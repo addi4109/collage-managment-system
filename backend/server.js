@@ -22,14 +22,20 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'];
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5173',
+  'https://collage-managment-system-fqny8pad8-addi4109s-projects.vercel.app',
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [])
+];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      if (!origin) return callback(null, true);
+      const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
+      if (isLocalhost || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
@@ -64,6 +70,9 @@ app.get('/health', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server is running in [${NODE_ENV}] mode`);
-  console.log(`Server listening on http://localhost:${PORT}`);
+  const serverUrl = NODE_ENV === 'production'
+    ? 'https://collage-managment-system.onrender.com'
+    : `http://localhost:${PORT}`;
+  console.log(`Server listening on ${serverUrl}`);
 });
 
