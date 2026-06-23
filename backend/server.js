@@ -9,6 +9,8 @@ import sessionRoutes from './routes/sessionRoutes.js';
 import noticeRoutes from './routes/noticeRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import lostFoundRoutes from './routes/lostFoundRoutes.js';
+import examRoutes from './routes/examRoutes.js';
+import proctorRoutes from './routes/proctorRoutes.js';
 import { connectDB } from './config/database.js';
 
 dotenv.config();
@@ -68,6 +70,8 @@ app.use('/api/session', sessionRoutes);
 app.use('/api/notices', noticeRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/lostfound', lostFoundRoutes);
+app.use('/api/exams', examRoutes);
+app.use('/api/proctor', proctorRoutes);
 
 // Health check endpoint displaying connection state and process uptime
 app.get('/', (req, res) => {

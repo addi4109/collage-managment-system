@@ -42,7 +42,11 @@ const TimetableGenerator = React.lazy(() => import('./pages/TimetableGenerator')
 const FacultyReportDashboard = React.lazy(() => import('./pages/FacultyReportDashboard').then(m => ({ default: m.FacultyReportDashboard })));
 const ReportForm = React.lazy(() => import('./pages/ReportForm').then(m => ({ default: m.ReportForm })));
 const StudentReportView = React.lazy(() => import('./pages/StudentReportView').then(m => ({ default: m.StudentReportView })));
-const InAppChat = React.lazy(() => import('./pages/InAppChat').then(m => ({ default: m.InAppChat })));
+const FacultyExams = React.lazy(() => import('./pages/FacultyExams').then(m => ({ default: m.FacultyExams })));
+const AdminExams = React.lazy(() => import('./pages/AdminExams').then(m => ({ default: m.AdminExams })));
+const StudentExams = React.lazy(() => import('./pages/StudentExams').then(m => ({ default: m.StudentExams })));
+const TakeExam = React.lazy(() => import('./pages/TakeExam').then(m => ({ default: m.TakeExam })));
+const ExamResult = React.lazy(() => import('./pages/ExamResult').then(m => ({ default: m.ExamResult })));
 const NoticeBoard = React.lazy(() => import('./pages/NoticeBoard').then(m => ({ default: m.NoticeBoard })));
 const LostFoundBoard = React.lazy(() => import('./pages/LostFoundBoard').then(m => ({ default: m.LostFoundBoard })));
 const LostFoundForm = React.lazy(() => import('./pages/LostFoundForm').then(m => ({ default: m.LostFoundForm })));
@@ -297,12 +301,53 @@ const AppContent: React.FC = () => {
             />
 
             {/* Utilities */}
+            {/* Exam System Routes */}
             <Route
-              path="/chat"
+              path="/exams/faculty"
               element={
-                <ProtectedRoute allowedRoles={['student', 'faculty', 'admin']}>
+                <ProtectedRoute allowedRoles={['faculty', 'admin']}>
                   <DashboardLayout>
-                    <InAppChat />
+                    <FacultyExams />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/exams/admin"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <DashboardLayout>
+                    <AdminExams />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/exams/student"
+              element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <DashboardLayout>
+                    <StudentExams />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/exams/take/:id"
+              element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <DashboardLayout>
+                    <TakeExam />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/exams/result/:id"
+              element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <DashboardLayout>
+                    <ExamResult />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

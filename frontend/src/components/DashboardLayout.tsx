@@ -34,7 +34,6 @@ import CampaignIcon from '@mui/icons-material/Campaign';
 import HelpCenterIcon from '@mui/icons-material/HelpCenter';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
-import ChatIcon from '@mui/icons-material/Chat';
 import { useThemeStore } from '../store/themeStore';
 import { useToast } from '../context/ToastContext';
 
@@ -174,6 +173,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <ListItemText primary="My Reports" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/exams/student')}
+                sx={{
+                  borderRadius: 2,
+                  mb: 0.5,
+                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <SchoolIcon color="warning" />
+                </ListItemIcon>
+                <ListItemText primary="Online Exams" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
           </>
         )}
 
@@ -238,6 +252,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                   <AssessmentIcon color="info" />
                 </ListItemIcon>
                 <ListItemText primary="Manage Reports" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/exams/faculty')}
+                sx={{
+                  borderRadius: 2,
+                  mb: 0.5,
+                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <SchoolIcon color="warning" />
+                </ListItemIcon>
+                <ListItemText primary="Manage Exams" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
           </>
@@ -321,6 +350,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <ListItemText primary="Manage Reports" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/exams/admin')}
+                sx={{
+                  borderRadius: 2,
+                  mb: 0.5,
+                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <SchoolIcon color="warning" />
+                </ListItemIcon>
+                <ListItemText primary="Approve Exams" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
           </>
         )}
 
@@ -341,22 +385,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </ListItemButton>
         </ListItem>
 
-        {/* Direct Chat (All Roles) */}
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={() => navigate('/chat')}
-            sx={{
-              borderRadius: 2,
-              mb: 0.5,
-              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 40 }}>
-              <ChatIcon color="secondary" />
-            </ListItemIcon>
-            <ListItemText primary="In-App Chat" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
-          </ListItemButton>
-        </ListItem>
+        {/* Direct Chat Removed */}
 
         {/* Notice Board (All Roles) */}
         <ListItem disablePadding>
