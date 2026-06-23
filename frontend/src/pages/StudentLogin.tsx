@@ -58,6 +58,7 @@ export const StudentLogin: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
 
     let hasError = false;
     if (!email) {

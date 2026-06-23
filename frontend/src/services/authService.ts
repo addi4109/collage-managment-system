@@ -41,18 +41,28 @@ export const loginWithEmail = async (
     }
   }
 
+  // Map minimal backend user details to full frontend UserProfile schema
+  const mappedUser: UserProfile & { id?: string } = {
+    uid: data.user.id || data.user.uid || '',
+    id: data.user.id || data.user.uid || '',
+    name: data.user.name || '',
+    role: (data.user.role || resolvedRole) as UserRole,
+    email: email, // Copy local login email input
+    status: 'active',
+  };
+
   try {
     const localUsersStr = localStorage.getItem('eh_users');
     const localUsers = localUsersStr ? JSON.parse(localUsersStr) : [];
-    if (!localUsers.some((u: any) => u.uid === data.user.uid)) {
-      localUsers.push(data.user);
+    if (!localUsers.some((u: any) => u.uid === mappedUser.uid)) {
+      localUsers.push(mappedUser);
       localStorage.setItem('eh_users', JSON.stringify(localUsers));
     }
   } catch (e) {
     console.error('Error syncing user to mock database:', e);
   }
 
-  return data.user;
+  return mappedUser;
 };
 
 export const registerWithEmail = async (

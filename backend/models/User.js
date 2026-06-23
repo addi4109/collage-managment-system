@@ -23,6 +23,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ['student', 'faculty', 'admin'],
+      index: true,
     },
     status: {
       type: String,

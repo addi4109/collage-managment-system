@@ -4,10 +4,23 @@ import User from '../models/User.js';
 import Student from '../models/Student.js';
 import Faculty from '../models/Faculty.js';
 import Admin from '../models/Admin.js';
+import { clearUserCache } from '../middleware/authMiddleware.js';
+
+// Cache for full profile responses to reduce database lookups
+const profileCache = new Map();
+const PROFILE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+export const clearProfileCache = (userId) => {
+  if (userId) {
+    profileCache.delete(userId.toString());
+  } else {
+    profileCache.clear();
+  }
+};
 
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id, email: user.email, role: user.role },
+    { id: user._id, userId: user._id, role: user.role, name: user.name },
     process.env.JWT_SECRET,
     { expiresIn: '30d' }
   );
@@ -128,7 +141,8 @@ export const loginStudent = async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ email });
+    // Optimize DB query: Select only required fields
+    const user = await User.findOne({ email }).select('_id role passwordHash name email status');
     if (!user || user.role !== 'student') {
       return res.status(401).json({ message: 'Invalid credentials or student account not found.' });
     }
@@ -151,15 +165,17 @@ export const loginStudent = async (req, res) => {
       return res.status(403).json({ message: 'Your account is not approved.' });
     }
 
+    // Invalidate cached instances on fresh login to prevent stale states
+    clearUserCache(user._id);
+    clearProfileCache(user._id);
+
     const token = generateToken(user);
     res.json({
       token,
       user: {
-        uid: user._id.toString(),
-        email: user.email,
+        id: user._id.toString(),
         name: user.name,
         role: user.role,
-        status: user.status,
       },
     });
   } catch (error) {
@@ -175,7 +191,8 @@ export const loginFaculty = async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ email });
+    // Optimize DB query: Select only required fields
+    const user = await User.findOne({ email }).select('_id role passwordHash name email status');
     if (!user || user.role !== 'faculty') {
       return res.status(401).json({ message: 'Invalid credentials or faculty account not found.' });
     }
@@ -198,15 +215,17 @@ export const loginFaculty = async (req, res) => {
       return res.status(403).json({ message: 'Your account is not approved.' });
     }
 
+    // Invalidate cached instances on fresh login to prevent stale states
+    clearUserCache(user._id);
+    clearProfileCache(user._id);
+
     const token = generateToken(user);
     res.json({
       token,
       user: {
-        uid: user._id.toString(),
-        email: user.email,
+        id: user._id.toString(),
         name: user.name,
         role: user.role,
-        status: user.status,
       },
     });
   } catch (error) {
@@ -222,7 +241,8 @@ export const loginAdmin = async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ email });
+    // Optimize DB query: Select only required fields
+    const user = await User.findOne({ email }).select('_id role passwordHash name email status');
     if (!user || user.role !== 'admin') {
       return res.status(401).json({ message: 'Invalid credentials or administrator account not found.' });
     }
@@ -245,15 +265,17 @@ export const loginAdmin = async (req, res) => {
       return res.status(403).json({ message: 'Your account is not approved.' });
     }
 
+    // Invalidate cached instances on fresh login to prevent stale states
+    clearUserCache(user._id);
+    clearProfileCache(user._id);
+
     const token = generateToken(user);
     res.json({
       token,
       user: {
-        uid: user._id.toString(),
-        email: user.email,
+        id: user._id.toString(),
         name: user.name,
         role: user.role,
-        status: user.status,
       },
     });
   } catch (error) {
@@ -285,6 +307,15 @@ export const forgotPassword = async (req, res) => {
 };
 
 export const getProfile = async (req, res) => {
+  const cacheKey = req.user.id;
+  const now = Date.now();
+  
+  // Check if profile response is cached
+  const cachedProfile = profileCache.get(cacheKey);
+  if (cachedProfile && (now - cachedProfile.timestamp < PROFILE_CACHE_TTL)) {
+    return res.json(cachedProfile.data);
+  }
+
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -315,6 +346,12 @@ export const getProfile = async (req, res) => {
         profileData.isHOD = facultyDoc.isHOD;
       }
     }
+
+    // Cache profile results
+    profileCache.set(cacheKey, {
+      data: profileData,
+      timestamp: now,
+    });
 
     res.json(profileData);
   } catch (error) {
