@@ -31,7 +31,11 @@ export const AdminLogin: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(true);
 
   useEffect(() => {
-    if (!isAdminVerified && !user) {
+    if (user) {
+      navigate('/admin/dashboard');
+      return;
+    }
+    if (!isAdminVerified) {
       navigate('/');
     }
   }, [isAdminVerified, user, navigate]);

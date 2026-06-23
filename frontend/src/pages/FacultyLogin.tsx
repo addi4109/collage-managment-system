@@ -31,7 +31,11 @@ export const FacultyLogin: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(true);
 
   useEffect(() => {
-    if (!isFacultyVerified && !user) {
+    if (user) {
+      navigate('/faculty/dashboard');
+      return;
+    }
+    if (!isFacultyVerified) {
       navigate('/');
     }
   }, [isFacultyVerified, user, navigate]);
