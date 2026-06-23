@@ -10,28 +10,30 @@ import {
   Divider,
   CircularProgress,
   Paper,
-  TextField,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import PersonIcon from '@mui/icons-material/Person';
 import PublishIcon from '@mui/icons-material/Publish';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VerifiedIcon from '@mui/icons-material/Verified';
 
 import {
-  getPendingResults,
-  approveSubject,
-  rejectSubject,
-  declareResult,
+  getDepartmentSummaries,
+  getDepartmentDetails,
+  verifyDepartment,
+  declareDepartment,
+  DepartmentSummary,
   ResultResponse,
 } from '../services/resultService';
 import { useToast } from '../context/ToastContext';
@@ -40,120 +42,97 @@ export const AdminResults: React.FC = () => {
   const toast = useToast();
 
   const [loading, setLoading] = useState(true);
-  const [results, setResults] = useState<ResultResponse[]>([]);
-
-  // Remarks state mapped as record[resultId-subjectIndex]: string
-  const [remarks, setRemarks] = useState<Record<string, string>>({});
+  const [summaries, setSummaries] = useState<DepartmentSummary[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState<DepartmentSummary | null>(null);
+  const [details, setDetails] = useState<ResultResponse[]>([]);
+  const [detailsLoading, setDetailsLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    fetchPending();
+    fetchSummaries();
   }, []);
 
-  const fetchPending = async () => {
+  const fetchSummaries = async () => {
     setLoading(true);
     try {
-      const data = await getPendingResults();
-      setResults(data);
+      const data = await getDepartmentSummaries();
+      setSummaries(data);
     } catch (err: any) {
       console.error(err);
-      toast.error('Failed to load pending result reviews.');
+      toast.error('Failed to load department result summaries.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApproveSub = async (resultId: string, subIdx: number) => {
-    const key = `${resultId}-${subIdx}`;
+  const handleVerifyDepartment = async (sum: DepartmentSummary) => {
+    const key = `${sum.department}-${sum.semester}-${sum.academicYear}-verify`;
     setActionLoading((prev) => ({ ...prev, [key]: true }));
     try {
-      await approveSubject(resultId, subIdx);
-      toast.success('Subject approved.');
-      
-      // Local updates instead of full refetch to keep scroll / open accordion state
-      await refreshSingleResult(resultId);
+      const res = await verifyDepartment({
+        department: sum.department,
+        semester: sum.semester,
+        academicYear: sum.academicYear,
+      });
+      toast.success(res.message || 'Department results verified successfully.');
+      await fetchSummaries();
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || 'Failed to approve subject.');
+      toast.error(err.message || 'Failed to verify department results.');
     } finally {
       setActionLoading((prev) => ({ ...prev, [key]: false }));
     }
   };
 
-  const handleRejectSub = async (resultId: string, subIdx: number) => {
-    const key = `${resultId}-${subIdx}`;
-    const remark = remarks[key] || '';
-    if (!remark.trim()) {
-      toast.warning('Please enter a remark explaining the rejection.');
-      return;
-    }
-
+  const handleDeclareDepartment = async (sum: DepartmentSummary) => {
+    const key = `${sum.department}-${sum.semester}-${sum.academicYear}-declare`;
     setActionLoading((prev) => ({ ...prev, [key]: true }));
     try {
-      await rejectSubject(resultId, subIdx, remark);
-      toast.success('Subject rejected with remark.');
-      
-      // Clear remark
-      setRemarks((prev) => ({ ...prev, [key]: '' }));
-      await refreshSingleResult(resultId);
+      const res = await declareDepartment({
+        department: sum.department,
+        semester: sum.semester,
+        academicYear: sum.academicYear,
+      });
+      toast.success(res.message || 'Department results declared successfully.');
+      await fetchSummaries();
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || 'Failed to reject subject.');
+      toast.error(err.message || 'Failed to declare department results.');
     } finally {
       setActionLoading((prev) => ({ ...prev, [key]: false }));
     }
   };
 
-  const handleDeclare = async (resultId: string) => {
-    setActionLoading((prev) => ({ ...prev, [resultId]: true }));
+  const handleViewDetails = async (sum: DepartmentSummary) => {
+    setSelectedGroup(sum);
+    setDetailsLoading(true);
     try {
-      await declareResult(resultId);
-      toast.success('Result sheet declared and published online.');
-      fetchPending(); // Refresh list
+      const data = await getDepartmentDetails(sum.department, sum.semester, sum.academicYear);
+      setDetails(data);
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || 'Failed to declare result.');
+      toast.error('Failed to load student result sheets.');
+      setSelectedGroup(null);
     } finally {
-      setActionLoading((prev) => ({ ...prev, [resultId]: false }));
+      setDetailsLoading(false);
     }
   };
 
-  const refreshSingleResult = async (_resultId: string) => {
-    // Re-fetch pending to get fresh sync
-    try {
-      const data = await getPendingResults();
-      setResults(data);
-    } catch (e) {
-      console.warn(e);
-    }
-  };
-
-  const getOverallStatusChip = (status: string) => {
+  const getStatusChip = (status: string) => {
     switch (status) {
-      case 'ready_for_declaration':
-        return <Chip label="READY FOR DECLARATION" color="secondary" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'verification_pending':
-        return <Chip label="VERIFICATION PENDING" color="warning" size="small" sx={{ fontWeight: 'bold' }} />;
+      case 'declared':
+        return <Chip label="DECLARED" color="success" size="small" sx={{ fontWeight: 'bold' }} />;
+      case 'verified':
+        return <Chip label="VERIFIED" color="secondary" size="small" sx={{ fontWeight: 'bold' }} />;
       case 'submitted':
         return <Chip label="SUBMITTED" color="info" size="small" sx={{ fontWeight: 'bold' }} />;
+      case 'draft':
       default:
-        return <Chip label={status.toUpperCase()} size="small" />;
+        return <Chip label="DRAFT" variant="outlined" size="small" sx={{ fontWeight: 'bold' }} />;
     }
   };
 
-  const getSubjectStatusChip = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <Chip icon={<CheckCircleIcon />} label="Approved" color="success" size="small" variant="outlined" sx={{ fontWeight: 'bold' }} />;
-      case 'rejected':
-        return <Chip icon={<CancelIcon />} label="Rejected" color="error" size="small" variant="outlined" sx={{ fontWeight: 'bold' }} />;
-      case 'pending':
-      default:
-        return <Chip icon={<HourglassEmptyIcon />} label="Pending" color="warning" size="small" variant="outlined" sx={{ fontWeight: 'bold' }} />;
-    }
-  };
-
-  if (loading && results.length === 0) {
+  if (loading && summaries.length === 0) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
         <CircularProgress />
@@ -166,194 +145,108 @@ export const AdminResults: React.FC = () => {
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" className="gradient-text" sx={{ fontWeight: 800 }}>
-          Result Verification Dashboard
+          Department Result Verification
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Review student marks subject-by-subject and declare finalized report cards.
+          Review, verify, and declare semester-end academic results in bulk at the department/branch level.
         </Typography>
       </Box>
 
-      {/* List */}
-      {results.length === 0 ? (
+      {/* Summaries list */}
+      {summaries.length === 0 ? (
         <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3, border: '1px dashed rgba(255, 255, 255, 0.1)' }}>
           <InfoIcon color="action" sx={{ fontSize: 48, mb: 1.5 }} />
           <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 600 }}>
             No Results Awaiting Review
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            All submitted student results have been verified, approved, and declared.
+            There are no active result drafts or submissions at this time.
           </Typography>
         </Paper>
       ) : (
-        <Grid container spacing={4}>
-          {results.map((result) => {
-            const approvedCount = result.subjects.filter((s) => s.approvalStatus === 'approved').length;
-            const allApproved = approvedCount === result.subjects.length;
-            const isDeclaring = actionLoading[result._id] || false;
+        <Grid container spacing={3}>
+          {summaries.map((sum, index) => {
+            const verifyKey = `${sum.department}-${sum.semester}-${sum.academicYear}-verify`;
+            const declareKey = `${sum.department}-${sum.semester}-${sum.academicYear}-declare`;
+            
+            const isVerifying = actionLoading[verifyKey] || false;
+            const isDeclaring = actionLoading[declareKey] || false;
 
             return (
-              <Grid item xs={12} key={result._id}>
+              <Grid item xs={12} md={6} key={index}>
                 <Card sx={{ borderRadius: 4, border: '1px solid rgba(255, 255, 255, 0.05)', bgcolor: 'rgba(30, 41, 59, 0.15)' }}>
-                  <CardContent sx={{ p: 4 }}>
+                  <CardContent sx={{ p: 3.5 }}>
                     {/* Header */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5, mb: 3 }}>
-                      <Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <PersonIcon color="primary" fontSize="small" />
-                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                            {result.studentName}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Roll: {result.rollNumber || 'N/A'}
-                          </Typography>
-                        </Box>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          Course: <b>{result.courseName}</b> | Semester: <b>{result.semester}</b> | Year: <b>{result.academicYear}</b>
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          Prepared By: <b>{result.facultyName || 'Faculty'}</b>
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: { xs: 'flex-start', sm: 'flex-end' }, gap: 1 }}>
-                        {getOverallStatusChip(result.status)}
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.light' }}>
+                        {sum.department}
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                        <CalendarTodayIcon fontSize="inherit" color="action" />
                         <Typography variant="caption" color="text.secondary">
-                          Approved Subjects: <b>{approvedCount} / {result.subjects.length}</b>
+                          Semester: <b>{sum.semester}</b> | Year: <b>{sum.academicYear}</b>
                         </Typography>
                       </Box>
                     </Box>
 
                     <Divider sx={{ my: 2, opacity: 0.05 }} />
 
-                    {/* Marks Table with Actions */}
-                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2 }}>
-                      Subject Verification Sheet
-                    </Typography>
-                    <TableContainer component={Paper} elevation={0} sx={{ bgcolor: 'transparent', border: '1px solid rgba(255, 255, 255, 0.05)', mb: 3 }}>
-                      <Table>
-                        <TableHead sx={{ bgcolor: 'rgba(255, 255, 255, 0.02)' }}>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Code</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Subject</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Max Marks</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Obtained</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Grade</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Result</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }} width={240}>Remark</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 'bold' }} width={200}>Verify Actions</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {result.subjects.map((sub, sIdx) => {
-                            const key = `${result._id}-${sIdx}`;
-                            const isSubLoading = actionLoading[key] || false;
-                            
-                            return (
-                              <TableRow key={sIdx}>
-                                <TableCell>{sub.subjectCode}</TableCell>
-                                <TableCell>{sub.subjectName}</TableCell>
-                                <TableCell>{sub.maxMarks}</TableCell>
-                                <TableCell>{sub.obtainedMarks}</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold' }}>{sub.grade}</TableCell>
-                                <TableCell>
-                                  <Chip
-                                    label={sub.status}
-                                    size="small"
-                                    color={sub.status === 'Pass' ? 'success' : 'error'}
-                                    variant="outlined"
-                                    sx={{ height: 20, fontSize: '0.65rem', fontWeight: 'bold' }}
-                                  />
-                                </TableCell>
-                                <TableCell>{getSubjectStatusChip(sub.approvalStatus || 'pending')}</TableCell>
-                                <TableCell>
-                                  {sub.approvalStatus === 'pending' ? (
-                                    <TextField
-                                      size="small"
-                                      placeholder="Remarks on reject"
-                                      value={remarks[key] || ''}
-                                      onChange={(e) => setRemarks({ ...remarks, [key]: e.target.value })}
-                                      disabled={isSubLoading}
-                                    />
-                                  ) : (
-                                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                                      {sub.adminRemark || '-'}
-                                    </Typography>
-                                  )}
-                                </TableCell>
-                                <TableCell align="center">
-                                  {sub.approvalStatus === 'pending' ? (
-                                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                                      <IconButton
-                                        color="success"
-                                        onClick={() => handleApproveSub(result._id, sIdx)}
-                                        disabled={isSubLoading}
-                                      >
-                                        <CheckCircleIcon />
-                                      </IconButton>
-                                      <IconButton
-                                        color="error"
-                                        onClick={() => handleRejectSub(result._id, sIdx)}
-                                        disabled={isSubLoading}
-                                      >
-                                        <CancelIcon />
-                                      </IconButton>
-                                    </Box>
-                                  ) : (
-                                    <Typography variant="caption" color="text.secondary">
-                                      Finalized
-                                    </Typography>
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-
-                    {/* Extra Parameters Display */}
+                    {/* Stats */}
                     <Grid container spacing={2} sx={{ mb: 3 }}>
-                      <Grid item xs={12} sm={3}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <CalendarTodayIcon fontSize="small" color="action" />
-                          <Typography variant="caption" color="text.secondary">
-                            Attendance: <b>{result.attendancePercentage ?? 'N/A'}%</b>
-                          </Typography>
-                        </Box>
+                      <Grid item xs={6} sm={3}>
+                        <Typography variant="caption" color="text.secondary" display="block">TOTAL STUDENTS</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{sum.totalStudents}</Typography>
                       </Grid>
-                      <Grid item xs={12} sm={3}>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          Internals Total: <b>{result.internalMarksTotal ?? 'N/A'}</b>
-                        </Typography>
+                      <Grid item xs={6} sm={3}>
+                        <Typography variant="caption" color="text.secondary" display="block">SUBMITTED</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'info.main' }}>{sum.submittedCount}</Typography>
                       </Grid>
-                      <Grid item xs={12} sm={3}>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          Practicals Total: <b>{result.practicalMarksTotal ?? 'N/A'}</b>
-                        </Typography>
+                      <Grid item xs={6} sm={3}>
+                        <Typography variant="caption" color="text.secondary" display="block">VERIFIED</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'secondary.main' }}>{sum.verifiedCount}</Typography>
                       </Grid>
-                      <Grid item xs={12} sm={3}>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          Theory Total: <b>{result.theoryMarksTotal ?? 'N/A'}</b>
-                        </Typography>
+                      <Grid item xs={6} sm={3}>
+                        <Typography variant="caption" color="text.secondary" display="block">DECLARED</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'success.main' }}>{sum.declaredCount}</Typography>
                       </Grid>
                     </Grid>
 
-                    {/* Declare Button section */}
-                    {allApproved && (
-                      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button
-                          variant="contained"
-                          color="success"
-                          size="large"
-                          startIcon={isDeclaring ? <CircularProgress size={20} /> : <PublishIcon />}
-                          onClick={() => handleDeclare(result._id)}
-                          disabled={isDeclaring}
-                          sx={{ fontWeight: 'bold', px: 4, borderRadius: 2.5 }}
-                        >
-                          Declare & Publish Results
-                        </Button>
-                      </Box>
-                    )}
+                    <Divider sx={{ my: 2, opacity: 0.05 }} />
+
+                    {/* Actions */}
+                    <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: 'flex-end', mt: 2 }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<VisibilityIcon />}
+                        onClick={() => handleViewDetails(sum)}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        View Results
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        size="small"
+                        startIcon={isVerifying ? <CircularProgress size={16} /> : <VerifiedIcon />}
+                        disabled={sum.submittedCount === 0 || isVerifying}
+                        onClick={() => handleVerifyDepartment(sum)}
+                        sx={{ borderRadius: 2, fontWeight: 'bold' }}
+                      >
+                        Verify Department
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        startIcon={isDeclaring ? <CircularProgress size={16} /> : <PublishIcon />}
+                        disabled={sum.verifiedCount === 0 || isDeclaring}
+                        onClick={() => handleDeclareDepartment(sum)}
+                        sx={{ borderRadius: 2, fontWeight: 'bold' }}
+                      >
+                        Declare Results
+                      </Button>
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>
@@ -361,6 +254,95 @@ export const AdminResults: React.FC = () => {
           })}
         </Grid>
       )}
+
+      {/* Details Dialog */}
+      <Dialog
+        open={!!selectedGroup}
+        onClose={() => setSelectedGroup(null)}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: '#111827',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: 3.5,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          },
+        }}
+      >
+        {selectedGroup && (
+          <>
+            <DialogTitle sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                {selectedGroup.department} Results
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Semester: <b>{selectedGroup.semester}</b> | Year: <b>{selectedGroup.academicYear}</b>
+              </Typography>
+            </DialogTitle>
+            <DialogContent sx={{ p: 3 }}>
+              {detailsLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                  <CircularProgress />
+                </Box>
+              ) : details.length === 0 ? (
+                <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+                  No result records found in this group.
+                </Typography>
+              ) : (
+                <TableContainer component={Paper} elevation={0} sx={{ bgcolor: 'transparent', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <Table size="small">
+                    <TableHead sx={{ bgcolor: 'rgba(255,255,255,0.02)' }}>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Roll No</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Student Name</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>Max Marks</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>Obtained Marks</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>Percentage</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>CGPA</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>Grade</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>Outcome</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {details.map((result) => (
+                        <TableRow key={result._id}>
+                          <TableCell>{result.rollNumber || 'N/A'}</TableCell>
+                          <TableCell sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <PersonIcon fontSize="inherit" color="action" />
+                            <Typography variant="body2">{result.studentName}</Typography>
+                          </TableCell>
+                          <TableCell align="center">{result.totalMarks}</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>{result.obtainedMarks}</TableCell>
+                          <TableCell align="center">{result.percentage}%</TableCell>
+                          <TableCell align="center" sx={{ color: 'primary.light', fontWeight: 'bold' }}>{result.cgpa}</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>{result.overallGrade}</TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              label={result.overallResult.toUpperCase()}
+                              size="small"
+                              color={result.overallResult === 'Pass' ? 'success' : 'error'}
+                              variant="outlined"
+                              sx={{ height: 18, fontSize: '0.6rem', fontWeight: 'bold' }}
+                            />
+                          </TableCell>
+                          <TableCell align="center">{getStatusChip(result.status)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </DialogContent>
+            <DialogActions sx={{ p: 2.5, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <Button onClick={() => setSelectedGroup(null)} sx={{ borderRadius: 2 }}>
+                Close
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
     </Box>
   );
 };

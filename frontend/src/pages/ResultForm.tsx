@@ -55,6 +55,7 @@ export const ResultForm: React.FC = () => {
   const [studentId, setStudentId] = useState('');
   const [studentName, setStudentName] = useState('');
   const [rollNumber, setRollNumber] = useState('');
+  const [department, setDepartment] = useState('');
   const [courseName, setCourseName] = useState('');
   const [semester, setSemester] = useState('');
   const [academicYear, setAcademicYear] = useState('');
@@ -85,6 +86,7 @@ export const ResultForm: React.FC = () => {
         setStudentId(resultData.studentId);
         setStudentName(resultData.studentName);
         setRollNumber(resultData.rollNumber || '');
+        setDepartment(resultData.department || '');
         setCourseName(resultData.courseName || '');
         setSemester(resultData.semester || '');
         setAcademicYear(resultData.academicYear || '');
@@ -99,8 +101,6 @@ export const ResultForm: React.FC = () => {
           subjectName: s.subjectName,
           maxMarks: s.maxMarks,
           obtainedMarks: s.obtainedMarks,
-          approvalStatus: s.approvalStatus,
-          adminRemark: s.adminRemark,
         })));
       }
     } catch (err: any) {
@@ -117,6 +117,7 @@ export const ResultForm: React.FC = () => {
     if (student) {
       setStudentName(student.studentName);
       setRollNumber(student.rollNumber);
+      setDepartment(student.department);
       setCourseName(student.department);
     }
   };
@@ -176,7 +177,7 @@ export const ResultForm: React.FC = () => {
   };
 
   const handleSave = async (submitForApproval = false) => {
-    if (!studentId || !semester.trim() || !academicYear.trim() || !courseName.trim()) {
+    if (!studentId || !semester.trim() || !academicYear.trim() || !courseName.trim() || !department.trim()) {
       toast.warning('Please fill in all general student details.');
       return;
     }
@@ -204,6 +205,7 @@ export const ResultForm: React.FC = () => {
         studentId,
         studentName,
         rollNumber,
+        department,
         courseName,
         semester,
         academicYear,
@@ -313,11 +315,21 @@ export const ResultForm: React.FC = () => {
                   />
                 </Grid>
 
+                {/* Department */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Branch / Department (for bulk verification)"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                  />
+                </Grid>
+
                 {/* Course Name */}
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Course / Department"
+                    label="Course Name"
                     value={courseName}
                     onChange={(e) => setCourseName(e.target.value)}
                   />

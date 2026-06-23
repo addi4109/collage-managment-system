@@ -29,7 +29,6 @@ const evaluateResultMetrics = (resultDoc) => {
       allPassed = false;
     }
 
-    // Keep existing approval fields if present, else default
     return {
       subjectCode: sub.subjectCode,
       subjectName: sub.subjectName,
@@ -37,8 +36,6 @@ const evaluateResultMetrics = (resultDoc) => {
       obtainedMarks: obtained,
       grade,
       status,
-      approvalStatus: sub.approvalStatus || 'pending',
-      adminRemark: sub.adminRemark || '',
     };
   });
 
@@ -100,6 +97,7 @@ export const createResult = async (req, res) => {
     studentId,
     studentName,
     rollNumber,
+    department,
     courseName,
     semester,
     academicYear,
@@ -110,8 +108,8 @@ export const createResult = async (req, res) => {
     theoryMarksTotal,
   } = req.body;
 
-  if (!studentId || !studentName || !subjects || !Array.isArray(subjects) || subjects.length === 0) {
-    return res.status(400).json({ message: 'Student information and subjects marks are required.' });
+  if (!studentId || !studentName || !department || !subjects || !Array.isArray(subjects) || subjects.length === 0) {
+    return res.status(400).json({ message: 'Student information, department, and subjects marks are required.' });
   }
 
   try {
@@ -119,6 +117,7 @@ export const createResult = async (req, res) => {
       studentId,
       studentName,
       rollNumber,
+      department,
       courseName,
       semester,
       academicYear,
@@ -129,8 +128,6 @@ export const createResult = async (req, res) => {
         subjectName: s.subjectName,
         maxMarks: Number(s.maxMarks),
         obtainedMarks: Number(s.obtainedMarks),
-        approvalStatus: 'pending', // Fresh starts default to pending
-        adminRemark: '',
       })),
       attendancePercentage: attendancePercentage ? Number(attendancePercentage) : undefined,
       internalMarksTotal: internalMarksTotal ? Number(internalMarksTotal) : undefined,
@@ -157,6 +154,7 @@ export const createResult = async (req, res) => {
 export const updateResult = async (req, res) => {
   const { id } = req.params;
   const {
+    department,
     courseName,
     semester,
     academicYear,
@@ -177,6 +175,7 @@ export const updateResult = async (req, res) => {
       return res.status(400).json({ message: 'Cannot modify a declared result.' });
     }
 
+    result.department = department || result.department;
     result.courseName = courseName || result.courseName;
     result.semester = semester || result.semester;
     result.academicYear = academicYear || result.academicYear;
@@ -186,42 +185,15 @@ export const updateResult = async (req, res) => {
     result.theoryMarksTotal = theoryMarksTotal !== undefined ? Number(theoryMarksTotal) : result.theoryMarksTotal;
 
     if (subjects && Array.isArray(subjects)) {
-      // Map and reset approval details if changed by faculty
-      result.subjects = subjects.map((sub) => {
-        const existingSub = result.subjects.find((e) => e.subjectCode === sub.subjectCode);
-        
-        let approvalStatus = 'pending';
-        let adminRemark = '';
-
-        if (existingSub) {
-          const marksChanged =
-            Number(existingSub.maxMarks) !== Number(sub.maxMarks) ||
-            Number(existingSub.obtainedMarks) !== Number(sub.obtainedMarks);
-
-          if (!marksChanged) {
-            approvalStatus = existingSub.approvalStatus;
-            adminRemark = existingSub.adminRemark;
-          }
-        }
-
-        return {
-          subjectCode: sub.subjectCode,
-          subjectName: sub.subjectName,
-          maxMarks: Number(sub.maxMarks),
-          obtainedMarks: Number(sub.obtainedMarks),
-          approvalStatus,
-          adminRemark,
-        };
-      });
+      result.subjects = subjects.map((sub) => ({
+        subjectCode: sub.subjectCode,
+        subjectName: sub.subjectName,
+        maxMarks: Number(sub.maxMarks),
+        obtainedMarks: Number(sub.obtainedMarks),
+      }));
     }
 
     evaluateResultMetrics(result);
-
-    // If re-evaluating status when correcting:
-    if (result.status === 'verification_pending') {
-      // Keep verification_pending, or reset to draft if edits are heavy.
-      // But we will allow direct re-submission to submitted.
-    }
 
     const saved = await result.save();
     res.json({
@@ -248,15 +220,6 @@ export const submitResult = async (req, res) => {
     if (result.status === 'declared') {
       return res.status(400).json({ message: 'Result is already declared.' });
     }
-
-    // Force reset all pending/rejected subjects to pending on fresh submission
-    result.subjects = result.subjects.map((sub) => {
-      if (sub.approvalStatus === 'rejected') {
-        sub.approvalStatus = 'pending';
-        sub.adminRemark = '';
-      }
-      return sub;
-    });
 
     result.status = 'submitted';
     await result.save();
@@ -312,125 +275,144 @@ export const getResultById = async (req, res) => {
 
 // --- Admin Services ---
 
-// 1. Fetch pending results (submitted or verification_pending)
-export const getPendingResults = async (req, res) => {
+// 1. Fetch all department result summaries (aggregate state)
+export const getDepartmentSummaries = async (req, res) => {
+  try {
+    const summaries = await Result.aggregate([
+      {
+        $group: {
+          _id: {
+            department: '$department',
+            semester: '$semester',
+            academicYear: '$academicYear',
+          },
+          total: { $sum: 1 },
+          submittedCount: {
+            $sum: { $cond: [{ $eq: ['$status', 'submitted'] }, 1, 0] },
+          },
+          verifiedCount: {
+            $sum: { $cond: [{ $eq: ['$status', 'verified'] }, 1, 0] },
+          },
+          declaredCount: {
+            $sum: { $cond: [{ $eq: ['$status', 'declared'] }, 1, 0] },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          department: '$_id.department',
+          semester: '$_id.semester',
+          academicYear: '$_id.academicYear',
+          totalStudents: '$total',
+          submittedCount: 1,
+          verifiedCount: 1,
+          declaredCount: 1,
+        },
+      },
+      {
+        $sort: { department: 1, semester: 1, academicYear: 1 },
+      },
+    ]);
+    res.json(summaries);
+  } catch (error) {
+    console.error('Get summaries error:', error);
+    res.status(500).json({ message: 'Internal server error fetching department summaries.' });
+  }
+};
+
+// 2. Fetch result sheets matching a department filter
+export const getDepartmentDetails = async (req, res) => {
+  const { department, semester, academicYear } = req.query;
+
+  if (!department || !semester || !academicYear) {
+    return res.status(400).json({ message: 'Department, semester, and academicYear are required parameters.' });
+  }
+
   try {
     const list = await Result.find({
-      status: { $in: ['submitted', 'verification_pending', 'ready_for_declaration'] },
-    }).sort({ updatedAt: -1 });
+      department,
+      semester,
+      academicYear,
+    }).sort({ rollNumber: 1 });
     res.json(list);
   } catch (error) {
-    console.error('Get pending results error:', error);
-    res.status(500).json({ message: 'Internal server error fetching pending reviews.' });
-  }
-};
-
-// 2. Approve single subject within a result
-export const approveSubject = async (req, res) => {
-  const { resultId, subjectIndex } = req.params;
-
-  try {
-    const result = await Result.findById(resultId);
-    if (!result) {
-      return res.status(404).json({ message: 'Result not found.' });
-    }
-
-    const idx = Number(subjectIndex);
-    if (idx < 0 || idx >= result.subjects.length) {
-      return res.status(400).json({ message: 'Invalid subject index.' });
-    }
-
-    result.subjects[idx].approvalStatus = 'approved';
-    result.subjects[idx].adminRemark = '';
-
-    // Re-evaluate overall result status
-    const allApproved = result.subjects.every((s) => s.approvalStatus === 'approved');
-    if (allApproved) {
-      result.status = 'ready_for_declaration';
-    } else {
-      result.status = 'verification_pending';
-    }
-
-    await result.save();
-    res.json({
-      success: true,
-      message: `Subject ${result.subjects[idx].subjectCode} approved successfully.`,
-      result,
-    });
-  } catch (error) {
-    console.error('Approve subject error:', error);
+    console.error('Get department details error:', error);
     res.status(500).json({ message: 'Internal server error.' });
   }
 };
 
-// 3. Reject single subject within a result
-export const rejectSubject = async (req, res) => {
-  const { resultId, subjectIndex } = req.params;
-  const { remark } = req.body;
+// 3. Verify all submitted results for a department
+export const verifyDepartment = async (req, res) => {
+  const { department, semester, academicYear } = req.body;
 
-  if (!remark) {
-    return res.status(400).json({ message: 'A remark/reason is required to reject a subject.' });
+  if (!department || !semester || !academicYear) {
+    return res.status(400).json({ message: 'Department, semester, and academic year are required.' });
   }
 
   try {
-    const result = await Result.findById(resultId);
-    if (!result) {
-      return res.status(404).json({ message: 'Result not found.' });
-    }
+    const filter = {
+      department,
+      semester,
+      academicYear,
+      status: 'submitted',
+    };
 
-    const idx = Number(subjectIndex);
-    if (idx < 0 || idx >= result.subjects.length) {
-      return res.status(400).json({ message: 'Invalid subject index.' });
-    }
+    const update = {
+      status: 'verified',
+      verifiedBy: req.user.id,
+      verifiedAt: new Date(),
+    };
 
-    result.subjects[idx].approvalStatus = 'rejected';
-    result.subjects[idx].adminRemark = remark;
-    result.status = 'verification_pending';
+    const response = await Result.updateMany(filter, update);
 
-    await result.save();
     res.json({
       success: true,
-      message: `Subject ${result.subjects[idx].subjectCode} rejected with remark.`,
-      result,
+      message: `Successfully verified ${response.modifiedCount} submitted results for ${department}.`,
+      modifiedCount: response.modifiedCount,
     });
   } catch (error) {
-    console.error('Reject subject error:', error);
-    res.status(500).json({ message: 'Internal server error.' });
+    console.error('Verify department error:', error);
+    res.status(500).json({ message: 'Internal server error verifying department results.' });
   }
 };
 
-// 4. Declare result officially
-export const declareResult = async (req, res) => {
-  const { id } = req.params;
+// 4. Declare all verified results for a department
+export const declareDepartment = async (req, res) => {
+  const { department, semester, academicYear } = req.body;
+
+  if (!department || !semester || !academicYear) {
+    return res.status(400).json({ message: 'Department, semester, and academic year are required.' });
+  }
 
   try {
-    const result = await Result.findById(id);
-    if (!result) {
-      return res.status(404).json({ message: 'Result not found.' });
-    }
+    const filter = {
+      department,
+      semester,
+      academicYear,
+      status: 'verified',
+    };
 
-    const allApproved = result.subjects.every((s) => s.approvalStatus === 'approved');
-    if (!allApproved) {
-      return res.status(400).json({ message: 'All subjects must be approved before declaration.' });
-    }
+    const update = {
+      status: 'declared',
+      declaredBy: req.user.id,
+      declaredAt: new Date(),
+    };
 
-    result.status = 'declared';
-    result.declaredBy = req.user.id;
-    result.declaredAt = new Date();
-    await result.save();
+    const response = await Result.updateMany(filter, update);
 
     res.json({
       success: true,
-      message: 'Result officially declared and published.',
-      result,
+      message: `Successfully declared ${response.modifiedCount} verified results for ${department}.`,
+      modifiedCount: response.modifiedCount,
     });
   } catch (error) {
-    console.error('Declare result error:', error);
-    res.status(500).json({ message: 'Internal server error declaring result.' });
+    console.error('Declare department error:', error);
+    res.status(500).json({ message: 'Internal server error declaring department results.' });
   }
 };
 
-// 5. Get all results (Admin reference list)
+// 5. Get all results list (Reference)
 export const getAllResults = async (req, res) => {
   try {
     const list = await Result.find().sort({ createdAt: -1 });
@@ -443,7 +425,7 @@ export const getAllResults = async (req, res) => {
 
 // --- Student Services ---
 
-// 1. Get declared results for logged-in student
+// 1. Get declared results for student
 export const getStudentResults = async (req, res) => {
   try {
     const list = await Result.find({
@@ -453,6 +435,6 @@ export const getStudentResults = async (req, res) => {
     res.json(list);
   } catch (error) {
     console.error('Get student results error:', error);
-    res.status(500).json({ message: 'Internal server error fetching your grades.' });
+    res.status(500).json({ message: 'Internal server error fetching results.' });
   }
 };

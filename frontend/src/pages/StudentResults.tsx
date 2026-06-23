@@ -76,11 +76,12 @@ export const StudentResults: React.FC = () => {
         {results.length > 0 && (
           <Button
             variant="outlined"
+            color="primary"
             startIcon={<PrintIcon />}
             onClick={handlePrint}
             sx={{ fontWeight: 'bold', borderRadius: 2 }}
           >
-            Print Marksheet
+            Download Marksheet PDF
           </Button>
         )}
       </Box>
@@ -131,19 +132,23 @@ export const StudentResults: React.FC = () => {
               <CardContent sx={{ p: 4 }}>
                 {/* Student Metadata */}
                 <Grid container spacing={3} sx={{ mb: 4 }}>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid item xs={12} sm={6} md={2.4}>
                     <Typography variant="caption" color="text.secondary" display="block">STUDENT NAME</Typography>
                     <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{result.studentName}</Typography>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid item xs={12} sm={6} md={2.4}>
                     <Typography variant="caption" color="text.secondary" display="block">ROLL NUMBER</Typography>
                     <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{result.rollNumber || 'N/A'}</Typography>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Typography variant="caption" color="text.secondary" display="block">COURSE / DEPARTMENT</Typography>
+                  <Grid item xs={12} sm={6} md={2.4}>
+                    <Typography variant="caption" color="text.secondary" display="block">DEPARTMENT</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{result.department || 'N/A'}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={2.4}>
+                    <Typography variant="caption" color="text.secondary" display="block">COURSE</Typography>
                     <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{result.courseName}</Typography>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid item xs={12} sm={6} md={2.4}>
                     <Typography variant="caption" color="text.secondary" display="block">SEMESTER & YEAR</Typography>
                     <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                       {result.semester} ({result.academicYear})
@@ -269,6 +274,15 @@ export const StudentResults: React.FC = () => {
                     </Card>
                   </Grid>
                 </Grid>
+                <Divider sx={{ my: 3, opacity: 0.05 }} />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Declared Date: <b>{result.declaredAt ? new Date(result.declaredAt).toLocaleDateString() : 'N/A'}</b>
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    * This is an official computer-generated statement of marks.
+                  </Typography>
+                </Box>
               </CardContent>
             </Card>
           ))}

@@ -29,16 +29,6 @@ const SubjectResultSchema = new mongoose.Schema({
     type: String,
     enum: ['Pass', 'Fail'],
   },
-  approvalStatus: {
-    type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending',
-  },
-  adminRemark: {
-    type: String,
-    default: '',
-    trim: true,
-  },
 });
 
 const ResultSchema = new mongoose.Schema(
@@ -55,6 +45,12 @@ const ResultSchema = new mongoose.Schema(
     rollNumber: {
       type: String,
       trim: true,
+    },
+    department: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true,
     },
     courseName: {
       type: String,
@@ -130,16 +126,16 @@ const ResultSchema = new mongoose.Schema(
     // Workflow State Machine
     status: {
       type: String,
-      enum: ['draft', 'submitted', 'verification_pending', 'ready_for_declaration', 'declared'],
+      enum: ['draft', 'submitted', 'verified', 'declared'],
       default: 'draft',
       index: true,
     },
     // Audit Trails
-    reviewedBy: {
+    verifiedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
-    reviewedAt: {
+    verifiedAt: {
       type: Date,
     },
     declaredBy: {
@@ -159,6 +155,8 @@ const ResultSchema = new mongoose.Schema(
 ResultSchema.index({ studentId: 1 });
 ResultSchema.index({ facultyId: 1 });
 ResultSchema.index({ status: 1 });
+ResultSchema.index({ department: 1, semester: 1, academicYear: 1 });
 
 const Result = mongoose.model('Result', ResultSchema);
 export default Result;
+

@@ -6,10 +6,10 @@ import {
   submitResult,
   getFacultyResults,
   getResultById,
-  getPendingResults,
-  approveSubject,
-  rejectSubject,
-  declareResult,
+  getDepartmentSummaries,
+  getDepartmentDetails,
+  verifyDepartment,
+  declareDepartment,
   getAllResults,
   getStudentResults,
 } from '../controllers/resultController.js';
@@ -28,10 +28,10 @@ router.post('/:id/submit', requireRole(['faculty']), submitResult);
 router.get('/faculty', requireRole(['faculty']), getFacultyResults);
 
 // --- Admin Endpoints ---
-router.get('/pending', requireRole(['admin']), getPendingResults);
-router.post('/:resultId/subject/:subjectIndex/approve', requireRole(['admin']), approveSubject);
-router.post('/:resultId/subject/:subjectIndex/reject', requireRole(['admin']), rejectSubject);
-router.post('/:id/declare', requireRole(['admin']), declareResult);
+router.get('/department-summaries', requireRole(['admin']), getDepartmentSummaries);
+router.get('/department-details', requireRole(['admin']), getDepartmentDetails);
+router.post('/verify-department', requireRole(['admin']), verifyDepartment);
+router.post('/declare-department', requireRole(['admin']), declareDepartment);
 router.get('/all', requireRole(['admin']), getAllResults);
 
 // --- Student Endpoints ---

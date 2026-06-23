@@ -15,14 +15,13 @@ export interface SubjectMarks {
   obtainedMarks: number;
   grade?: string;
   status?: 'Pass' | 'Fail';
-  approvalStatus?: 'pending' | 'approved' | 'rejected';
-  adminRemark?: string;
 }
 
 export interface ResultPayload {
   studentId: string;
   studentName: string;
   rollNumber?: string;
+  department: string;
   courseName?: string;
   semester?: string;
   academicYear?: string;
@@ -43,9 +42,9 @@ export interface ResultResponse extends ResultPayload {
   cgpa: number;
   overallGrade: string;
   overallResult: 'Pass' | 'Fail';
-  status: 'draft' | 'submitted' | 'verification_pending' | 'ready_for_declaration' | 'declared';
-  reviewedBy?: string;
-  reviewedAt?: string;
+  status: 'draft' | 'submitted' | 'verified' | 'declared';
+  verifiedBy?: string;
+  verifiedAt?: string;
   declaredBy?: string;
   declaredAt?: string;
   createdAt: string;
@@ -58,6 +57,16 @@ export interface StudentDropdownItem {
   studentEmail: string;
   rollNumber: string;
   department: string;
+}
+
+export interface DepartmentSummary {
+  department: string;
+  semester: string;
+  academicYear: string;
+  totalStudents: number;
+  submittedCount: number;
+  verifiedCount: number;
+  declaredCount: number;
 }
 
 // Faculty service calls
@@ -124,44 +133,58 @@ export const getResultById = async (id: string): Promise<ResultResponse> => {
 };
 
 // Admin service calls
-export const getPendingResults = async (): Promise<ResultResponse[]> => {
-  const res = await fetch(`${API_URL}/results/pending`, {
+export const getDepartmentSummaries = async (): Promise<DepartmentSummary[]> => {
+  const res = await fetch(`${API_URL}/results/department-summaries`, {
     method: 'GET',
     headers: getHeaders(),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Failed to load pending results.');
+  if (!res.ok) throw new Error(data.message || 'Failed to load department summaries.');
   return data;
 };
 
-export const approveSubject = async (resultId: string, subjectIndex: number): Promise<{ success: boolean; result: ResultResponse }> => {
-  const res = await fetch(`${API_URL}/results/${resultId}/subject/${subjectIndex}/approve`, {
-    method: 'POST',
+export const getDepartmentDetails = async (
+  department: string,
+  semester: string,
+  academicYear: string
+): Promise<ResultResponse[]> => {
+  const params = new URLSearchParams({ department, semester, academicYear });
+  const res = await fetch(`${API_URL}/results/department-details?${params.toString()}`, {
+    method: 'GET',
     headers: getHeaders(),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Failed to approve subject.');
+  if (!res.ok) throw new Error(data.message || 'Failed to fetch department details.');
   return data;
 };
 
-export const rejectSubject = async (resultId: string, subjectIndex: number, remark: string): Promise<{ success: boolean; result: ResultResponse }> => {
-  const res = await fetch(`${API_URL}/results/${resultId}/subject/${subjectIndex}/reject`, {
+export const verifyDepartment = async (payload: {
+  department: string;
+  semester: string;
+  academicYear: string;
+}): Promise<{ success: boolean; message: string; modifiedCount: number }> => {
+  const res = await fetch(`${API_URL}/results/verify-department`, {
     method: 'POST',
     headers: getHeaders(),
-    body: JSON.stringify({ remark }),
+    body: JSON.stringify(payload),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Failed to reject subject.');
+  if (!res.ok) throw new Error(data.message || 'Failed to verify department.');
   return data;
 };
 
-export const declareResult = async (id: string): Promise<{ success: boolean; result: ResultResponse }> => {
-  const res = await fetch(`${API_URL}/results/${id}/declare`, {
+export const declareDepartment = async (payload: {
+  department: string;
+  semester: string;
+  academicYear: string;
+}): Promise<{ success: boolean; message: string; modifiedCount: number }> => {
+  const res = await fetch(`${API_URL}/results/declare-department`, {
     method: 'POST',
     headers: getHeaders(),
+    body: JSON.stringify(payload),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Failed to declare result.');
+  if (!res.ok) throw new Error(data.message || 'Failed to declare department results.');
   return data;
 };
 

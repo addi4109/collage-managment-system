@@ -28,9 +28,7 @@ import SendIcon from '@mui/icons-material/Send';
 import InfoIcon from '@mui/icons-material/Info';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import SchoolIcon from '@mui/icons-material/School';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+
 
 import { getFacultyResults, submitResult, ResultResponse } from '../services/resultService';
 import { useToast } from '../context/ToastContext';
@@ -79,10 +77,8 @@ export const FacultyResults: React.FC = () => {
     switch (status) {
       case 'declared':
         return <Chip label="DECLARED" color="success" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'ready_for_declaration':
-        return <Chip label="READY FOR DECLARATION" color="secondary" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'verification_pending':
-        return <Chip label="VERIFICATION PENDING" color="warning" size="small" sx={{ fontWeight: 'bold' }} />;
+      case 'verified':
+        return <Chip label="VERIFIED" color="secondary" size="small" sx={{ fontWeight: 'bold' }} />;
       case 'submitted':
         return <Chip label="SUBMITTED" color="info" size="small" sx={{ fontWeight: 'bold' }} />;
       case 'draft':
@@ -91,51 +87,12 @@ export const FacultyResults: React.FC = () => {
     }
   };
 
-  const getSubjectStatusChip = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return (
-          <Chip
-            icon={<CheckCircleIcon />}
-            label="Approved"
-            color="success"
-            size="small"
-            variant="outlined"
-            sx={{ fontWeight: 'bold' }}
-          />
-        );
-      case 'rejected':
-        return (
-          <Chip
-            icon={<CancelIcon />}
-            label="Rejected"
-            color="error"
-            size="small"
-            variant="outlined"
-            sx={{ fontWeight: 'bold' }}
-          />
-        );
-      case 'pending':
-      default:
-        return (
-          <Chip
-            icon={<HourglassEmptyIcon />}
-            label="Pending"
-            color="warning"
-            size="small"
-            variant="outlined"
-            sx={{ fontWeight: 'bold' }}
-          />
-        );
-    }
-  };
-
   // Filter tabs
   const tabFilters = [
     { label: 'All Results', filter: () => true },
     { label: 'Drafts', filter: (r: ResultResponse) => r.status === 'draft' },
     { label: 'Submitted', filter: (r: ResultResponse) => r.status === 'submitted' },
-    { label: 'Verification Pending', filter: (r: ResultResponse) => r.status === 'verification_pending' },
+    { label: 'Verified', filter: (r: ResultResponse) => r.status === 'verified' },
     { label: 'Declared', filter: (r: ResultResponse) => r.status === 'declared' },
   ];
 
@@ -195,7 +152,6 @@ export const FacultyResults: React.FC = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {filteredResults.map((result) => {
             const isSubmitting = submitLoading[result._id] || false;
-            const approvedCount = result.subjects.filter((s) => s.approvalStatus === 'approved').length;
 
             return (
               <Accordion
@@ -229,7 +185,7 @@ export const FacultyResults: React.FC = () => {
                         Score: {result.obtainedMarks}/{result.totalMarks} ({result.percentage}%)
                       </Typography>
                       <Typography variant="caption" color="text.secondary" display="block">
-                        Verification: {approvedCount}/{result.subjects.length} Approved
+                        Branch: {result.department || 'N/A'}
                       </Typography>
                     </Grid>
                      <Grid item xs={12} sm={2} sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
@@ -253,8 +209,6 @@ export const FacultyResults: React.FC = () => {
                           <TableCell sx={{ fontWeight: 'bold' }}>Obtained</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Grade</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Verification</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Admin Remarks</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -273,10 +227,6 @@ export const FacultyResults: React.FC = () => {
                                 variant="outlined"
                                 sx={{ height: 20, fontSize: '0.65rem', fontWeight: 'bold' }}
                               />
-                            </TableCell>
-                            <TableCell>{getSubjectStatusChip(sub.approvalStatus || 'pending')}</TableCell>
-                            <TableCell sx={{ color: sub.approvalStatus === 'rejected' ? 'error.light' : 'text.secondary', fontStyle: 'italic' }}>
-                              {sub.adminRemark || '-'}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -324,7 +274,7 @@ export const FacultyResults: React.FC = () => {
 
                   {/* Actions inside accordion */}
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                    {['draft', 'verification_pending', 'submitted'].includes(result.status) && (
+                    {['draft', 'submitted'].includes(result.status) && (
                       <Button
                         variant="outlined"
                         startIcon={<EditIcon />}
@@ -333,7 +283,7 @@ export const FacultyResults: React.FC = () => {
                         Edit / Correct Marks
                       </Button>
                     )}
-                    {['draft', 'verification_pending'].includes(result.status) && (
+                    {['draft'].includes(result.status) && (
                       <Button
                         variant="contained"
                         color="secondary"
