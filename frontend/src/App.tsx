@@ -44,7 +44,8 @@ const ReportForm = React.lazy(() => import('./pages/ReportForm').then(m => ({ de
 const StudentReportView = React.lazy(() => import('./pages/StudentReportView').then(m => ({ default: m.StudentReportView })));
 const InAppChat = React.lazy(() => import('./pages/InAppChat').then(m => ({ default: m.InAppChat })));
 const NoticeBoard = React.lazy(() => import('./pages/NoticeBoard').then(m => ({ default: m.NoticeBoard })));
-const LostFound = React.lazy(() => import('./pages/LostFound').then(m => ({ default: m.LostFound })));
+const LostFoundBoard = React.lazy(() => import('./pages/LostFoundBoard').then(m => ({ default: m.LostFoundBoard })));
+const LostFoundForm = React.lazy(() => import('./pages/LostFoundForm').then(m => ({ default: m.LostFoundForm })));
 
 // Instant micro-loader UI spinner
 const LoadingFallback: React.FC = () => (
@@ -317,11 +318,31 @@ const AppContent: React.FC = () => {
               }
             />
             <Route
-              path="/lost-found"
+              path="/lostfound"
               element={
                 <ProtectedRoute allowedRoles={['student', 'faculty', 'admin']}>
                   <DashboardLayout>
-                    <LostFound />
+                    <LostFoundBoard />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/lostfound/create"
+              element={
+                <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+                  <DashboardLayout>
+                    <LostFoundForm />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/lostfound/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+                  <DashboardLayout>
+                    <LostFoundForm />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

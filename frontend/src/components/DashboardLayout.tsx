@@ -375,10 +375,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </ListItemButton>
         </ListItem>
 
-        {/* Lost & Found (All Roles) */}
+        {/* Lost & Found Board (All Roles) */}
         <ListItem disablePadding>
           <ListItemButton
-            onClick={() => navigate('/lost-found')}
+            onClick={() => navigate('/lostfound')}
             sx={{
               borderRadius: 2,
               mb: 0.5,
@@ -388,7 +388,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             <ListItemIcon sx={{ minWidth: 40 }}>
               <HelpCenterIcon color="error" />
             </ListItemIcon>
-            <ListItemText primary="Lost & Found" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+            <ListItemText primary="Lost & Found Board" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
           </ListItemButton>
         </ListItem>
       </List>
