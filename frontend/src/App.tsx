@@ -39,7 +39,9 @@ const AssignmentsManage = React.lazy(() => import('./pages/AssignmentsManage').t
 const AssignmentsView = React.lazy(() => import('./pages/AssignmentsView').then(m => ({ default: m.AssignmentsView })));
 const AdminCrud = React.lazy(() => import('./pages/AdminCrud').then(m => ({ default: m.AdminCrud })));
 const TimetableGenerator = React.lazy(() => import('./pages/TimetableGenerator').then(m => ({ default: m.TimetableGenerator })));
-const ReportGenerator = React.lazy(() => import('./pages/ReportGenerator').then(m => ({ default: m.ReportGenerator })));
+const FacultyReportDashboard = React.lazy(() => import('./pages/FacultyReportDashboard').then(m => ({ default: m.FacultyReportDashboard })));
+const ReportForm = React.lazy(() => import('./pages/ReportForm').then(m => ({ default: m.ReportForm })));
+const StudentReportView = React.lazy(() => import('./pages/StudentReportView').then(m => ({ default: m.StudentReportView })));
 const InAppChat = React.lazy(() => import('./pages/InAppChat').then(m => ({ default: m.InAppChat })));
 const NoticeBoard = React.lazy(() => import('./pages/NoticeBoard').then(m => ({ default: m.NoticeBoard })));
 const LostFound = React.lazy(() => import('./pages/LostFound').then(m => ({ default: m.LostFound })));
@@ -253,11 +255,41 @@ const AppContent: React.FC = () => {
               }
             />
             <Route
-              path="/reports"
+              path="/reports/view"
               element={
-                <ProtectedRoute allowedRoles={['student', 'faculty', 'admin']}>
+                <ProtectedRoute allowedRoles={['student']}>
                   <DashboardLayout>
-                    <ReportGenerator />
+                    <StudentReportView />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports/manage"
+              element={
+                <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+                  <DashboardLayout>
+                    <FacultyReportDashboard />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports/create"
+              element={
+                <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+                  <DashboardLayout>
+                    <ReportForm />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+                  <DashboardLayout>
+                    <ReportForm />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

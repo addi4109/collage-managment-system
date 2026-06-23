@@ -161,7 +161,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             </ListItem>
             <ListItem disablePadding>
               <ListItemButton
-                onClick={() => navigate('/reports')}
+                onClick={() => navigate('/reports/view')}
                 sx={{
                   borderRadius: 2,
                   mb: 0.5,
@@ -227,7 +227,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             </ListItem>
             <ListItem disablePadding>
               <ListItemButton
-                onClick={() => navigate('/reports')}
+                onClick={() => navigate('/reports/manage')}
                 sx={{
                   borderRadius: 2,
                   mb: 0.5,
@@ -237,7 +237,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <ListItemIcon sx={{ minWidth: 40 }}>
                   <AssessmentIcon color="info" />
                 </ListItemIcon>
-                <ListItemText primary="Generate Reports" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+                <ListItemText primary="Manage Reports" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
           </>
@@ -308,7 +308,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             </ListItem>
             <ListItem disablePadding>
               <ListItemButton
-                onClick={() => navigate('/reports')}
+                onClick={() => navigate('/reports/manage')}
                 sx={{
                   borderRadius: 2,
                   mb: 0.5,
@@ -318,7 +318,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <ListItemIcon sx={{ minWidth: 40 }}>
                   <AssessmentIcon color="info" />
                 </ListItemIcon>
-                <ListItemText primary="Generate Reports" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+                <ListItemText primary="Manage Reports" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
           </>
