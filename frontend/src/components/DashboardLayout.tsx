@@ -197,6 +197,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             </ListItem>
             <ListItem disablePadding>
               <ListItemButton
+                onClick={() => navigate('/attendance/mark')}
+                sx={{
+                  borderRadius: 2,
+                  mb: 0.5,
+                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <CalendarTodayIcon color="success" />
+                </ListItemIcon>
+                <ListItemText primary="Mark Attendance" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
                 onClick={() => navigate('/assignments/manage')}
                 sx={{
                   borderRadius: 2,

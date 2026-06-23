@@ -6,10 +6,6 @@ import {
   Typography,
   Grid,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Button,
   CircularProgress,
   Alert,
@@ -24,23 +20,15 @@ import {
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
-import GradeIcon from '@mui/icons-material/Grade';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 
 import { useAuthStore } from '../store/authStore';
-import {
-  getFacultyCourses,
-  getFacultyAssignments,
-  createAssignment,
-  getAssignmentSubmissions,
-  gradeSubmission,
-} from '../firebase/dbService';
-import { Course } from '../types';
-import { formatDate } from '../utils/format';
+import { createAssignment, getAssignments } from '../services/assignmentService';
+import { useToast } from '../context/ToastContext';
 
 export const AssignmentsManage: React.FC = () => {
   const { user } = useAuthStore();
-  const [courses, setCourses] = useState<Course[]>([]);
+  const toast = useToast();
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -48,16 +36,9 @@ export const AssignmentsManage: React.FC = () => {
   // Create Form States
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [courseName, setCourseName] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
-  
-  // Grader States
-  const [selectedAssignment, setSelectedAssignment] = useState<any | null>(null);
-  const [submissions, setSubmissions] = useState<any[]>([]);
-  const [submissionsLoading, setSubmissionsLoading] = useState(false);
-  const [gradeInputs, setGradeInputs] = useState<Record<string, string>>({});
-  const [feedbackInputs, setFeedbackInputs] = useState<Record<string, string>>({});
   
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -65,18 +46,19 @@ export const AssignmentsManage: React.FC = () => {
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
+    setErrorMsg(null);
     try {
-      const [coursesList, assignmentsList] = await Promise.all([
-        getFacultyCourses(user.uid),
-        getFacultyAssignments(user.uid),
-      ]);
-      setCourses(coursesList);
-      setAssignments(assignmentsList);
-      if (coursesList.length > 0) {
-        setSelectedCourseId(coursesList[0].id);
-      }
-    } catch (err) {
+      const assignmentsList = await getAssignments();
+      // Filter assignments created by the current faculty
+      const facultyId = user.uid;
+      const filtered = assignmentsList.filter((asg: any) => {
+        const facId = asg.faculty?._id || asg.faculty;
+        return facId === facultyId;
+      });
+      setAssignments(filtered);
+    } catch (err: any) {
       console.error(err);
+      setErrorMsg(err.message || 'Failed to load assignments.');
     } finally {
       setLoading(false);
     }
@@ -86,36 +68,10 @@ export const AssignmentsManage: React.FC = () => {
     loadData();
   }, [user]);
 
-  // Load submissions for selected assignment
-  const handleViewSubmissions = async (assignment: any) => {
-    setSelectedAssignment(assignment);
-    setSubmissionsLoading(true);
-    setErrorMsg(null);
-    setSuccessMsg(null);
-    try {
-      const list = await getAssignmentSubmissions(assignment.id);
-      setSubmissions(list);
-      
-      // Initialize inputs with current values
-      const initialGrades: Record<string, string> = {};
-      const initialFeedbacks: Record<string, string> = {};
-      list.forEach((s) => {
-        initialGrades[s.id] = s.grade || 'A';
-        initialFeedbacks[s.id] = s.feedbackComments || '';
-      });
-      setGradeInputs(initialGrades);
-      setFeedbackInputs(initialFeedbacks);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSubmissionsLoading(false);
-    }
-  };
-
   // Handle Post Assignment
   const handlePostAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !description || !selectedCourseId || !dueDate || !user) {
+    if (!title || !description || !courseName || !dueDate || !user) {
       setErrorMsg('Please complete all assignment fields.');
       return;
     }
@@ -125,17 +81,26 @@ export const AssignmentsManage: React.FC = () => {
     setSuccessMsg(null);
 
     try {
-      await createAssignment(
-        {
-          title,
-          description,
-          courseId: selectedCourseId,
-          dueDate,
-          facultyId: user.uid,
-        },
-        attachedFile || undefined
-      );
+      let attachmentBase64 = '';
+      if (attachedFile) {
+        attachmentBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(attachedFile);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = (error) => reject(error);
+        });
+      }
 
+      await createAssignment({
+        title,
+        description,
+        courseName,
+        dueDate,
+        attachment: attachmentBase64 || undefined,
+        attachmentName: attachedFile ? attachedFile.name : undefined,
+      });
+
+      toast.success('Assignment posted successfully.');
       setSuccessMsg('Assignment posted successfully to course resources.');
       
       // Trigger local mock notification
@@ -157,41 +122,37 @@ export const AssignmentsManage: React.FC = () => {
 
       setTitle('');
       setDescription('');
+      setCourseName('');
+      setDueDate('');
       setAttachedFile(null);
       
       // Reload assignments list
-      const list = await getFacultyAssignments(user.uid);
-      setAssignments(list);
+      const list = await getAssignments();
+      const facultyId = user.uid;
+      const filtered = list.filter((asg: any) => {
+        const facId = asg.faculty?._id || asg.faculty;
+        return facId === facultyId;
+      });
+      setAssignments(filtered);
     } catch (err: any) {
       console.error(err);
       setErrorMsg(err.message || 'Failed to publish assignment.');
+      toast.error('Failed to publish assignment.');
     } finally {
       setActionLoading(false);
     }
   };
 
-  // Handle Submit Grade
-  const handleSubmitGrade = async (submissionId: string) => {
-    if (!user || !selectedAssignment) return;
-    const grade = gradeInputs[submissionId];
-    const feedback = feedbackInputs[submissionId];
-
-    setActionLoading(true);
-    setErrorMsg(null);
-    setSuccessMsg(null);
-
+  // Decode and download Base64 attachment
+  const downloadAttachment = (base64Data: string, fileName: string) => {
     try {
-      await gradeSubmission(submissionId, grade, feedback, user.uid);
-      setSuccessMsg('Student submission graded successfully.');
-      
-      // Refresh submissions
-      const list = await getAssignmentSubmissions(selectedAssignment.id);
-      setSubmissions(list);
-    } catch (err: any) {
-      console.error(err);
-      setErrorMsg(err.message || 'Failed to submit grade.');
-    } finally {
-      setActionLoading(false);
+      const link = document.createElement('a');
+      link.href = base64Data;
+      link.download = fileName || 'attachment';
+      link.click();
+    } catch (err) {
+      console.error('Download failed:', err);
+      toast.error('Unable to download attachment.');
     }
   };
 
@@ -210,7 +171,7 @@ export const AssignmentsManage: React.FC = () => {
           Manage Assignments & Notes
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Upload course resources, post assignments, and grade student submissions.
+          Upload course resources, post assignments, and manage class tasks.
         </Typography>
       </Box>
 
@@ -239,104 +200,93 @@ export const AssignmentsManage: React.FC = () => {
               </Box>
               <Divider sx={{ mb: 3, opacity: 0.08 }} />
 
-              {courses.length === 0 ? (
-                <Alert severity="info" sx={{ borderRadius: 2 }}>
-                  Assign courses to your profile before creating assignments.
-                </Alert>
-              ) : (
-                <form onSubmit={handlePostAssignment}>
-                  <FormControl fullWidth sx={{ mb: 2.5 }}>
-                    <InputLabel id="course-select-label">Select Course</InputLabel>
-                    <Select
-                      labelId="course-select-label"
-                      value={selectedCourseId}
-                      label="Select Course"
-                      onChange={(e) => setSelectedCourseId(e.target.value)}
-                    >
-                      {courses.map((c) => (
-                        <MenuItem key={c.id} value={c.id}>
-                          {c.name} ({c.code})
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+              <form onSubmit={handlePostAssignment}>
+                <TextField
+                  fullWidth
+                  label="Subject / Course Name"
+                  variant="outlined"
+                  value={courseName}
+                  onChange={(e) => setCourseName(e.target.value)}
+                  placeholder="e.g. CS101 - Computer Science"
+                  sx={{ mb: 2.5 }}
+                  required
+                />
 
-                  <TextField
-                    fullWidth
-                    label="Assignment Title"
-                    variant="outlined"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    sx={{ mb: 2.5 }}
-                    required
-                  />
+                <TextField
+                  fullWidth
+                  label="Assignment Title"
+                  variant="outlined"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  sx={{ mb: 2.5 }}
+                  required
+                />
 
-                  <TextField
-                    fullWidth
-                    label="Description & Instructions"
-                    multiline
-                    rows={4}
-                    variant="outlined"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    sx={{ mb: 2.5 }}
-                    required
-                  />
+                <TextField
+                  fullWidth
+                  label="Description & Instructions"
+                  multiline
+                  rows={4}
+                  variant="outlined"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  sx={{ mb: 2.5 }}
+                  required
+                />
 
-                  <TextField
-                    fullWidth
-                    label="Due Date"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    variant="outlined"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    sx={{ mb: 2.5 }}
-                    required
-                  />
+                <TextField
+                  fullWidth
+                  label="Due Date"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  variant="outlined"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  sx={{ mb: 2.5 }}
+                  required
+                />
 
-                  <Box sx={{ mb: 3 }}>
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      fullWidth
-                      startIcon={<AttachFileIcon />}
-                      sx={{
-                        height: 48,
-                        borderStyle: 'dashed',
-                        borderColor: attachedFile ? 'secondary.main' : 'rgba(255,255,255,0.15)',
-                        '&:hover': {
-                          borderColor: 'secondary.light',
-                          backgroundColor: 'rgba(6, 182, 212, 0.04)',
-                        },
-                      }}
-                    >
-                      {attachedFile ? `Attached: ${attachedFile.name}` : 'Attach Resource (PDF / Video)'}
-                      <input
-                        type="file"
-                        hidden
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files.length > 0) {
-                            setAttachedFile(e.target.files[0]);
-                          }
-                        }}
-                      />
-                    </Button>
-                  </Box>
-
+                <Box sx={{ mb: 3 }}>
                   <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
+                    variant="outlined"
+                    component="label"
                     fullWidth
-                    disabled={actionLoading}
-                    startIcon={actionLoading ? <CircularProgress size={20} color="inherit" /> : <CloudUploadIcon />}
-                    sx={{ height: 48 }}
+                    startIcon={<AttachFileIcon />}
+                    sx={{
+                      height: 48,
+                      borderStyle: 'dashed',
+                      borderColor: attachedFile ? 'secondary.main' : 'rgba(255,255,255,0.15)',
+                      '&:hover': {
+                        borderColor: 'secondary.light',
+                        backgroundColor: 'rgba(6, 182, 212, 0.04)',
+                      },
+                    }}
                   >
-                    {actionLoading ? 'Uploading & Publishing...' : 'Post Assignment'}
+                    {attachedFile ? `Attached: ${attachedFile.name}` : 'Attach Resource (PDF / Video / Doc)'}
+                    <input
+                      type="file"
+                      hidden
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          setAttachedFile(e.target.files[0]);
+                        }
+                      }}
+                    />
                   </Button>
-                </form>
-              )}
+                </Box>
+
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  disabled={actionLoading}
+                  startIcon={actionLoading ? <CircularProgress size={20} color="inherit" /> : <CloudUploadIcon />}
+                  sx={{ height: 48 }}
+                >
+                  {actionLoading ? 'Uploading & Publishing...' : 'Post Assignment'}
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </Grid>
@@ -358,7 +308,7 @@ export const AssignmentsManage: React.FC = () => {
                   No assignments created yet.
                 </Typography>
               ) : (
-                <TableContainer component={Box} sx={{ maxHeight: 350 }}>
+                <TableContainer component={Box} sx={{ maxHeight: 500 }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
@@ -370,11 +320,11 @@ export const AssignmentsManage: React.FC = () => {
                     </TableHead>
                     <TableBody>
                       {assignments.map((asg) => (
-                        <TableRow key={asg.id} hover>
-                          <TableCell sx={{ fontWeight: 600 }}>{asg.courseCode}</TableCell>
+                        <TableRow key={asg._id || asg.id} hover>
+                          <TableCell sx={{ fontWeight: 600 }}>{asg.courseName}</TableCell>
                           <TableCell sx={{ color: 'text.primary', fontWeight: 500 }}>
                             {asg.title}
-                            {asg.fileUrl && (
+                            {asg.attachment && (
                               <Chip
                                 size="small"
                                 label="Attached File"
@@ -384,16 +334,23 @@ export const AssignmentsManage: React.FC = () => {
                               />
                             )}
                           </TableCell>
-                          <TableCell>{asg.dueDate}</TableCell>
+                          <TableCell>{new Date(asg.dueDate).toLocaleDateString()}</TableCell>
                           <TableCell align="right">
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="secondary"
-                              onClick={() => handleViewSubmissions(asg)}
-                            >
-                              Grade
-                            </Button>
+                            {asg.attachment ? (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="secondary"
+                                startIcon={<AttachFileIcon />}
+                                onClick={() => downloadAttachment(asg.attachment, asg.attachmentName)}
+                              >
+                                Download
+                              </Button>
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">
+                                No Attachment
+                              </Typography>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -403,128 +360,10 @@ export const AssignmentsManage: React.FC = () => {
               )}
             </CardContent>
           </Card>
-
-          {/* Submissions Grading Panel */}
-          {selectedAssignment && (
-            <Card className="animate-fade-in">
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <GradeIcon color="warning" />
-                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                    Grading: {selectedAssignment.title} ({selectedAssignment.courseCode})
-                  </Typography>
-                </Box>
-                <Divider sx={{ mb: 2, opacity: 0.08 }} />
-
-                {submissionsLoading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                    <CircularProgress size={30} />
-                  </Box>
-                ) : submissions.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
-                    No students have submitted homework for this assignment yet.
-                  </Typography>
-                ) : (
-                  <Box>
-                    {submissions.map((sub, idx) => (
-                      <Box key={sub.id} sx={{ mb: 3 }}>
-                        <Grid container spacing={2} alignItems="center">
-                          <Grid item xs={12} md={4}>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {sub.studentName}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                              {sub.studentEmail}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                              Submitted: {formatDate(sub.submittedAt)}
-                            </Typography>
-                            
-                            <Box sx={{ mt: 1 }}>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="info"
-                                href={sub.fileUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                startIcon={<AttachFileIcon />}
-                              >
-                                View File
-                              </Button>
-                            </Box>
-                          </Grid>
-
-                          {/* Grade select input */}
-                          <Grid item xs={12} sm={4} md={2}>
-                            <FormControl fullWidth size="small">
-                              <InputLabel>Grade</InputLabel>
-                              <Select
-                                value={gradeInputs[sub.id] || 'A'}
-                                label="Grade"
-                                onChange={(e) =>
-                                  setGradeInputs({ ...gradeInputs, [sub.id]: e.target.value })
-                                }
-                              >
-                                <MenuItem value="A+">A+</MenuItem>
-                                <MenuItem value="A">A</MenuItem>
-                                <MenuItem value="B">B</MenuItem>
-                                <MenuItem value="C">C</MenuItem>
-                                <MenuItem value="D">D</MenuItem>
-                                <MenuItem value="F">F</MenuItem>
-                              </Select>
-                            </FormControl>
-                          </Grid>
-
-                          {/* Feedback text input */}
-                          <Grid item xs={12} sm={6} md={4}>
-                            <TextField
-                              fullWidth
-                              size="small"
-                              label="Feedback Comments"
-                              variant="outlined"
-                              value={feedbackInputs[sub.id] || ''}
-                              onChange={(e) =>
-                                setFeedbackInputs({ ...feedbackInputs, [sub.id]: e.target.value })
-                              }
-                            />
-                          </Grid>
-
-                          {/* Submit Grade button */}
-                          <Grid item xs={12} sm={2} md={2} sx={{ textAlign: 'right' }}>
-                            <Button
-                              variant="contained"
-                              color="primary"
-                              size="small"
-                              disabled={actionLoading}
-                              onClick={() => handleSubmitGrade(sub.id)}
-                            >
-                              Grade
-                            </Button>
-                          </Grid>
-                        </Grid>
-                        
-                        {sub.grade && (
-                          <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Chip size="small" label={`Graded: ${sub.grade}`} color="success" />
-                            {sub.feedbackComments && (
-                              <Typography variant="caption" color="text.secondary">
-                                "{sub.feedbackComments}"
-                              </Typography>
-                            )}
-                          </Box>
-                        )}
-                        {idx < submissions.length - 1 && <Divider sx={{ mt: 2, opacity: 0.05 }} />}
-                      </Box>
-                    ))}
-                  </Box>
-                )}
-              </CardContent>
-            </Card>
-          )}
         </Grid>
       </Grid>
     </Box>
   );
 };
+
 export default AssignmentsManage;

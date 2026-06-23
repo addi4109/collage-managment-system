@@ -17,30 +17,20 @@ import {
   Paper,
   IconButton,
 } from '@mui/material';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
 import DownloadIcon from '@mui/icons-material/Download';
-import AssignmentLateIcon from '@mui/icons-material/AssignmentLate';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloseIcon from '@mui/icons-material/Close';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 
 import { useAuthStore } from '../store/authStore';
-import { getStudentAssignments, submitAssignment } from '../firebase/dbService';
-import { isPlaceholder } from '../firebase/config';
+import { getAssignments } from '../services/assignmentService';
+import { useToast } from '../context/ToastContext';
 
 export const AssignmentsView: React.FC = () => {
   const { user } = useAuthStore();
+  const toast = useToast();
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
-  // Dialog States
-  const [openSubmitDialog, setOpenSubmitDialog] = useState(false);
-  const [selectedAsg, setSelectedAsg] = useState<any | null>(null);
-  const [attachedFile, setAttachedFile] = useState<File | null>(null);
 
   // AI Notes Summarizer States
   const [openSummaryDialog, setOpenSummaryDialog] = useState(false);
@@ -52,11 +42,13 @@ export const AssignmentsView: React.FC = () => {
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
+    setErrorMsg(null);
     try {
-      const list = await getStudentAssignments(user.uid);
+      const list = await getAssignments();
       setAssignments(list);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching assignments:', err);
+      setErrorMsg(err.message || 'Failed to fetch assignments.');
     } finally {
       setLoading(false);
     }
@@ -66,40 +58,6 @@ export const AssignmentsView: React.FC = () => {
     loadData();
   }, [user]);
 
-  const handleOpenSubmit = (asg: any) => {
-    setSelectedAsg(asg);
-    setAttachedFile(null);
-    setOpenSubmitDialog(true);
-  };
-
-  const handleCloseSubmit = () => {
-    setOpenSubmitDialog(false);
-    setSelectedAsg(null);
-    setAttachedFile(null);
-  };
-
-  const handleSubmitFile = async () => {
-    if (!user || !selectedAsg || !attachedFile) return;
-    setActionLoading(true);
-    setErrorMsg(null);
-    setSuccessMsg(null);
-
-    try {
-      await submitAssignment(selectedAsg.id, user.uid, attachedFile);
-      setSuccessMsg(`Homework successfully uploaded for: ${selectedAsg.title}.`);
-      handleCloseSubmit();
-      
-      // Reload lists
-      const list = await getStudentAssignments(user.uid);
-      setAssignments(list);
-    } catch (err: any) {
-      console.error(err);
-      setErrorMsg(err.message || 'Failed to submit file.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   const handleSummarize = async (asg: any) => {
     setSummaryAsg(asg);
     setSummaryText('');
@@ -108,98 +66,40 @@ export const AssignmentsView: React.FC = () => {
     setSummarizing(true);
 
     try {
-      if (isPlaceholder) {
-        // Local Sandbox simulation
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        
-        // Generate simple mock summary tailored to course/assignment
-        setSummaryText(`### 📚 Lecture Summary: ${asg.title}
+      // Simulate local summary analysis
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      setSummaryText(`### 📚 Lecture Summary: ${asg.title}
 
-Here is a summary of the uploaded study material for **${asg.courseCode}**:
+Here is a summary of the uploaded study material for **${asg.courseName}**:
 
 - **Key Objective**: Understand the core design principles and execution rules of the ${asg.title} model.
 - **Section 1 - Foundations**: Focuses on core specifications, architectural layers, and performance considerations.
 - **Section 2 - Implementation**: Outlines how variables are managed and how schemas are verified dynamically.
 - **Section 3 - Critical Insights**:
-  - Double check conflict flags when editing data files.
-  - Review how the circular widgets display information.
+  - Review all relevant formulas and instructions in detail.
+  - Complete the required tasks before the due date.
   
-*Note: In local sandbox mode, summaries are simulated locally. Add your GEMINI_API_KEY in backend functions to process actual PDF files!*`);
-      } else {
-        // Trigger live cloud function
-        const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || 'edutech-hub-placeholder';
-        const isLocalHost = window.location.hostname === 'localhost';
-        const url = isLocalHost
-          ? `http://localhost:5001/${projectId}/us-central1/aiSummarizer`
-          : `https://us-central1-${projectId}.cloudfunctions.net/aiSummarizer`;
-
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ fileUrl: asg.fileUrl }),
-        });
-
-        if (!response.ok) {
-          throw new Error('API server returned error status');
-        }
-
-        const data = await response.json();
-        if (data.error) {
-          throw new Error(data.error);
-        }
-        setSummaryText(data.summary || 'Empty summary received.');
-      }
+*Note: In local sandbox mode, summaries are simulated locally using mock models.*`);
     } catch (err: any) {
       console.error(err);
-      setSummaryError(err.message || 'Failed to fetch note summary. Verify cloud services are online.');
+      setSummaryError(err.message || 'Failed to fetch note summary.');
     } finally {
       setSummarizing(false);
     }
   };
 
-  // Determine status chip
-  const getStatusChip = (asg: any) => {
-    const isSubmitted = !!asg.submission;
-    const isGraded = isSubmitted && !!asg.submission.grade;
-    const isOverdue = new Date(asg.dueDate) < new Date();
-
-    if (isGraded) {
-      return (
-        <Chip
-          label={`Graded: ${asg.submission.grade}`}
-          color="success"
-          sx={{ fontWeight: 'bold' }}
-        />
-      );
+  // Decode and download Base64 attachment
+  const downloadAttachment = (base64Data: string, fileName: string) => {
+    try {
+      const link = document.createElement('a');
+      link.href = base64Data;
+      link.download = fileName || 'attachment';
+      link.click();
+    } catch (err) {
+      console.error('Download failed:', err);
+      toast.error('Unable to download attachment.');
     }
-    if (isSubmitted) {
-      return (
-        <Chip
-          label="Submitted"
-          color="info"
-          sx={{ fontWeight: 'bold' }}
-        />
-      );
-    }
-    if (isOverdue) {
-      return (
-        <Chip
-          icon={<AssignmentLateIcon />}
-          label="Overdue"
-          color="error"
-          sx={{ fontWeight: 'bold' }}
-        />
-      );
-    }
-    return (
-      <Chip
-        label="Pending Submit"
-        color="warning"
-        sx={{ fontWeight: 'bold' }}
-      />
-    );
   };
 
   if (loading) {
@@ -217,15 +117,9 @@ Here is a summary of the uploaded study material for **${asg.courseCode}**:
           My Assignments & Resources
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Review assignments, download course readings, and submit your work files.
+          Review assignments, download course readings, and study your course materials.
         </Typography>
       </Box>
-
-      {successMsg && (
-        <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setSuccessMsg(null)}>
-          {successMsg}
-        </Alert>
-      )}
 
       {errorMsg && (
         <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setErrorMsg(null)}>
@@ -244,19 +138,17 @@ Here is a summary of the uploaded study material for **${asg.courseCode}**:
       ) : (
         <Grid container spacing={3}>
           {assignments.map((asg) => {
-            const hasFile = !!asg.fileUrl;
-            const isSubmitted = !!asg.submission;
-            const isGraded = isSubmitted && !!asg.submission.grade;
+            const hasFile = !!asg.attachment;
 
             return (
-              <Grid item xs={12} key={asg.id}>
+              <Grid item xs={12} key={asg._id || asg.id}>
                 <Card>
                   <CardContent sx={{ p: 3 }}>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 1.5 }}>
                       <Box>
                         <Chip
                           size="small"
-                          label={`${asg.courseCode} - ${asg.courseName}`}
+                          label={asg.courseName}
                           color="primary"
                           sx={{ mb: 1, fontWeight: 'bold' }}
                         />
@@ -265,10 +157,14 @@ Here is a summary of the uploaded study material for **${asg.courseCode}**:
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: { xs: 'flex-start', sm: 'flex-end' }, gap: 1 }}>
-                        {getStatusChip(asg)}
                         <Typography variant="caption" color="text.secondary">
-                          Due Date: <strong>{asg.dueDate}</strong>
+                          Due Date: <strong>{new Date(asg.dueDate).toLocaleDateString()}</strong>
                         </Typography>
+                        {asg.faculty && (
+                          <Typography variant="caption" color="text.secondary">
+                            Posted by: <strong>{asg.faculty.name || 'Professor'}</strong>
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
                     <Divider sx={{ mb: 2, opacity: 0.08 }} />
@@ -284,9 +180,7 @@ Here is a summary of the uploaded study material for **${asg.courseCode}**:
                           <Button
                             variant="outlined"
                             color="secondary"
-                            href={asg.fileUrl}
-                            target="_blank"
-                            rel="noreferrer"
+                            onClick={() => downloadAttachment(asg.attachment, asg.attachmentName)}
                             startIcon={<DownloadIcon />}
                           >
                             Download Resource
@@ -309,38 +203,7 @@ Here is a summary of the uploaded study material for **${asg.courseCode}**:
                           </Button>
                         </>
                       )}
-
-                      {/* Submit Homework Button */}
-                      {!isGraded && (
-                        <Button
-                          variant="contained"
-                          color={isSubmitted ? 'inherit' : 'primary'}
-                          onClick={() => handleOpenSubmit(asg)}
-                          startIcon={<CloudUploadIcon />}
-                          sx={{
-                            backgroundColor: isSubmitted ? 'rgba(255, 255, 255, 0.05)' : 'primary.main',
-                            color: isSubmitted ? 'text.secondary' : 'primary.contrastText',
-                          }}
-                        >
-                          {isSubmitted ? 'Resubmit Homework' : 'Submit Assignment'}
-                        </Button>
-                      )}
                     </Box>
-
-                    {/* Grader Feedback Details */}
-                    {isGraded && (
-                      <Box sx={{ mt: 3, p: 2, borderRadius: 2, backgroundColor: 'rgba(16, 185, 129, 0.04)', border: '1px solid rgba(16, 185, 129, 0.12)' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'success.light', mb: 1 }}>
-                          <CheckCircleIcon fontSize="small" />
-                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                            Graded Assignment Summary (Score: {asg.submission.grade})
-                          </Typography>
-                        </Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                          Feedback Comments: "{asg.feedback || 'Excellent work! Keep it up.'}"
-                        </Typography>
-                      </Box>
-                    )}
                   </CardContent>
                 </Card>
               </Grid>
@@ -348,60 +211,6 @@ Here is a summary of the uploaded study material for **${asg.courseCode}**:
           })}
         </Grid>
       )}
-
-      {/* Upload Submission Dialog */}
-      <Dialog open={openSubmitDialog} onClose={handleCloseSubmit} fullWidth maxWidth="xs" PaperProps={{ sx: { bgcolor: '#111827' } }}>
-        <DialogTitle sx={{ fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          Submit Assignment
-        </DialogTitle>
-        <DialogContent sx={{ p: 3, mt: 1 }}>
-          <Typography variant="body2" sx={{ mb: 3 }}>
-            Upload your homework solution file (PDF, docx, or zip format) for:{' '}
-            <strong>{selectedAsg?.title}</strong>.
-          </Typography>
-
-          <Button
-            variant="outlined"
-            component="label"
-            fullWidth
-            startIcon={<AttachFileIcon />}
-            sx={{
-              height: 56,
-              borderStyle: 'dashed',
-              borderColor: attachedFile ? 'secondary.main' : 'rgba(255,255,255,0.15)',
-              '&:hover': {
-                borderColor: 'secondary.light',
-                backgroundColor: 'rgba(6, 182, 212, 0.04)',
-              },
-            }}
-          >
-            {attachedFile ? attachedFile.name : 'Select File to Upload'}
-            <input
-              type="file"
-              hidden
-              onChange={(e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                  setAttachedFile(e.target.files[0]);
-                }
-              }}
-            />
-          </Button>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <Button onClick={handleCloseSubmit} color="inherit" disabled={actionLoading}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmitFile}
-            variant="contained"
-            color="primary"
-            disabled={actionLoading || !attachedFile}
-            startIcon={actionLoading ? <CircularProgress size={16} color="inherit" /> : <CloudUploadIcon />}
-          >
-            Submit Homework
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* AI Summary Dialog */}
       <Dialog
@@ -435,7 +244,7 @@ Here is a summary of the uploaded study material for **${asg.courseCode}**:
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 6, gap: 2 }}>
               <CircularProgress color="secondary" />
               <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                Analyzing PDF document and extracting notes...
+                Analyzing document and extracting notes...
               </Typography>
             </Box>
           ) : summaryError ? (
@@ -487,4 +296,5 @@ Here is a summary of the uploaded study material for **${asg.courseCode}**:
     </Box>
   );
 };
+
 export default AssignmentsView;

@@ -32,6 +32,7 @@ const AdminDashboard = React.lazy(() => import('./pages/Dashboards').then(m => (
 const QrGenerate = React.lazy(() => import('./pages/QrGenerate').then(m => ({ default: m.QrGenerate })));
 const QrScan = React.lazy(() => import('./pages/QrScan').then(m => ({ default: m.QrScan })));
 const AttendanceAnalytics = React.lazy(() => import('./pages/AttendanceAnalytics').then(m => ({ default: m.AttendanceAnalytics })));
+const MarkAttendance = React.lazy(() => import('./pages/MarkAttendance').then(m => ({ default: m.MarkAttendance })));
 const AssignmentsManage = React.lazy(() => import('./pages/AssignmentsManage').then(m => ({ default: m.AssignmentsManage })));
 const AssignmentsView = React.lazy(() => import('./pages/AssignmentsView').then(m => ({ default: m.AssignmentsView })));
 const AdminCrud = React.lazy(() => import('./pages/AdminCrud').then(m => ({ default: m.AdminCrud })));
@@ -171,6 +172,16 @@ const AppContent: React.FC = () => {
                 <ProtectedRoute allowedRoles={['student', 'faculty', 'admin']}>
                   <DashboardLayout>
                     <AttendanceAnalytics />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/attendance/mark"
+              element={
+                <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+                  <DashboardLayout>
+                    <MarkAttendance />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

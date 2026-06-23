@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Typography,
   Grid,
@@ -32,6 +33,8 @@ import ClassIcon from '@mui/icons-material/Class';
 import SchoolIcon from '@mui/icons-material/School';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import PaymentIcon from '@mui/icons-material/Payment';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import { getAssignments } from '../services/assignmentService';
 
 import {
   ResponsiveContainer,
@@ -114,22 +117,25 @@ export const StudentDashboard: React.FC = () => {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [attendance, setAttendance] = useState<AttendanceStats[]>([]);
   const [fees, setFees] = useState<FeeRecord[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [ttData, noticeData, attData, feeData] = await Promise.all([
+      const [ttData, noticeData, attData, feeData, assignmentsData] = await Promise.all([
         getTimetable(user.uid, 'student'),
         getNotices('student'),
         getStudentAttendanceStats(user.uid),
         getStudentFeeRecords(user.uid),
+        getAssignments().catch(() => []),
       ]);
       setTimetable(ttData);
       setNotices(noticeData);
       setAttendance(attData);
       setFees(feeData);
+      setAssignments(assignmentsData);
     } catch (err) {
       console.error(err);
     } finally {
@@ -257,6 +263,72 @@ export const StudentDashboard: React.FC = () => {
                             <Chip size="small" label={`Expires: ${formatDate(n.expiresAt)}`} variant="outlined" />
                           </Box>
                           {idx < notices.length - 1 && <Divider sx={{ my: 1, opacity: 0.05 }} />}
+                        </React.Fragment>
+                      ))}
+                    </List>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Assignments Widget */}
+            <Grid item xs={12}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <AssignmentIcon color="primary" />
+                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                      Assignments Roster
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ mb: 2, opacity: 0.08 }} />
+                  {assignments.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                      No assignments posted.
+                    </Typography>
+                  ) : (
+                    <List disablePadding>
+                      {assignments.map((assignment, idx) => (
+                        <React.Fragment key={assignment._id || assignment.id}>
+                          <Box sx={{ py: 1.5 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                                {assignment.title}
+                              </Typography>
+                              <Chip
+                                size="small"
+                                label={assignment.courseName}
+                                color="primary"
+                                variant="outlined"
+                                sx={{ fontWeight: 'bold' }}
+                              />
+                            </Box>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                              {assignment.description}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Typography variant="caption" color="error.light" sx={{ fontWeight: 'bold' }}>
+                                Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                              </Typography>
+                              {assignment.attachment && (
+                                <Button
+                                  size="small"
+                                  variant="text"
+                                  startIcon={<AttachFileIcon />}
+                                  onClick={() => {
+                                    const link = document.createElement('a');
+                                    link.href = assignment.attachment;
+                                    link.download = assignment.attachmentName || 'attachment';
+                                    link.click();
+                                  }}
+                                  sx={{ fontSize: '0.75rem', p: 0 }}
+                                >
+                                  Download File
+                                </Button>
+                              )}
+                            </Box>
+                          </Box>
+                          {idx < assignments.length - 1 && <Divider sx={{ my: 1, opacity: 0.05 }} />}
                         </React.Fragment>
                       ))}
                     </List>
@@ -393,6 +465,7 @@ export const StudentDashboard: React.FC = () => {
 // FACULTY DASHBOARD
 // ============================================================================
 export const FacultyDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const [schedule, setSchedule] = useState<(TimetableEntry & { courseName: string; courseCode: string })[]>([]);
   const [pendingLeaves, setPendingLeaves] = useState<LeaveRequest[]>([]);
@@ -465,13 +538,37 @@ export const FacultyDashboard: React.FC = () => {
 
   return (
     <Box sx={{ mt: 2 }} className="animate-fade-in">
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" className="gradient-text" sx={{ fontWeight: 800 }}>
-          {getGreeting()}, Professor {user?.name}
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Manage your timetables, approvals, and course resources.
-        </Typography>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" className="gradient-text" sx={{ fontWeight: 800 }}>
+            {getGreeting()}, Professor {user?.name}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Manage your timetables, approvals, and course resources.
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate('/assignments/manage')}
+            sx={{ fontWeight: 600 }}
+          >
+            Add Assignment
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => navigate('/attendance/mark')}
+            sx={{
+              fontWeight: 600,
+              backgroundColor: '#10b981',
+              '&:hover': { backgroundColor: '#059669' }
+            }}
+          >
+            Mark Attendance
+          </Button>
+        </Box>
       </Box>
 
       <Grid container spacing={3}>

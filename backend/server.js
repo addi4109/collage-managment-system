@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
+import assignmentRoutes from './routes/assignmentRoutes.js';
+import attendanceRoutes from './routes/attendanceRoutes.js';
 import { connectDB } from './config/database.js';
 
 dotenv.config();
@@ -44,13 +46,16 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Initialize MongoDB Atlas connection
 connectDB();
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', authRoutes);
+app.use('/api/assignments', assignmentRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 // Health check endpoint displaying connection state and process uptime
 app.get('/', (req, res) => {
