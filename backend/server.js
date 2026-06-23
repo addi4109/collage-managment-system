@@ -47,13 +47,16 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', authRoutes);
 
 // Health check endpoint displaying connection state and process uptime
+app.get('/', (req, res) => {
+  res.send('API is running');
+});
+
 app.get('/health', (req, res) => {
   const dbConnectionStates = ['disconnected', 'connected', 'connecting', 'disconnecting'];
-  const currentDbState = dbConnectionStates[mongoose.connection.readyState] || 'unknown';
 
   res.json({
     status: 'healthy',
-    database: currentDbState,
+    database: dbConnectionStates[mongoose.connection.readyState] || 'unknown',
     uptime: `${process.uptime().toFixed(1)}s`,
     timestamp: new Date().toISOString(),
   });
@@ -63,3 +66,4 @@ app.listen(PORT, () => {
   console.log(`Server is running in [${NODE_ENV}] mode`);
   console.log(`Server listening on http://localhost:${PORT}`);
 });
+
