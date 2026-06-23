@@ -28,22 +28,26 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
   'http://localhost:5173',
-  'https://collage-managment-system-fqny8pad8-addi4109s-projects.vercel.app',
-  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [])
+  'https://collage-managment-system.vercel.app',
+  'https://collage-managment-system-fqny8pad8-addi4109s-projects.vercel.app'
 ];
 
 app.use(
   cors({
-    origin: (origin, callback) => {
+    origin: function (origin, callback) {
+      // allow mobile apps / curl / server-to-server
       if (!origin) return callback(null, true);
-      const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
-      if (isLocalhost || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
       }
+
+      console.log("Blocked by CORS:", origin);
+      return callback(null, false);
     },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 app.use(express.json({ limit: '50mb' }));
