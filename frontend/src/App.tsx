@@ -41,7 +41,7 @@ const AdminCrud = React.lazy(() => import('./pages/AdminCrud').then(m => ({ defa
 const TimetableGenerator = React.lazy(() => import('./pages/TimetableGenerator').then(m => ({ default: m.TimetableGenerator })));
 const ReportGenerator = React.lazy(() => import('./pages/ReportGenerator').then(m => ({ default: m.ReportGenerator })));
 const InAppChat = React.lazy(() => import('./pages/InAppChat').then(m => ({ default: m.InAppChat })));
-const DiscussionForum = React.lazy(() => import('./pages/DiscussionForum').then(m => ({ default: m.DiscussionForum })));
+const NoticeBoard = React.lazy(() => import('./pages/NoticeBoard').then(m => ({ default: m.NoticeBoard })));
 const LostFound = React.lazy(() => import('./pages/LostFound').then(m => ({ default: m.LostFound })));
 
 // Instant micro-loader UI spinner
@@ -275,11 +275,11 @@ const AppContent: React.FC = () => {
               }
             />
             <Route
-              path="/forum"
+              path="/notices"
               element={
                 <ProtectedRoute allowedRoles={['student', 'faculty', 'admin']}>
                   <DashboardLayout>
-                    <DiscussionForum />
+                    <NoticeBoard />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

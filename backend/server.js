@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes.js';
 import assignmentRoutes from './routes/assignmentRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
 import sessionRoutes from './routes/sessionRoutes.js';
+import noticeRoutes from './routes/noticeRoutes.js';
 import { connectDB } from './config/database.js';
 
 dotenv.config();
@@ -62,6 +63,7 @@ app.use('/api/users', authRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/session', sessionRoutes);
+app.use('/api/notices', noticeRoutes);
 
 // Health check endpoint displaying connection state and process uptime
 app.get('/', (req, res) => {

@@ -30,7 +30,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { useAuthStore } from '../store/authStore';
 import { logoutUser } from '../services/authService';
 import { AiChatbotBubble } from './AiChatbotBubble';
-import ForumIcon from '@mui/icons-material/Forum';
+import CampaignIcon from '@mui/icons-material/Campaign';
 import HelpCenterIcon from '@mui/icons-material/HelpCenter';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -358,10 +358,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </ListItemButton>
         </ListItem>
 
-        {/* Discussion Forum (All Roles) */}
+        {/* Notice Board (All Roles) */}
         <ListItem disablePadding>
           <ListItemButton
-            onClick={() => navigate('/forum')}
+            onClick={() => navigate('/notices')}
             sx={{
               borderRadius: 2,
               mb: 0.5,
@@ -369,9 +369,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             }}
           >
             <ListItemIcon sx={{ minWidth: 40 }}>
-              <ForumIcon color="primary" />
+              <CampaignIcon color="primary" />
             </ListItemIcon>
-            <ListItemText primary="Discussion Board" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+            <ListItemText primary="Notice Board" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
           </ListItemButton>
         </ListItem>
 
