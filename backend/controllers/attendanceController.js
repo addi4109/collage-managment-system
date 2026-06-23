@@ -86,7 +86,7 @@ export const getAttendanceRecords = async (req, res) => {
   }
 };
 
-export const checkin = async (req, res) => {
+export const checkInStudent = async (req, res) => {
   const { sessionToken } = req.body;
 
   if (!sessionToken) {
@@ -94,6 +94,11 @@ export const checkin = async (req, res) => {
   }
 
   try {
+    // Only students can check in
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ message: 'Only students are permitted to check in.' });
+    }
+
     // Find active session by token
     const session = await AttendanceSession.findOne({ sessionToken, status: 'active' });
 
@@ -113,8 +118,10 @@ export const checkin = async (req, res) => {
 
     // Prevent duplicate check-ins for this student in this session
     const existingRecord = await Attendance.findOne({
-      student: req.user.id,
-      session: session._id,
+      $or: [
+        { studentId: req.user.id, sessionId: session._id },
+        { student: req.user.id, session: session._id }
+      ]
     });
 
     if (existingRecord) {
@@ -123,11 +130,16 @@ export const checkin = async (req, res) => {
 
     // Mark student present
     const attendanceRecord = new Attendance({
+      studentId: req.user.id,
       student: req.user.id,
+      studentName: req.user.name,
+      facultyId: session.facultyId,
       faculty: session.facultyId,
+      sessionId: session._id,
+      session: session._id,
       date: new Date(session.date),
       status: 'Present',
-      session: session._id,
+      checkInTime: new Date(),
     });
 
     await attendanceRecord.save();
@@ -141,6 +153,62 @@ export const checkin = async (req, res) => {
   } catch (error) {
     console.error('Student checkin error:', error);
     res.status(500).json({ message: 'Internal server error checking in.' });
+  }
+};
+
+export const getFacultySessions = async (req, res) => {
+  try {
+    const filter = req.user.role === 'admin' ? {} : { facultyId: req.user.id };
+    const sessions = await AttendanceSession.find(filter).sort({ createdAt: -1 });
+    res.json(sessions);
+  } catch (error) {
+    console.error('Fetch faculty sessions error:', error);
+    res.status(500).json({ message: 'Internal server error fetching sessions.' });
+  }
+};
+
+export const getSessionAttendance = async (req, res) => {
+  const { sessionId } = req.params;
+
+  try {
+    const session = await AttendanceSession.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({ message: 'Attendance session not found.' });
+    }
+
+    // Faculty can only access their own sessions unless admin
+    if (session.facultyId.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Unauthorized. You do not own this session.' });
+    }
+
+    const records = await Attendance.find({
+      $or: [{ sessionId }, { session: sessionId }]
+    });
+
+    // Populate student roll numbers from Student collection
+    const studentUserIds = records.map(r => r.studentId || r.student);
+    const studentProfiles = await Student.find({ user: { $in: studentUserIds } });
+
+    const presentStudents = records.map(record => {
+      const sId = (record.studentId || record.student).toString();
+      const profile = studentProfiles.find(p => p.user.toString() === sId);
+      return {
+        studentId: sId,
+        studentName: record.studentName || 'Unknown Student',
+        rollNumber: profile ? profile.rollNumber : 'N/A',
+        checkInTime: record.checkInTime || record.createdAt || new Date(),
+        status: record.status,
+      };
+    });
+
+    res.json({
+      session,
+      presentStudents,
+      totalPresent: presentStudents.length,
+    });
+  } catch (error) {
+    console.error('Get session attendance error:', error);
+    res.status(500).json({ message: 'Internal server error fetching session attendance.' });
   }
 };
 

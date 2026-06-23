@@ -2,7 +2,22 @@ import mongoose from 'mongoose';
 
 const attendanceSchema = new mongoose.Schema(
   {
+    studentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     student: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    studentName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    facultyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
@@ -10,6 +25,16 @@ const attendanceSchema = new mongoose.Schema(
     faculty: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+      required: true,
+    },
+    sessionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'AttendanceSession',
+      required: true,
+    },
+    session: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'AttendanceSession',
       required: true,
     },
     date: {
@@ -20,11 +45,11 @@ const attendanceSchema = new mongoose.Schema(
       type: String,
       enum: ['Present', 'Absent'],
       required: true,
+      default: 'Present',
     },
-    session: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'AttendanceSession',
-      default: null,
+    checkInTime: {
+      type: Date,
+      default: Date.now,
     },
   },
   {
@@ -32,7 +57,9 @@ const attendanceSchema = new mongoose.Schema(
   }
 );
 
-// Prevent marking a student's attendance multiple times for the same date and session combination
+// Prevent marking a student's attendance multiple times for the same session
+attendanceSchema.index({ studentId: 1, sessionId: 1 }, { unique: true });
+// Keep the old unique constraint index for date-based roll calls if still referenced
 attendanceSchema.index({ student: 1, date: 1, session: 1 }, { unique: true });
 
 const Attendance = mongoose.model('Attendance', attendanceSchema);
