@@ -1,0 +1,1 @@
+import{r,i as t,j as a}from"./index-30cae1e0.js";var e={},u=t;Object.defineProperty(e,"__esModule",{value:!0});var i=e.default=void 0,o=u(r()),d=a;i=e.default=(0,o.default)((0,d.jsx)("path",{d:"M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5z"}),"Shield");export{i as d};
