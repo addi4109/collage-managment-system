@@ -48,6 +48,10 @@ const StudentExams = React.lazy(() => import('./pages/StudentExams').then(m => (
 const TakeExam = React.lazy(() => import('./pages/TakeExam').then(m => ({ default: m.TakeExam })));
 const ExamResult = React.lazy(() => import('./pages/ExamResult').then(m => ({ default: m.ExamResult })));
 const NoticeBoard = React.lazy(() => import('./pages/NoticeBoard').then(m => ({ default: m.NoticeBoard })));
+const FacultyResults = React.lazy(() => import('./pages/FacultyResults').then(m => ({ default: m.FacultyResults })));
+const ResultForm = React.lazy(() => import('./pages/ResultForm').then(m => ({ default: m.ResultForm })));
+const AdminResults = React.lazy(() => import('./pages/AdminResults').then(m => ({ default: m.AdminResults })));
+const StudentResults = React.lazy(() => import('./pages/StudentResults').then(m => ({ default: m.StudentResults })));
 const LostFoundBoard = React.lazy(() => import('./pages/LostFoundBoard').then(m => ({ default: m.LostFoundBoard })));
 const LostFoundForm = React.lazy(() => import('./pages/LostFoundForm').then(m => ({ default: m.LostFoundForm })));
 
@@ -348,6 +352,58 @@ const AppContent: React.FC = () => {
                 <ProtectedRoute allowedRoles={['student']}>
                   <DashboardLayout>
                     <ExamResult />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Results Management Routes */}
+            <Route
+              path="/results/faculty"
+              element={
+                <ProtectedRoute allowedRoles={['faculty']}>
+                  <DashboardLayout>
+                    <FacultyResults />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/results/create"
+              element={
+                <ProtectedRoute allowedRoles={['faculty']}>
+                  <DashboardLayout>
+                    <ResultForm />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/results/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['faculty']}>
+                  <DashboardLayout>
+                    <ResultForm />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/results/admin"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <DashboardLayout>
+                    <AdminResults />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/results/student"
+              element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <DashboardLayout>
+                    <StudentResults />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

@@ -188,6 +188,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <ListItemText primary="Online Exams" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/results/student')}
+                sx={{
+                  borderRadius: 2,
+                  mb: 0.5,
+                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <SchoolIcon color="success" />
+                </ListItemIcon>
+                <ListItemText primary="My Results" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
           </>
         )}
 
@@ -267,6 +282,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                   <SchoolIcon color="warning" />
                 </ListItemIcon>
                 <ListItemText primary="Manage Exams" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/results/faculty')}
+                sx={{
+                  borderRadius: 2,
+                  mb: 0.5,
+                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <SchoolIcon color="success" />
+                </ListItemIcon>
+                <ListItemText primary="Results Management" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
           </>
@@ -363,6 +393,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                   <SchoolIcon color="warning" />
                 </ListItemIcon>
                 <ListItemText primary="Approve Exams" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/results/admin')}
+                sx={{
+                  borderRadius: 2,
+                  mb: 0.5,
+                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <SchoolIcon color="success" />
+                </ListItemIcon>
+                <ListItemText primary="Result Verification" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
           </>
