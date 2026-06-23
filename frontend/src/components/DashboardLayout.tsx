@@ -182,7 +182,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           <>
             <ListItem disablePadding>
               <ListItemButton
-                onClick={() => navigate('/attendance/generate')}
+                onClick={() => navigate('/attendance/sessions')}
                 sx={{
                   borderRadius: 2,
                   mb: 0.5,
@@ -192,7 +192,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <ListItemIcon sx={{ minWidth: 40 }}>
                   <QrCodeScannerIcon color="secondary" />
                 </ListItemIcon>
-                <ListItemText primary="Generate QR Code" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+                <ListItemText primary="Manage Sessions" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
             <ListItem disablePadding>
@@ -248,7 +248,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           <>
             <ListItem disablePadding>
               <ListItemButton
-                onClick={() => navigate('/attendance/generate')}
+                onClick={() => navigate('/attendance/sessions')}
                 sx={{
                   borderRadius: 2,
                   mb: 0.5,
@@ -258,7 +258,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <ListItemIcon sx={{ minWidth: 40 }}>
                   <QrCodeScannerIcon color="secondary" />
                 </ListItemIcon>
-                <ListItemText primary="Generate QR Code" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+                <ListItemText primary="Manage Sessions" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
             <ListItem disablePadding>

@@ -40,11 +40,12 @@ export const markAttendance = async (date: string, records: AttendanceRecordPayl
   return data;
 };
 
-export const getAttendanceRecords = async (studentId?: string, date?: string) => {
+export const getAttendanceRecords = async (studentId?: string, date?: string, sessionId?: string) => {
   let url = `${API_URL}/attendance/records`;
   const params = new URLSearchParams();
   if (studentId) params.append('studentId', studentId);
   if (date) params.append('date', date);
+  if (sessionId) params.append('sessionId', sessionId);
   
   if (params.toString()) {
     url += `?${params.toString()}`;

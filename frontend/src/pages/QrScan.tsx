@@ -17,7 +17,7 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 import { useAuthStore } from '../store/authStore';
-import { markStudentPresent } from '../firebase/dbService';
+import { checkIn } from '../services/sessionService';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
 export const QrScan: React.FC = () => {
@@ -89,10 +89,20 @@ export const QrScan: React.FC = () => {
     setErrorMsg(null);
 
     try {
-      const result = await markStudentPresent(token, user.uid);
+      let sessionToken = token;
+      try {
+        const parsed = JSON.parse(token);
+        if (parsed.sessionToken) {
+          sessionToken = parsed.sessionToken;
+        }
+      } catch (e) {
+        // Not a JSON payload, treat token as raw sessionToken
+      }
+
+      const result = await checkIn(sessionToken);
       if (result.success) {
         setSuccessMsg(
-          `Success! Your attendance has been marked for: ${result.courseName} (${result.courseCode}).`
+          `Success! Your attendance has been marked for: ${result.courseName} - ${result.sessionTitle}.`
         );
       }
     } catch (err: any) {

@@ -29,7 +29,9 @@ const FacultyDashboard = React.lazy(() => import('./pages/Dashboards').then(m =>
 const AdminDashboard = React.lazy(() => import('./pages/Dashboards').then(m => ({ default: m.AdminDashboard })));
 
 // Lazy load helper workspaces
-const QrGenerate = React.lazy(() => import('./pages/QrGenerate').then(m => ({ default: m.QrGenerate })));
+const MySessions = React.lazy(() => import('./pages/MySessions').then(m => ({ default: m.MySessions })));
+const CreateSession = React.lazy(() => import('./pages/CreateSession').then(m => ({ default: m.CreateSession })));
+const QrDisplay = React.lazy(() => import('./pages/QrDisplay').then(m => ({ default: m.QrDisplay })));
 const QrScan = React.lazy(() => import('./pages/QrScan').then(m => ({ default: m.QrScan })));
 const AttendanceAnalytics = React.lazy(() => import('./pages/AttendanceAnalytics').then(m => ({ default: m.AttendanceAnalytics })));
 const MarkAttendance = React.lazy(() => import('./pages/MarkAttendance').then(m => ({ default: m.MarkAttendance })));
@@ -147,11 +149,31 @@ const AppContent: React.FC = () => {
 
             {/* Attendance Session Managers */}
             <Route
-              path="/attendance/generate"
+              path="/attendance/sessions"
               element={
                 <ProtectedRoute allowedRoles={['faculty', 'admin']}>
                   <DashboardLayout>
-                    <QrGenerate />
+                    <MySessions />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/attendance/sessions/create"
+              element={
+                <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+                  <DashboardLayout>
+                    <CreateSession />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/attendance/sessions/qr/:id"
+              element={
+                <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+                  <DashboardLayout>
+                    <QrDisplay />
                   </DashboardLayout>
                 </ProtectedRoute>
               }
