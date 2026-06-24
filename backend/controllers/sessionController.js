@@ -21,12 +21,21 @@ export const createSession = async (req, res) => {
   }
 
   try {
+    if (req.user.role === 'faculty') {
+      const assigned = req.user.assignedSubjects || [];
+      if (!assigned.includes(courseName)) {
+        return res.status(403).json({
+          message: `Forbidden. You are not assigned to teach the subject "${courseName}".`,
+        });
+      }
+    }
+
     const newSession = new AttendanceSession({
       facultyId: req.user.id,
       facultyName,
       courseName,
       sessionTitle,
-      department: req.user.role === 'faculty' ? req.user.activeDepartment : (department || ''),
+      department: req.user.role === 'faculty' ? req.user.department : (department || ''),
       date: new Date(date),
       startTime,
       duration: Number(duration) || 5,
@@ -109,7 +118,7 @@ export const endSession = async (req, res) => {
 // Retrieve all sessions created by the logged-in faculty
 export const getSessions = async (req, res) => {
   try {
-    const filter = req.user.role === 'admin' ? {} : { facultyId: req.user.id, department: req.user.activeDepartment };
+    const filter = req.user.role === 'admin' ? {} : { facultyId: req.user.id, department: req.user.department };
     const sessions = await AttendanceSession.find(filter).sort({ createdAt: -1 });
     res.json(sessions);
   } catch (error) {

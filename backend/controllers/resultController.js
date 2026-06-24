@@ -73,7 +73,7 @@ export const getStudentList = async (req, res) => {
   try {
     const userQuery = { role: 'student', status: 'active' };
     if (req.user.role === 'faculty') {
-      userQuery.department = req.user.activeDepartment;
+      userQuery.department = req.user.department;
     }
     const studentUsers = await User.find(userQuery).select('name email');
     const list = await Promise.all(
@@ -116,8 +116,18 @@ export const createResult = async (req, res) => {
     return res.status(400).json({ message: 'Student information, department, and subjects marks are required.' });
   }
 
-  if (req.user.role === 'faculty' && department !== req.user.activeDepartment) {
-    return res.status(403).json({ message: 'Unauthorized. You can only create results for your active department.' });
+  if (req.user.role === 'faculty') {
+    if (department !== req.user.department) {
+      return res.status(403).json({ message: 'Unauthorized. You can only create results for your department.' });
+    }
+    const assigned = req.user.assignedSubjects || [];
+    for (const sub of subjects) {
+      if (!assigned.includes(sub.subjectName) && !assigned.includes(sub.subjectCode)) {
+        return res.status(403).json({
+          message: `Forbidden. You are not assigned to manage grades for the subject "${sub.subjectName}".`,
+        });
+      }
+    }
   }
 
   try {
@@ -174,6 +184,17 @@ export const updateResult = async (req, res) => {
   } = req.body;
 
   try {
+    if (req.user.role === 'faculty' && subjects && Array.isArray(subjects)) {
+      const assigned = req.user.assignedSubjects || [];
+      for (const sub of subjects) {
+        if (!assigned.includes(sub.subjectName) && !assigned.includes(sub.subjectCode)) {
+          return res.status(403).json({
+            message: `Forbidden. You are not assigned to manage grades for the subject "${sub.subjectName}".`,
+          });
+        }
+      }
+    }
+
     const result = await Result.findById(id);
     if (!result) {
       return res.status(404).json({ message: 'Result sheet not found.' });
@@ -246,7 +267,7 @@ export const submitResult = async (req, res) => {
 // 5. List Faculty submissions
 export const getFacultyResults = async (req, res) => {
   try {
-    const list = await Result.find({ facultyId: req.user.id, department: req.user.activeDepartment }).sort({ createdAt: -1 });
+    const list = await Result.find({ facultyId: req.user.id, department: req.user.department }).sort({ createdAt: -1 });
     res.json(list);
   } catch (error) {
     console.error('Get faculty results error:', error);

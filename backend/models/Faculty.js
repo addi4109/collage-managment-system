@@ -16,6 +16,14 @@ const facultySchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    assignedSubjects: {
+      type: [String],
+      default: [],
+    },
+    approvedByAdmin: {
+      type: Boolean,
+      default: false,
+    },
     departments: {
       type: [String],
       default: [],

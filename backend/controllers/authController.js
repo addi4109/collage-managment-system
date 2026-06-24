@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import Student from '../models/Student.js';
 import Faculty from '../models/Faculty.js';
 import Admin from '../models/Admin.js';
+import Department from '../models/Department.js';
 import { clearUserCache } from '../middleware/authMiddleware.js';
 
 // Cache for full profile responses to reduce database lookups
@@ -82,19 +83,22 @@ export const registerStudent = async (req, res) => {
     res.status(500).json({ message: 'Internal server error during registration.' });
   }
 };
-
 export const registerFaculty = async (req, res) => {
-  const { name, email, password, authCode } = req.body;
+  const { name, email, password, department, departmentSecretCode } = req.body;
 
-  if (!name || !email || !password || !authCode) {
-    return res.status(400).json({ message: 'Please provide name, email, password, and secret passcode.' });
-  }
-
-  if (authCode !== 'faculty123') {
-    return res.status(400).json({ message: 'Invalid secret passcode. Registration denied.' });
+  if (!name || !email || !password || !department || !departmentSecretCode) {
+    return res.status(400).json({ message: 'Please provide name, email, password, department, and department secret code.' });
   }
 
   try {
+    const dept = await Department.findOne({ departmentName: department, status: 'active' });
+    if (!dept) {
+      return res.status(400).json({ message: 'Selected department is not active or does not exist.' });
+    }
+    if (dept.departmentSecretCode !== departmentSecretCode) {
+      return res.status(400).json({ message: 'Invalid secret code for selected department. Registration denied.' });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'An account with this email already exists.' });
@@ -103,16 +107,15 @@ export const registerFaculty = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const defaultDepts = ['Computer Engineering', 'Information Technology'];
-
     const newUser = new User({
       name,
       email,
       passwordHash,
       role: 'faculty',
-      status: 'active',
-      departments: defaultDepts,
-      activeDepartment: defaultDepts[0],
+      status: 'pending',
+      department,
+      assignedSubjects: [],
+      approvedByAdmin: false,
     });
 
     const savedUser = await newUser.save();
@@ -120,9 +123,9 @@ export const registerFaculty = async (req, res) => {
     const newFaculty = new Faculty({
       user: savedUser._id,
       employeeId: 'FAC' + Math.floor(1000 + Math.random() * 9000),
-      department: defaultDepts[0],
-      departments: defaultDepts,
-      activeDepartment: defaultDepts[0],
+      department,
+      assignedSubjects: [],
+      approvedByAdmin: false,
     });
     await newFaculty.save();
 
@@ -136,8 +139,9 @@ export const registerFaculty = async (req, res) => {
         name: savedUser.name,
         role: savedUser.role,
         status: savedUser.status,
-        departments: savedUser.departments,
-        activeDepartment: savedUser.activeDepartment,
+        department: savedUser.department,
+        assignedSubjects: savedUser.assignedSubjects,
+        approvedByAdmin: savedUser.approvedByAdmin,
         createdAt: savedUser.createdAt,
       },
     });
@@ -146,7 +150,6 @@ export const registerFaculty = async (req, res) => {
     res.status(500).json({ message: 'Internal server error during registration.' });
   }
 };
-
 export const loginStudent = async (req, res) => {
   const { email, password } = req.body; // email field holds rollNumber or email
   if (!email || !password) {
@@ -209,7 +212,6 @@ export const loginStudent = async (req, res) => {
     res.status(500).json({ message: 'Internal server error.' });
   }
 };
-
 export const loginFaculty = async (req, res) => {
   console.log('[DEBUG] Server: Faculty login - Request received');
   const { email, password } = req.body;
@@ -219,7 +221,7 @@ export const loginFaculty = async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ email }).select('_id role passwordHash name email status departments activeDepartment');
+    const user = await User.findOne({ email }).select('_id role passwordHash name email status department assignedSubjects approvedByAdmin');
     if (!user || user.role !== 'faculty') {
       console.log('[DEBUG] Server: Faculty login - User not found or role mismatch');
       return res.status(401).json({ message: 'Invalid credentials or faculty account not found.' });
@@ -263,8 +265,9 @@ export const loginFaculty = async (req, res) => {
         id: user._id.toString(),
         name: user.name,
         role: user.role,
-        departments: user.departments,
-        activeDepartment: user.activeDepartment,
+        department: user.department,
+        assignedSubjects: user.assignedSubjects || [],
+        approvedByAdmin: user.approvedByAdmin || false,
       },
     });
   } catch (error) {
@@ -357,38 +360,18 @@ export const getProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User profile not found.' });
     }
-
     const profileData = {
       uid: user._id.toString(),
       email: user.email,
-      name: user.name,
       role: user.role,
+      name: user.name,
       status: user.status,
-      createdAt: user.createdAt,
       department: user.department,
       semester: user.semester,
-      departments: user.departments,
-      activeDepartment: user.activeDepartment,
+      assignedSubjects: user.assignedSubjects || [],
+      approvedByAdmin: user.approvedByAdmin || false,
+      createdAt: user.createdAt,
     };
-
-    if (user.role === 'student') {
-      const studentDoc = await Student.findOne({ user: user._id });
-      if (studentDoc) {
-        profileData.rollNumber = studentDoc.rollNumber;
-        profileData.department = studentDoc.department || user.department;
-        profileData.semester = studentDoc.semester || user.semester;
-        profileData.enrolledCourses = studentDoc.enrolledCourses;
-      }
-    } else if (user.role === 'faculty') {
-      const facultyDoc = await Faculty.findOne({ user: user._id });
-      if (facultyDoc) {
-        profileData.employeeId = facultyDoc.employeeId;
-        profileData.department = facultyDoc.department || user.activeDepartment;
-        profileData.departments = facultyDoc.departments || user.departments;
-        profileData.activeDepartment = facultyDoc.activeDepartment || user.activeDepartment;
-        profileData.isHOD = facultyDoc.isHOD;
-      }
-    }
 
     profileCache.set(cacheKey, {
       data: profileData,

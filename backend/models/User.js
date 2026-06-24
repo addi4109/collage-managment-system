@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema(
     department: {
       type: String,
       required: function () {
-        return this.role === 'student';
+        return this.role === 'student' || this.role === 'faculty';
       },
       trim: true,
     },
@@ -44,6 +44,17 @@ const userSchema = new mongoose.Schema(
         return this.role === 'student';
       },
       trim: true,
+    },
+    assignedSubjects: {
+      type: [String],
+      default: [],
+    },
+    approvedByAdmin: {
+      type: Boolean,
+      default: function () {
+        // Default to true for admin and student, but false for faculty (needs manual approval)
+        return this.role !== 'faculty';
+      },
     },
     departments: {
       type: [String],

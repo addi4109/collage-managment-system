@@ -8,13 +8,22 @@ export const createAssignment = async (req, res) => {
   }
 
   try {
+    if (req.user.role === 'faculty') {
+      const assigned = req.user.assignedSubjects || [];
+      if (!assigned.includes(courseName)) {
+        return res.status(403).json({
+          message: `Forbidden. You are not assigned to teach the subject "${courseName}".`,
+        });
+      }
+    }
+
     const newAssignment = new Assignment({
       title,
       description,
       courseName,
       dueDate: new Date(dueDate),
       faculty: req.user.id,
-      department: req.user.role === 'faculty' ? req.user.activeDepartment : '',
+      department: req.user.role === 'faculty' ? req.user.department : '',
       attachment: attachment || '',
       attachmentName: attachmentName || '',
     });
@@ -38,7 +47,7 @@ export const getAssignments = async (req, res) => {
       ];
     } else if (req.user.role === 'faculty') {
       filter.$or = [
-        { department: req.user.activeDepartment },
+        { department: req.user.department },
         { department: '' },
         { department: { $exists: false } }
       ];

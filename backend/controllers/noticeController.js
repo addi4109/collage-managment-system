@@ -20,7 +20,7 @@ export const createNotice = async (req, res) => {
       createdBy: req.user.id,
       createdByName: req.user.name,
       role: req.user.role,
-      department: req.user.role === 'faculty' ? req.user.activeDepartment : '',
+      department: req.user.role === 'faculty' ? req.user.department : '',
       priority: priority || 'low',
     });
 
@@ -44,7 +44,7 @@ export const getAllNotices = async (req, res) => {
       ];
     } else if (req.user.role === 'faculty') {
       filter.$or = [
-        { department: req.user.activeDepartment },
+        { department: req.user.department },
         { department: '' },
         { department: { $exists: false } }
       ];

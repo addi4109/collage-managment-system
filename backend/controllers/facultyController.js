@@ -147,3 +147,94 @@ export const updateFacultyDepartments = async (req, res) => {
     res.status(500).json({ message: 'Internal server error.' });
   }
 };
+
+export const getAllFaculty = async (req, res) => {
+  try {
+    const facultyUsers = await User.find({ role: 'faculty' }).select('-passwordHash');
+    res.json(facultyUsers);
+  } catch (error) {
+    console.error('Get all faculty error:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+export const updateFacultyStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!status) {
+    return res.status(400).json({ message: 'Status is required.' });
+  }
+
+  try {
+    const user = await User.findById(id);
+    if (!user || user.role !== 'faculty') {
+      return res.status(404).json({ message: 'Faculty account not found.' });
+    }
+
+    user.status = status;
+    user.approvedByAdmin = (status === 'approved' || status === 'active');
+    await user.save();
+
+    const facultyProfile = await Faculty.findOne({ user: user._id });
+    if (facultyProfile) {
+      facultyProfile.approvedByAdmin = user.approvedByAdmin;
+      await facultyProfile.save();
+    }
+
+    clearUserCache(user._id);
+    clearProfileCache(user._id);
+
+    res.json({
+      success: true,
+      message: `Faculty status updated to ${status}.`,
+      user,
+    });
+  } catch (error) {
+    console.error('Update faculty status error:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+export const updateFacultyAssignment = async (req, res) => {
+  const { id } = req.params;
+  const { department, assignedSubjects } = req.body;
+
+  try {
+    const user = await User.findById(id);
+    if (!user || user.role !== 'faculty') {
+      return res.status(404).json({ message: 'Faculty account not found.' });
+    }
+
+    if (department) {
+      user.department = department;
+    }
+    if (assignedSubjects) {
+      user.assignedSubjects = assignedSubjects;
+    }
+    await user.save();
+
+    const facultyProfile = await Faculty.findOne({ user: user._id });
+    if (facultyProfile) {
+      if (department) {
+        facultyProfile.department = department;
+      }
+      if (assignedSubjects) {
+        facultyProfile.assignedSubjects = assignedSubjects;
+      }
+      await facultyProfile.save();
+    }
+
+    clearUserCache(user._id);
+    clearProfileCache(user._id);
+
+    res.json({
+      success: true,
+      message: 'Faculty assignment updated successfully.',
+      user,
+    });
+  } catch (error) {
+    console.error('Update faculty assignment error:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};

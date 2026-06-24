@@ -33,6 +33,8 @@ export const AuthLanding: React.FC = () => {
   const handlePortalClick = (role: 'student' | 'faculty' | 'admin') => {
     if (role === 'student') {
       navigate('/student/login');
+    } else if (role === 'faculty') {
+      navigate('/faculty/login');
     } else {
       setTargetRole(role);
       setPasscode('');

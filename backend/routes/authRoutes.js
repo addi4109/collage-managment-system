@@ -14,6 +14,9 @@ import {
   updateActiveDepartment,
   updateStudentDepartment,
   updateFacultyDepartments,
+  getAllFaculty,
+  updateFacultyStatus,
+  updateFacultyAssignment,
 } from '../controllers/facultyController.js';
 import { authenticateToken, requireRole } from '../middleware/authMiddleware.js';
 
@@ -35,6 +38,9 @@ router.put('/faculty/active-department', authenticateToken, requireRole(['facult
 // Admin overrides
 router.put('/admin/student/:id/department', authenticateToken, requireRole(['admin']), updateStudentDepartment);
 router.put('/admin/faculty/:id/departments', authenticateToken, requireRole(['admin']), updateFacultyDepartments);
+router.get('/admin/faculty', authenticateToken, requireRole(['admin']), getAllFaculty);
+router.put('/admin/faculty/:id/status', authenticateToken, requireRole(['admin']), updateFacultyStatus);
+router.put('/admin/faculty/:id/assign', authenticateToken, requireRole(['admin']), updateFacultyAssignment);
 
 export default router;
 

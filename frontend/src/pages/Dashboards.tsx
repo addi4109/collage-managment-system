@@ -740,10 +740,55 @@ export const FacultyDashboard: React.FC = () => {
             </Grid>
           </Grid>
         </Grid>
-
-        {/* Right Side: Assignment Stats */}
+        {/* Right Side: Faculty Profile & Assignment Stats */}
         <Grid item xs={12} lg={4}>
-          <Card sx={{ height: '100%' }}>
+          {/* Faculty Profile Card */}
+          <Card sx={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.08) 100%)', border: '1px solid rgba(255, 255, 255, 0.08)', mb: 3 }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
+                <Avatar sx={{ width: 56, height: 56, bgcolor: 'success.main', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  {user?.name?.charAt(0).toUpperCase()}
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                    Professor {user?.name}
+                  </Typography>
+                  <Typography variant="body2" color="success.light" sx={{ fontWeight: 600 }}>
+                    Faculty Profile
+                  </Typography>
+                </Box>
+              </Box>
+              <Divider sx={{ my: 1.5, opacity: 0.1 }} />
+              <Grid container spacing={1}>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Assigned Department
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.light' }}>
+                    {user?.department || 'Not Assigned'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sx={{ mt: 1 }}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Assigned Subjects
+                  </Typography>
+                  {(user as any)?.assignedSubjects && (user as any).assignedSubjects.length > 0 ? (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                      {(user as any).assignedSubjects.map((sub: string) => (
+                        <Chip key={sub} label={sub} size="small" variant="filled" sx={{ bgcolor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontWeight: 500 }} />
+                      ))}
+                    </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                      None Assigned
+                    </Typography>
+                  )}
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ height: 'auto' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <AssignmentIcon color="warning" />
@@ -828,12 +873,13 @@ export const AdminDashboard: React.FC = () => {
         "Information Technology",
         "Mechanical Engineering",
         "Civil Engineering",
-        "Chemical Engineering"
+        "Chemical Engineering",
+        "Electronics Engineering"
       ];
 
       const stats = departmentsList.map(dept => {
         const studentCount = allUsers.filter(u => u.role === 'student' && u.department === dept).length;
-        const facultyCount = allUsers.filter(u => u.role === 'faculty' && u.departments && u.departments.includes(dept)).length;
+        const facultyCount = allUsers.filter(u => u.role === 'faculty' && u.department === dept).length;
         
         const deptSummaries = summaries.filter(s => s.department === dept);
         const totalResults = deptSummaries.reduce((sum, s) => sum + s.totalStudents, 0);

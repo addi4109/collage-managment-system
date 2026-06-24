@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
+import departmentRoutes from './routes/departmentRoutes.js';
 import assignmentRoutes from './routes/assignmentRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
 import sessionRoutes from './routes/sessionRoutes.js';
@@ -65,6 +66,7 @@ connectDB();
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', authRoutes);
+app.use('/api/departments', departmentRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/session', sessionRoutes);

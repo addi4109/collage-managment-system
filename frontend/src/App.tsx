@@ -17,9 +17,9 @@ const AuthLanding = React.lazy(() => import('./pages/AuthLanding').then(m => ({ 
 const StudentLogin = React.lazy(() => import('./pages/StudentLogin').then(m => ({ default: m.StudentLogin })));
 const StudentRegister = React.lazy(() => import('./pages/StudentRegister').then(m => ({ default: m.StudentRegister })));
 const FacultyLogin = React.lazy(() => import('./pages/FacultyLogin').then(m => ({ default: m.FacultyLogin })));
-const FacultyRegister = React.lazy(() => import('./pages/FacultyRegister').then(m => ({ default: m.FacultyRegister })));
 const AdminLogin = React.lazy(() => import('./pages/AdminLogin').then(m => ({ default: m.AdminLogin })));
 const AdminRegister = React.lazy(() => import('./pages/AdminRegister').then(m => ({ default: m.AdminRegister })));
+const AdminFacultyAssignment = React.lazy(() => import('./pages/AdminFacultyAssignment').then(m => ({ default: m.AdminFacultyAssignment })));
 const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword').then(m => ({ default: m.ForgotPassword })));
 const Unauthorized = React.lazy(() => import('./pages/Unauthorized'));
 
@@ -108,7 +108,6 @@ const AppContent: React.FC = () => {
             <Route path="/student/login" element={<StudentLogin />} />
             <Route path="/student/register" element={<StudentRegister />} />
             <Route path="/faculty/login" element={<FacultyLogin />} />
-            <Route path="/faculty/register" element={<FacultyRegister />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/register" element={<AdminRegister />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -249,6 +248,16 @@ const AppContent: React.FC = () => {
                 <ProtectedRoute allowedRoles={['admin']}>
                   <DashboardLayout>
                     <AdminCrud />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/faculty-assignment"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <DashboardLayout>
+                    <AdminFacultyAssignment />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

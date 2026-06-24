@@ -13,6 +13,15 @@ export const createExam = async (req, res) => {
   }
 
   try {
+    if (req.user.role === 'faculty') {
+      const assigned = req.user.assignedSubjects || [];
+      if (!assigned.includes(courseName)) {
+        return res.status(403).json({
+          message: `Forbidden. You are not assigned to teach the subject "${courseName}".`,
+        });
+      }
+    }
+
     const status = submitForApproval ? 'pending' : 'draft';
     const newExam = new Exam({
       title,
@@ -20,7 +29,7 @@ export const createExam = async (req, res) => {
       duration: Number(duration),
       totalMarks: Number(totalMarks),
       createdBy: req.user.id,
-      department: req.user.role === 'faculty' ? req.user.activeDepartment : '',
+      department: req.user.role === 'faculty' ? req.user.department : '',
       status,
     });
 
@@ -52,6 +61,16 @@ export const updateExam = async (req, res) => {
   const { title, courseName, duration, totalMarks, questions, submitForApproval } = req.body;
 
   try {
+    if (req.user.role === 'faculty') {
+      const checkSubject = courseName || (await Exam.findById(id))?.courseName;
+      const assigned = req.user.assignedSubjects || [];
+      if (checkSubject && !assigned.includes(checkSubject)) {
+        return res.status(403).json({
+          message: `Forbidden. You are not assigned to teach the subject "${checkSubject}".`,
+        });
+      }
+    }
+
     const exam = await Exam.findById(id);
     if (!exam) {
       return res.status(404).json({ message: 'Exam not found.' });
@@ -165,7 +184,7 @@ export const startExam = async (req, res) => {
 
 export const getFacultyExams = async (req, res) => {
   try {
-    const filter = req.user.role === 'admin' ? {} : { createdBy: req.user.id, department: req.user.activeDepartment };
+    const filter = req.user.role === 'admin' ? {} : { createdBy: req.user.id, department: req.user.department };
     const exams = await Exam.find(filter).sort({ createdAt: -1 });
     
     // Map question counts

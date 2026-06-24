@@ -89,6 +89,8 @@ export const registerWithEmail = async (
   const body: any = { name, email, password };
   if (role === 'faculty') {
     body.authCode = authCode;
+    body.department = department;
+    body.departmentSecretCode = authCode;
   } else if (role === 'student') {
     body.department = department;
     body.semester = semester;

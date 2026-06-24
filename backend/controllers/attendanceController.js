@@ -6,7 +6,7 @@ export const getStudents = async (req, res) => {
   try {
     const query = {};
     if (req.user.role === 'faculty') {
-      query.department = req.user.activeDepartment;
+      query.department = req.user.department;
     }
     const students = await Student.find(query)
       .populate({
@@ -62,6 +62,43 @@ export const getAttendanceRecords = async (req, res) => {
 
     if (req.user.role === 'student') {
       filter.student = req.user.id;
+    } else if (req.user.role === 'faculty') {
+      const { studentId, date, sessionId } = req.query;
+
+      // Filter by department students
+      const deptStudents = await Student.find({ department: req.user.department }).select('user');
+      const deptStudentUserIds = deptStudents.map(s => s.user.toString());
+
+      if (studentId) {
+        if (!deptStudentUserIds.includes(studentId.toString())) {
+          return res.status(403).json({ message: 'Unauthorized. Student is not in your department.' });
+        }
+        filter.student = studentId;
+      } else {
+        filter.student = { $in: deptStudentUserIds };
+      }
+
+      // Filter by session / assigned subjects
+      if (sessionId) {
+        const session = await AttendanceSession.findById(sessionId);
+        if (!session || session.department !== req.user.department || !(req.user.assignedSubjects || []).includes(session.courseName)) {
+          return res.status(403).json({ message: 'Unauthorized. Session does not match your assigned subjects.' });
+        }
+        filter.session = sessionId;
+      } else {
+        const sessions = await AttendanceSession.find({
+          department: req.user.department,
+          courseName: { $in: req.user.assignedSubjects || [] }
+        });
+        const sessionIds = sessions.map(s => s._id);
+        filter.session = { $in: sessionIds };
+      }
+
+      if (date) {
+        const parsedDate = new Date(date);
+        parsedDate.setUTCHours(0, 0, 0, 0);
+        filter.date = parsedDate;
+      }
     } else {
       // Faculty/Admin can optionally pass a student ID or date filter
       const { studentId, date, sessionId } = req.query;
@@ -167,7 +204,7 @@ export const checkInStudent = async (req, res) => {
 
 export const getFacultySessions = async (req, res) => {
   try {
-    const filter = req.user.role === 'admin' ? {} : { facultyId: req.user.id, department: req.user.activeDepartment };
+    const filter = req.user.role === 'admin' ? {} : { facultyId: req.user.id, department: req.user.department };
     const sessions = await AttendanceSession.find(filter).sort({ createdAt: -1 });
     res.json(sessions);
   } catch (error) {
