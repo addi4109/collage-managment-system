@@ -6,7 +6,7 @@ import Student from '../models/Student.js';
 // --- Faculty Operations ---
 
 export const createExam = async (req, res) => {
-  const { title, courseName, duration, totalMarks, questions, submitForApproval } = req.body;
+  const { title, courseName, duration, totalMarks, questions, submitForApproval, year, semester } = req.body;
 
   if (!title || !courseName || !duration || !totalMarks || !questions || !Array.isArray(questions)) {
     return res.status(400).json({ message: 'All exam details and questions are required.' });
@@ -30,6 +30,8 @@ export const createExam = async (req, res) => {
       totalMarks: Number(totalMarks),
       createdBy: req.user.id,
       department: req.user.role === 'faculty' ? req.user.department : '',
+      year: year || '',
+      semester: semester || '',
       status,
     });
 
@@ -58,7 +60,7 @@ export const createExam = async (req, res) => {
 
 export const updateExam = async (req, res) => {
   const { id } = req.params;
-  const { title, courseName, duration, totalMarks, questions, submitForApproval } = req.body;
+  const { title, courseName, duration, totalMarks, questions, submitForApproval, year, semester } = req.body;
 
   try {
     if (req.user.role === 'faculty') {
@@ -88,6 +90,8 @@ export const updateExam = async (req, res) => {
     exam.courseName = courseName || exam.courseName;
     exam.duration = duration ? Number(duration) : exam.duration;
     exam.totalMarks = totalMarks ? Number(totalMarks) : exam.totalMarks;
+    if (year !== undefined) exam.year = year;
+    if (semester !== undefined) exam.semester = semester;
     
     if (submitForApproval) {
       exam.status = 'pending';
@@ -96,7 +100,6 @@ export const updateExam = async (req, res) => {
     await exam.save();
 
     if (questions && Array.isArray(questions)) {
-      // Re-create questions list
       await Question.deleteMany({ examId: id });
       const questionsToInsert = questions.map((q) => ({
         examId: id,
@@ -324,11 +327,9 @@ export const getAvailableExams = async (req, res) => {
     // Return all scheduled, active, or completed exams that match student department or global
     const filter = {
       status: { $in: ['scheduled', 'active', 'completed'] },
-      $or: [
-        { department: req.user.department },
-        { department: '' },
-        { department: { $exists: false } }
-      ]
+      department: req.user.department,
+      year: req.user.year,
+      semester: req.user.semester,
     };
     const exams = await Exam.find(filter).sort({ scheduledAt: 1 });
 

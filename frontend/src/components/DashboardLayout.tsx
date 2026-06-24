@@ -28,6 +28,11 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PeopleIcon from '@mui/icons-material/People';
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import ContactPageIcon from '@mui/icons-material/ContactPage';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import { useAuthStore } from '../store/authStore';
 import { logoutUser } from '../services/authService';
 import { AiChatbotBubble } from './AiChatbotBubble';
@@ -206,6 +211,51 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <ListItemText primary="My Results" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/placements')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><BusinessCenterIcon color="primary" /></ListItemIcon>
+                <ListItemText primary="Placements Cell" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/library')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><LibraryBooksIcon color="secondary" /></ListItemIcon>
+                <ListItemText primary="Library Lookup" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/fees')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><AccountBalanceWalletIcon color="success" /></ListItemIcon>
+                <ListItemText primary="My Fees" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/calendar')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><CalendarTodayIcon color="info" /></ListItemIcon>
+                <ListItemText primary="Academic Calendar" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/certificates')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><ContactPageIcon color="warning" /></ListItemIcon>
+                <ListItemText primary="My Credentials & ID" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
           </>
         )}
 
@@ -311,6 +361,60 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                   <SchoolIcon color="success" />
                 </ListItemIcon>
                 <ListItemText primary="Results Management" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/faculty/admissions')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><AssignmentIndIcon color="success" /></ListItemIcon>
+                <ListItemText primary="Admissions Request" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/placements')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><BusinessCenterIcon color="primary" /></ListItemIcon>
+                <ListItemText primary="Placements Cell" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/library')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><LibraryBooksIcon color="secondary" /></ListItemIcon>
+                <ListItemText primary="Library Lookup" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/fees')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><AccountBalanceWalletIcon color="success" /></ListItemIcon>
+                <ListItemText primary="Student Fees" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/calendar')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><CalendarTodayIcon color="info" /></ListItemIcon>
+                <ListItemText primary="Academic Calendar" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/certificates')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><ContactPageIcon color="warning" /></ListItemIcon>
+                <ListItemText primary="Credentials & ID" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
           </>
@@ -437,6 +541,51 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                   <AdminPanelSettingsIcon color="success" />
                 </ListItemIcon>
                 <ListItemText primary="Faculty & Subjects" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/admin/admissions')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><AssignmentIndIcon color="success" /></ListItemIcon>
+                <ListItemText primary="Admissions Approvals" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/placements')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><BusinessCenterIcon color="primary" /></ListItemIcon>
+                <ListItemText primary="Placement Cell" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/library')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><LibraryBooksIcon color="secondary" /></ListItemIcon>
+                <ListItemText primary="Library Catalog" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/fees')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><AccountBalanceWalletIcon color="success" /></ListItemIcon>
+                <ListItemText primary="Fee Management" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/calendar')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><CalendarTodayIcon color="info" /></ListItemIcon>
+                <ListItemText primary="Academic Calendar" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
           </>

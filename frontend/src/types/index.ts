@@ -12,6 +12,15 @@ export interface UserProfile {
   activeDepartment?: string;
   enrolledCourses?: string[]; // Array of courseIds
   phoneNumber?: string;
+  assignedSubjects?: string[];
+  assignedSemesters?: string[];
+  assignedYear?: string;
+  username?: string;
+  phone?: string;
+  rollNumber?: string;
+  enrollmentNumber?: string;
+  semester?: string;
+  year?: string;
 }
 
 export interface Department {

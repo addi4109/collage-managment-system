@@ -8,7 +8,6 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import PeopleIcon from '@mui/icons-material/People';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -27,11 +26,9 @@ const getHeaders = () => {
   };
 };
 
-const SEMESTERS = ['Semester 1', 'Semester 2', 'Semester 3', 'Semester 4', 'Semester 5', 'Semester 6'];
-
 const emptyForm = {
   name: '', username: '', password: '', rollNumber: '', enrollmentNumber: '',
-  semester: '', email: '', phone: '', parentName: '', parentMobile: '',
+  semester: '', email: '', phone: '', parentName: '', parentMobile: '', address: '',
 };
 
 export const FacultyStudentManagement: React.FC = () => {
@@ -48,14 +45,19 @@ export const FacultyStudentManagement: React.FC = () => {
   const [form, setForm] = useState({ ...emptyForm });
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // View Details dialog
+  const [viewStudent, setViewStudent] = useState<any | null>(null);
 
   // Delete dialog
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // View dialog
-  const [viewStudent, setViewStudent] = useState<any | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -63,28 +65,15 @@ export const FacultyStudentManagement: React.FC = () => {
       const res = await fetch(`${API_URL}/students`, { headers: getHeaders() });
       const data = await res.json();
       if (res.ok) {
-        setStudents(Array.isArray(data) ? data : []);
+        setStudents(data);
       } else {
-        toast.error(data.message || 'Failed to load students.');
+        toast.error(data.message || 'Failed to fetch students.');
       }
     } catch {
-      toast.error('Connection error loading students.');
+      toast.error('Network error loading students list.');
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => { fetchStudents(); }, []);
-
-  const validateForm = () => {
-    const errors: Record<string, string> = {};
-    if (!form.name.trim()) errors.name = 'Student name is required.';
-    if (!form.username.trim()) errors.username = 'Username is required.';
-    if (!editingStudent && !form.password) errors.password = 'Password is required.';
-    if (!form.rollNumber.trim()) errors.rollNumber = 'Roll number is required.';
-    if (!form.semester) errors.semester = 'Semester is required.';
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
   };
 
   const handleOpenAdd = () => {
@@ -95,53 +84,73 @@ export const FacultyStudentManagement: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleOpenEdit = (student: any) => {
-    setEditingStudent(student);
+  const handleOpenEdit = (stu: any) => {
+    setEditingStudent(stu);
     setForm({
-      name: student.name || '',
-      username: student.username || '',
+      name: stu.name || '',
+      username: stu.username || '',
       password: '',
-      rollNumber: student.rollNumber || '',
-      enrollmentNumber: student.enrollmentNumber || '',
-      semester: student.semester || '',
-      email: student.email || '',
-      phone: student.phone || '',
-      parentName: student.parentName || '',
-      parentMobile: student.parentMobile || '',
+      rollNumber: stu.rollNumber || '',
+      enrollmentNumber: stu.enrollmentNumber || '',
+      semester: stu.semester || '',
+      email: stu.email || '',
+      phone: stu.phone || '',
+      parentName: stu.parentName || '',
+      parentMobile: stu.parentMobile || '',
+      address: stu.address || '',
     });
     setFormErrors({});
     setShowPassword(false);
     setOpenDialog(true);
   };
 
+  const validateForm = () => {
+    const errs: Record<string, string> = {};
+    if (!form.name.trim()) errs.name = 'Full name is required.';
+    if (!form.username.trim()) errs.username = 'Username is required.';
+    if (!editingStudent && !form.password) errs.password = 'Password is required.';
+    if (!form.rollNumber.trim()) errs.rollNumber = 'Roll number is required.';
+    if (!form.semester) errs.semester = 'Semester selection is required.';
+    setFormErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSave = async () => {
     if (!validateForm()) return;
     setSaving(true);
+
     try {
       const payload: any = { ...form };
-      if (!payload.password) delete payload.password; // don't send empty password on edit
+      if (!payload.password) delete payload.password;
 
-      let res, data;
+      let res;
       if (editingStudent) {
         res = await fetch(`${API_URL}/students/${editingStudent._id}`, {
-          method: 'PUT', headers: getHeaders(), body: JSON.stringify(payload),
+          method: 'PUT',
+          headers: getHeaders(),
+          body: JSON.stringify(payload),
         });
       } else {
         res = await fetch(`${API_URL}/students`, {
-          method: 'POST', headers: getHeaders(), body: JSON.stringify(payload),
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify(payload),
         });
       }
-      data = await res.json();
-
+      const data = await res.json();
       if (res.ok) {
-        toast.success(editingStudent ? 'Student updated successfully.' : 'Student created successfully.');
+        toast.success(
+          editingStudent
+            ? 'Student details updated successfully.'
+            : 'Admission request created successfully and is pending approval.'
+        );
         setOpenDialog(false);
         fetchStudents();
       } else {
-        toast.error(data.message || 'Failed to save student.');
+        toast.error(data.message || 'Error processing request.');
       }
     } catch {
-      toast.error('Connection error saving student.');
+      toast.error('Network connection error.');
     } finally {
       setSaving(false);
     }
@@ -152,18 +161,19 @@ export const FacultyStudentManagement: React.FC = () => {
     setDeleteLoading(true);
     try {
       const res = await fetch(`${API_URL}/students/${deleteTarget._id}`, {
-        method: 'DELETE', headers: getHeaders(),
+        method: 'DELETE',
+        headers: getHeaders(),
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success('Student deleted.');
+        toast.success('Student account deleted successfully.');
         setDeleteTarget(null);
         fetchStudents();
       } else {
         toast.error(data.message || 'Failed to delete student.');
       }
     } catch {
-      toast.error('Connection error deleting student.');
+      toast.error('Error deleting student account.');
     } finally {
       setDeleteLoading(false);
     }
@@ -175,6 +185,8 @@ export const FacultyStudentManagement: React.FC = () => {
     s.username?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const assignedSems = user?.assignedSemesters || [];
+
   return (
     <Box sx={{ mt: 2 }} className="animate-fade-in">
       {/* ── Header ─────────────────────────────────────────── */}
@@ -185,7 +197,7 @@ export const FacultyStudentManagement: React.FC = () => {
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             Department: <strong>{user?.department || '—'}</strong>
-            {user?.assignedYear ? <> &nbsp;|&nbsp; Year: <strong>{user.assignedYear}</strong></> : null}
+            {assignedSems.length > 0 ? <> &nbsp;|&nbsp; Assigned Semesters: <strong>{assignedSems.join(', ')}</strong></> : null}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
@@ -250,9 +262,9 @@ export const FacultyStudentManagement: React.FC = () => {
                   {filtered.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                        <PersonAddIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1, display: 'block', mx: 'auto' }} />
+                        <PeopleIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1, display: 'block', mx: 'auto' }} />
                         <Typography color="text.secondary">
-                          {search ? 'No students match your search.' : 'No students added yet. Click "Add Student" to create the first one.'}
+                          {search ? 'No students match your search.' : 'No students managed yet. Click "Add Student" to create a request.'}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -308,15 +320,13 @@ export const FacultyStudentManagement: React.FC = () => {
         PaperProps={{ sx: { bgcolor: '#111827', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 3 } }}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>
-          {editingStudent ? `Edit: ${editingStudent.name}` : 'Add New Student'}
+          {editingStudent ? `Edit Student: ${editingStudent.name}` : 'Add Student (Creates Admission Request)'}
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Grid container spacing={2} sx={{ mt: 0 }}>
-            {/* Auto-filled dept & year info */}
             <Grid item xs={12}>
               <Alert severity="info" sx={{ borderRadius: 2, mb: 1 }}>
                 Department: <strong>{user?.department}</strong>
-                {user?.assignedYear ? <> &nbsp;|&nbsp; Year: <strong>{user.assignedYear}</strong></> : ''}
               </Alert>
             </Grid>
 
@@ -361,13 +371,13 @@ export const FacultyStudentManagement: React.FC = () => {
                 <Select value={form.semester}
                   onChange={(e) => { setForm(f => ({ ...f, semester: e.target.value })); setFormErrors(fe => ({ ...fe, semester: '' })); }}
                   label="Semester *">
-                  {SEMESTERS.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                  {assignedSems.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                 </Select>
                 {formErrors.semester && <Typography variant="caption" color="error" sx={{ pl: 2 }}>{formErrors.semester}</Typography>}
               </FormControl>
             </Grid>
 
-            <Grid item xs={12}><Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1, fontWeight: 600 }}>Optional Contact Info</Typography></Grid>
+            <Grid item xs={12}><Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1, fontWeight: 600 }}>Contact Details</Typography></Grid>
 
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Email Address" value={form.email}
@@ -378,21 +388,52 @@ export const FacultyStudentManagement: React.FC = () => {
                 onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} size="small" />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="Parent/Guardian Name" value={form.parentName}
+              <TextField fullWidth label="Parent Name" value={form.parentName}
                 onChange={(e) => setForm(f => ({ ...f, parentName: e.target.value }))} size="small" />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Parent Mobile" value={form.parentMobile}
                 onChange={(e) => setForm(f => ({ ...f, parentMobile: e.target.value }))} size="small" />
             </Grid>
+            <Grid item xs={12}>
+              <TextField fullWidth label="Address" value={form.address}
+                onChange={(e) => setForm(f => ({ ...f, address: e.target.value }))} size="small" multiline rows={2} />
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
           <Button onClick={() => setOpenDialog(false)} color="inherit">Cancel</Button>
-          <Button onClick={handleSave} variant="contained" color="success" disabled={saving}
-            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <AddIcon />}>
-            {saving ? 'Saving...' : editingStudent ? 'Save Changes' : 'Create Student'}
+          <Button onClick={handleSave} variant="contained" color="success" disabled={saving}>
+            {saving ? 'Saving...' : editingStudent ? 'Save Changes' : 'Submit Admission'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── View Student Details Dialog ─────────────────────── */}
+      <Dialog
+        open={!!viewStudent} onClose={() => setViewStudent(null)} fullWidth maxWidth="xs"
+        PaperProps={{ sx: { bgcolor: '#111827', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Student Information</DialogTitle>
+        <DialogContent dividers sx={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+          {viewStudent && (
+            <Grid container spacing={2}>
+              <Grid item xs={6}><Typography variant="caption" color="text.secondary">Name</Typography><Typography variant="body2" fontWeight={600}>{viewStudent.name}</Typography></Grid>
+              <Grid item xs={6}><Typography variant="caption" color="text.secondary">Username</Typography><Typography variant="body2" fontWeight={600}>{viewStudent.username}</Typography></Grid>
+              <Grid item xs={6}><Typography variant="caption" color="text.secondary">Roll Number</Typography><Typography variant="body2">{viewStudent.rollNumber || '—'}</Typography></Grid>
+              <Grid item xs={6}><Typography variant="caption" color="text.secondary">Enrollment No.</Typography><Typography variant="body2">{viewStudent.enrollmentNumber || '—'}</Typography></Grid>
+              <Grid item xs={6}><Typography variant="caption" color="text.secondary">Semester</Typography><Typography variant="body2">{viewStudent.semester}</Typography></Grid>
+              <Grid item xs={6}><Typography variant="caption" color="text.secondary">Academic Year</Typography><Typography variant="body2">{viewStudent.year}</Typography></Grid>
+              <Grid item xs={6}><Typography variant="caption" color="text.secondary">Phone</Typography><Typography variant="body2">{viewStudent.phone || '—'}</Typography></Grid>
+              <Grid item xs={6}><Typography variant="caption" color="text.secondary">Email</Typography><Typography variant="body2">{viewStudent.email || '—'}</Typography></Grid>
+              <Grid item xs={6}><Typography variant="caption" color="text.secondary">Parent Name</Typography><Typography variant="body2">{viewStudent.parentName || '—'}</Typography></Grid>
+              <Grid item xs={6}><Typography variant="caption" color="text.secondary">Parent Mobile</Typography><Typography variant="body2">{viewStudent.parentMobile || '—'}</Typography></Grid>
+              <Grid item xs={12}><Typography variant="caption" color="text.secondary">Address</Typography><Typography variant="body2">{viewStudent.address || '—'}</Typography></Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setViewStudent(null)} variant="outlined" color="inherit">Close</Button>
         </DialogActions>
       </Dialog>
 
@@ -401,56 +442,17 @@ export const FacultyStudentManagement: React.FC = () => {
         open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth
         PaperProps={{ sx: { bgcolor: '#111827', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 3 } }}
       >
-        <DialogTitle sx={{ fontWeight: 700, color: 'error.light' }}>Delete Student</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, color: 'error.light' }}>Delete Student Profile</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
             Are you sure you want to permanently delete <strong>{deleteTarget?.name}</strong>?
-            Their login credentials will be revoked and this action cannot be undone.
+            This will remove their profile and credentials.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
           <Button onClick={() => setDeleteTarget(null)} color="inherit">Cancel</Button>
           <Button onClick={handleDelete} variant="contained" color="error" disabled={deleteLoading}>
             {deleteLoading ? 'Deleting...' : 'Delete Permanently'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* ── View Student Dialog ─────────────────────────────── */}
-      <Dialog
-        open={!!viewStudent} onClose={() => setViewStudent(null)} maxWidth="sm" fullWidth
-        PaperProps={{ sx: { bgcolor: '#111827', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 3 } }}
-      >
-        <DialogTitle sx={{ fontWeight: 700 }}>Student Details</DialogTitle>
-        <DialogContent>
-          {viewStudent && (
-            <Grid container spacing={2} sx={{ mt: 0 }}>
-              {[
-                { label: 'Full Name', value: viewStudent.name },
-                { label: 'Username', value: viewStudent.username },
-                { label: 'Roll Number', value: viewStudent.rollNumber || '—' },
-                { label: 'Enrollment No.', value: viewStudent.enrollmentNumber || '—' },
-                { label: 'Department', value: viewStudent.department || '—' },
-                { label: 'Year', value: viewStudent.year || '—' },
-                { label: 'Semester', value: viewStudent.semester || '—' },
-                { label: 'Email', value: viewStudent.email || '—' },
-                { label: 'Phone', value: viewStudent.phone || '—' },
-                { label: 'Parent Name', value: viewStudent.parentName || '—' },
-                { label: 'Parent Mobile', value: viewStudent.parentMobile || '—' },
-                { label: 'Status', value: viewStudent.status?.toUpperCase() },
-              ].map(({ label, value }) => (
-                <Grid item xs={12} sm={6} key={label}>
-                  <Typography variant="caption" color="text.secondary">{label}</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{value}</Typography>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setViewStudent(null)} color="inherit">Close</Button>
-          <Button onClick={() => { setViewStudent(null); handleOpenEdit(viewStudent); }} variant="outlined" color="success" startIcon={<EditIcon />}>
-            Edit
           </Button>
         </DialogActions>
       </Dialog>

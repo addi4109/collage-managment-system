@@ -14,15 +14,21 @@ export const loginWithEmail = async (
   email: string,
   password: string,
   rememberMe = true,
-  role?: UserRole
+  role?: UserRole,
+  department?: string
 ): Promise<UserProfile> => {
   const resolvedRole = role || (email.includes('admin') ? 'admin' : email.includes('faculty') ? 'faculty' : 'student');
   const endpoint = `${API_URL}/auth/login-${resolvedRole}`;
   
+  const body: any = { email, password };
+  if (resolvedRole === 'faculty' && department) {
+    body.department = department;
+  }
+
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(body),
   });
 
   const data = await res.json();
@@ -53,6 +59,8 @@ export const loginWithEmail = async (
     semester: data.user.semester || '',
     departments: data.user.departments || [],
     activeDepartment: data.user.activeDepartment || '',
+    assignedSemesters: data.user.assignedSemesters || [],
+    assignedSubjects: data.user.assignedSubjects || [],
   };
 
   try {

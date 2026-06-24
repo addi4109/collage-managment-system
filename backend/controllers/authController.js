@@ -32,7 +32,7 @@ const generateToken = (user) => {
 // Only admin can create faculty accounts. No public registration.
 // ──────────────────────────────────────────────────────────
 export const adminCreateFaculty = async (req, res) => {
-  const { name, username, email, password, department, assignedYear, assignedSubjects, employeeId, phone } = req.body;
+  const { name, username, email, password, department, assignedSemesters, assignedSubjects, employeeId, phone } = req.body;
 
   if (!name || !username || !password || !department) {
     return res.status(400).json({ message: 'Name, username, password, and department are required.' });
@@ -56,6 +56,12 @@ export const adminCreateFaculty = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
+    const sems = assignedSemesters || [];
+    let calculatedYear = '';
+    if (sems.includes('Sem 1') || sems.includes('Sem 2')) calculatedYear = 'First Year';
+    else if (sems.includes('Sem 3') || sems.includes('Sem 4')) calculatedYear = 'Second Year';
+    else if (sems.includes('Sem 5') || sems.includes('Sem 6')) calculatedYear = 'Third Year';
+
     const newUser = new User({
       name,
       username: username.toLowerCase().trim(),
@@ -65,7 +71,8 @@ export const adminCreateFaculty = async (req, res) => {
       status: 'approved',
       approvedByAdmin: true,
       department,
-      assignedYear: assignedYear || '',
+      assignedSemesters: sems,
+      assignedYear: calculatedYear,
       assignedSubjects: assignedSubjects || [],
       employeeId: employeeId || 'FAC' + Math.floor(1000 + Math.random() * 9000),
       phone: phone || '',
@@ -77,6 +84,7 @@ export const adminCreateFaculty = async (req, res) => {
       user: savedUser._id,
       employeeId: savedUser.employeeId,
       department,
+      assignedSemesters: sems,
       assignedSubjects: assignedSubjects || [],
       approvedByAdmin: true,
     });
@@ -93,6 +101,7 @@ export const adminCreateFaculty = async (req, res) => {
         role: savedUser.role,
         status: savedUser.status,
         department: savedUser.department,
+        assignedSemesters: savedUser.assignedSemesters,
         assignedYear: savedUser.assignedYear,
         assignedSubjects: savedUser.assignedSubjects,
         employeeId: savedUser.employeeId,
@@ -111,7 +120,7 @@ export const adminCreateFaculty = async (req, res) => {
 // ──────────────────────────────────────────────────────────
 export const adminUpdateFaculty = async (req, res) => {
   const { id } = req.params;
-  const { name, username, email, password, department, assignedYear, assignedSubjects, employeeId, phone, status } = req.body;
+  const { name, username, email, password, department, assignedSemesters, assignedSubjects, employeeId, phone, status } = req.body;
 
   try {
     const user = await User.findById(id);
@@ -138,7 +147,14 @@ export const adminUpdateFaculty = async (req, res) => {
 
     if (name) user.name = name;
     if (department) user.department = department;
-    if (assignedYear !== undefined) user.assignedYear = assignedYear;
+    if (assignedSemesters !== undefined) {
+      user.assignedSemesters = assignedSemesters;
+      let calculatedYear = '';
+      if (assignedSemesters.includes('Sem 1') || assignedSemesters.includes('Sem 2')) calculatedYear = 'First Year';
+      else if (assignedSemesters.includes('Sem 3') || assignedSemesters.includes('Sem 4')) calculatedYear = 'Second Year';
+      else if (assignedSemesters.includes('Sem 5') || assignedSemesters.includes('Sem 6')) calculatedYear = 'Third Year';
+      user.assignedYear = calculatedYear;
+    }
     if (assignedSubjects) user.assignedSubjects = assignedSubjects;
     if (employeeId) user.employeeId = employeeId;
     if (phone !== undefined) user.phone = phone;
@@ -158,6 +174,7 @@ export const adminUpdateFaculty = async (req, res) => {
     const facultyProfile = await Faculty.findOne({ user: user._id });
     if (facultyProfile) {
       if (department) facultyProfile.department = department;
+      if (assignedSemesters) facultyProfile.assignedSemesters = assignedSemesters;
       if (assignedSubjects) facultyProfile.assignedSubjects = assignedSubjects;
       if (status) facultyProfile.approvedByAdmin = user.approvedByAdmin;
       if (employeeId) facultyProfile.employeeId = employeeId;
@@ -178,6 +195,7 @@ export const adminUpdateFaculty = async (req, res) => {
         role: user.role,
         status: user.status,
         department: user.department,
+        assignedSemesters: user.assignedSemesters,
         assignedYear: user.assignedYear,
         assignedSubjects: user.assignedSubjects,
         employeeId: user.employeeId,
@@ -292,25 +310,28 @@ export const loginStudent = async (req, res) => {
 // ──────────────────────────────────────────────────────────
 export const loginFaculty = async (req, res) => {
   console.log('[DEBUG] Server: Faculty login - Request received');
-  const { email, password } = req.body; // 'email' can be username or email
+  const { email, password, department } = req.body; // 'email' is username or email
   const identifier = email;
 
-  if (!identifier || !password) {
-    return res.status(400).json({ message: 'Please provide username and password.' });
+  if (!identifier || !password || !department) {
+    return res.status(400).json({ message: 'Please provide username, password, and department.' });
   }
 
   try {
-    // Try username lookup first, then email
     let user = await User.findOne({ username: identifier.toLowerCase().trim() })
-      .select('_id role passwordHash name username email status department assignedSubjects assignedYear approvedByAdmin');
+      .select('_id role passwordHash name username email status department assignedSubjects assignedSemesters assignedYear approvedByAdmin');
 
     if (!user) {
       user = await User.findOne({ email: identifier.toLowerCase().trim() })
-        .select('_id role passwordHash name username email status department assignedSubjects assignedYear approvedByAdmin');
+        .select('_id role passwordHash name username email status department assignedSubjects assignedSemesters assignedYear approvedByAdmin');
     }
 
     if (!user || user.role !== 'faculty') {
       return res.status(401).json({ message: 'Invalid credentials or faculty account not found.' });
+    }
+
+    if (user.department !== department) {
+      return res.status(401).json({ message: 'You are not assigned to this department portal.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
@@ -345,6 +366,7 @@ export const loginFaculty = async (req, res) => {
         role: user.role,
         department: user.department,
         assignedSubjects: user.assignedSubjects || [],
+        assignedSemesters: user.assignedSemesters || [],
         assignedYear: user.assignedYear || '',
         approvedByAdmin: user.approvedByAdmin || false,
       },
@@ -460,6 +482,7 @@ export const getProfile = async (req, res) => {
       parentMobile: user.parentMobile || '',
       assignedSubjects: user.assignedSubjects || [],
       assignedSemester: user.assignedSemester || null,
+      assignedSemesters: user.assignedSemesters || [],
       assignedYear: user.assignedYear || '',
       employeeId: user.employeeId || '',
       approvedByAdmin: user.approvedByAdmin || false,

@@ -26,11 +26,11 @@ const getHeaders = () => {
   };
 };
 
-const YEARS = ['First Year', 'Second Year', 'Third Year'];
+const SEMESTERS = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'];
 
 const emptyFacultyForm = {
   name: '', username: '', email: '', password: '', phone: '',
-  employeeId: '', department: '', assignedYear: '', assignedSubjects: [] as string[],
+  employeeId: '', department: '', assignedSemesters: [] as string[], assignedSubjects: [] as string[],
 };
 
 export const AdminFacultyAssignment: React.FC = () => {
@@ -97,7 +97,7 @@ export const AdminFacultyAssignment: React.FC = () => {
       phone: fac.phone || '',
       employeeId: fac.employeeId || '',
       department: fac.department || '',
-      assignedYear: fac.assignedYear || '',
+      assignedSemesters: fac.assignedSemesters || [],
       assignedSubjects: fac.assignedSubjects || [],
     });
     setShowPassword(false);
@@ -235,7 +235,7 @@ export const AdminFacultyAssignment: React.FC = () => {
             Faculty Management
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Create, edit, and manage all faculty accounts and subject assignments.
+            Create, edit, and manage all faculty accounts, semesters, and subject assignments.
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -262,7 +262,7 @@ export const AdminFacultyAssignment: React.FC = () => {
                   <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Username</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Department</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Year</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Assigned Semesters</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Subjects</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>Actions</TableCell>
@@ -289,9 +289,15 @@ export const AdminFacultyAssignment: React.FC = () => {
                         <Chip label={fac.department || 'Not Assigned'} color={fac.department ? 'success' : 'default'} variant="outlined" size="small" />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="caption" color="text.secondary">
-                          {fac.assignedYear || '—'}
-                        </Typography>
+                        {fac.assignedSemesters?.length > 0 ? (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {fac.assignedSemesters.map((sem: string) => (
+                              <Chip key={sem} label={sem} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.05)', color: 'text.secondary' }} />
+                            ))}
+                          </Box>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">—</Typography>
+                        )}
                       </TableCell>
                       <TableCell>
                         {fac.assignedSubjects?.length > 0 ? (
@@ -427,15 +433,35 @@ export const AdminFacultyAssignment: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Assigned Year</InputLabel>
-                <Select value={facultyForm.assignedYear}
-                  onChange={(e) => setFacultyForm(f => ({ ...f, assignedYear: e.target.value }))} label="Assigned Year">
-                  <MenuItem value="">— Not Set —</MenuItem>
-                  {YEARS.map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
-                </Select>
-              </FormControl>
+            
+            <Grid item xs={12} sx={{ mt: 1 }}>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
+                Assign Semesters
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {SEMESTERS.map((sem) => (
+                  <FormControlLabel
+                    key={sem}
+                    control={
+                      <Checkbox
+                        checked={facultyForm.assignedSemesters?.includes(sem)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFacultyForm(f => ({
+                            ...f,
+                            assignedSemesters: checked
+                              ? [...(f.assignedSemesters || []), sem]
+                              : (f.assignedSemesters || []).filter(s => s !== sem)
+                          }));
+                        }}
+                        color="success"
+                        size="small"
+                      />
+                    }
+                    label={sem}
+                  />
+                ))}
+              </Box>
             </Grid>
           </Grid>
         </DialogContent>

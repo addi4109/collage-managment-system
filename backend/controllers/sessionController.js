@@ -8,24 +8,28 @@ export const createSession = async (req, res) => {
     courseName,
     sessionTitle,
     department,
+    year,
+    semester,
+    subject,
     date,
     startTime,
     duration,
     description,
   } = req.body;
 
-  if (!facultyName || !courseName || !sessionTitle || !date || !startTime) {
+  if (!facultyName || (!courseName && !subject) || !sessionTitle || !date || !startTime) {
     return res.status(400).json({
-      message: 'Faculty name, course name, session title, date, and start time are required.',
+      message: 'Faculty name, subject/course name, session title, date, and start time are required.',
     });
   }
 
   try {
+    const activeSubject = subject || courseName;
     if (req.user.role === 'faculty') {
       const assigned = req.user.assignedSubjects || [];
-      if (!assigned.includes(courseName)) {
+      if (!assigned.includes(activeSubject)) {
         return res.status(403).json({
-          message: `Forbidden. You are not assigned to teach the subject "${courseName}".`,
+          message: `Forbidden. You are not assigned to teach the subject "${activeSubject}".`,
         });
       }
     }
@@ -33,9 +37,12 @@ export const createSession = async (req, res) => {
     const newSession = new AttendanceSession({
       facultyId: req.user.id,
       facultyName,
-      courseName,
+      courseName: activeSubject,
+      subject: activeSubject,
       sessionTitle,
       department: req.user.role === 'faculty' ? req.user.department : (department || ''),
+      year: year || '',
+      semester: semester || '',
       date: new Date(date),
       startTime,
       duration: Number(duration) || 5,

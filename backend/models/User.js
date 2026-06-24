@@ -58,6 +58,10 @@ const userSchema = new mongoose.Schema(
       max: 8,
       default: null,
     },
+    assignedSemesters: {
+      type: [String],
+      default: [],
+    },
     assignedYear: {
       type: String,
       enum: ['First Year', 'Second Year', 'Third Year', ''],

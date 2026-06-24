@@ -2,7 +2,7 @@ import Notice from '../models/Notice.js';
 
 // Create a new notice
 export const createNotice = async (req, res) => {
-  const { title, message, priority } = req.body;
+  const { title, message, priority, department, year, semester } = req.body;
 
   if (!title || !message) {
     return res.status(400).json({ message: 'Title and message are required.' });
@@ -20,7 +20,9 @@ export const createNotice = async (req, res) => {
       createdBy: req.user.id,
       createdByName: req.user.name,
       role: req.user.role,
-      department: req.user.role === 'faculty' ? req.user.department : '',
+      department: req.user.role === 'faculty' ? req.user.department : (department || ''),
+      year: year || '',
+      semester: semester || '',
       priority: priority || 'low',
     });
 
@@ -37,16 +39,15 @@ export const getAllNotices = async (req, res) => {
   try {
     const filter = {};
     if (req.user.role === 'student') {
-      filter.$or = [
-        { department: req.user.department },
-        { department: '' },
-        { department: { $exists: false } }
+      filter.$and = [
+        { $or: [{ department: req.user.department }, { department: '' }] },
+        { $or: [{ year: req.user.year }, { year: '' }] },
+        { $or: [{ semester: req.user.semester }, { semester: '' }] }
       ];
     } else if (req.user.role === 'faculty') {
-      filter.$or = [
+      filter.$and = [
         { department: req.user.department },
-        { department: '' },
-        { department: { $exists: false } }
+        { $or: [{ semester: { $in: req.user.assignedSemesters } }, { semester: '' }] }
       ];
     }
     const notices = await Notice.find(filter).sort({ createdAt: -1 });

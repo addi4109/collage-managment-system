@@ -139,6 +139,7 @@ export const createResult = async (req, res) => {
       courseName,
       semester,
       academicYear,
+      year: academicYear,
       facultyId: req.user.id,
       facultyName: req.user.name,
       subjects: subjects.map((s) => ({
@@ -208,6 +209,7 @@ export const updateResult = async (req, res) => {
     result.courseName = courseName || result.courseName;
     result.semester = semester || result.semester;
     result.academicYear = academicYear || result.academicYear;
+    result.year = academicYear || result.year || result.academicYear;
     result.attendancePercentage = attendancePercentage !== undefined ? Number(attendancePercentage) : result.attendancePercentage;
     result.internalMarksTotal = internalMarksTotal !== undefined ? Number(internalMarksTotal) : result.internalMarksTotal;
     result.practicalMarksTotal = practicalMarksTotal !== undefined ? Number(practicalMarksTotal) : result.practicalMarksTotal;
@@ -267,7 +269,11 @@ export const submitResult = async (req, res) => {
 // 5. List Faculty submissions
 export const getFacultyResults = async (req, res) => {
   try {
-    const list = await Result.find({ facultyId: req.user.id, department: req.user.department }).sort({ createdAt: -1 });
+    const list = await Result.find({
+      facultyId: req.user.id,
+      department: req.user.department,
+      semester: { $in: req.user.assignedSemesters || [] }
+    }).sort({ createdAt: -1 });
     res.json(list);
   } catch (error) {
     console.error('Get faculty results error:', error);

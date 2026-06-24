@@ -27,6 +27,21 @@ const attendanceSessionSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    year: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    semester: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    subject: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     date: {
       type: Date,
       required: true,

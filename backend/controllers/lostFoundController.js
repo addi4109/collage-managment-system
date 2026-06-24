@@ -2,7 +2,7 @@ import LostFound from '../models/LostFound.js';
 
 // Create a new Lost & Found entry (Faculty only)
 export const createLostFound = async (req, res) => {
-  const { title, description, type, location, date, imageUrl } = req.body;
+  const { title, description, type, location, date, imageUrl, department, year, semester } = req.body;
 
   if (!title || !description || !type || !date) {
     return res.status(400).json({ message: 'Title, description, type, and date are required.' });
@@ -21,7 +21,9 @@ export const createLostFound = async (req, res) => {
       date: new Date(date),
       imageUrl: imageUrl || '',
       createdBy: req.user.id,
-      department: req.user.role === 'faculty' ? req.user.activeDepartment : '',
+      department: req.user.role === 'faculty' ? req.user.department : (department || ''),
+      year: year || '',
+      semester: semester || '',
       createdByName: req.user.name,
       replies: [],
       status: 'active',
@@ -109,16 +111,15 @@ export const getAllLostFound = async (req, res) => {
   try {
     const filter = {};
     if (req.user.role === 'student') {
-      filter.$or = [
-        { department: req.user.department },
-        { department: '' },
-        { department: { $exists: false } }
+      filter.$and = [
+        { $or: [{ department: req.user.department }, { department: '' }] },
+        { $or: [{ year: req.user.year }, { year: '' }] },
+        { $or: [{ semester: req.user.semester }, { semester: '' }] }
       ];
     } else if (req.user.role === 'faculty') {
-      filter.$or = [
-        { department: req.user.activeDepartment },
-        { department: '' },
-        { department: { $exists: false } }
+      filter.$and = [
+        { department: req.user.department },
+        { $or: [{ semester: { $in: req.user.assignedSemesters } }, { semester: '' }] }
       ];
     }
     const items = await LostFound.find(filter).sort({ createdAt: -1 });

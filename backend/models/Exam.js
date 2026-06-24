@@ -30,6 +30,16 @@ const examSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    year: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    semester: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     status: {
       type: String,
       enum: ['draft', 'pending', 'approved', 'rejected', 'scheduled', 'active', 'completed'],

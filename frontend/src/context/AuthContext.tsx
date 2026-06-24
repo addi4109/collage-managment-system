@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { getUserProfile } from '../services/userService';
-import { useToast } from './ToastContext';
+
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -21,7 +21,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const toast = useToast();
   const [user, setUserState] = useState<UserProfile | null>(null);
   const [loading, setLoadingState] = useState(true);
   const [error, setErrorState] = useState<string | null>(null);

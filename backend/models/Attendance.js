@@ -41,6 +41,26 @@ const attendanceSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    department: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    year: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    semester: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    subject: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     status: {
       type: String,
       enum: ['Present', 'Absent'],

@@ -1,17 +1,18 @@
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import Student from '../models/Student.js';
+import Admission from '../models/Admission.js';
 import { clearUserCache } from '../middleware/authMiddleware.js';
 import { clearProfileCache } from './authController.js';
 
 // ──────────────────────────────────────────────────────────
-// FACULTY: Create Student
-// Faculty can only create students in their own dept + year
+// FACULTY: Add Student -> Creates Admission Request (Pending)
+// Student accounts are only created through Admission approvals.
 // ──────────────────────────────────────────────────────────
 export const createStudent = async (req, res) => {
   const {
     name, username, password, rollNumber, enrollmentNumber,
-    semester, email, phone, parentName, parentMobile,
+    semester, email, phone, parentName, parentMobile, address,
   } = req.body;
 
   if (!name || !username || !password || !rollNumber || !semester) {
@@ -21,16 +22,35 @@ export const createStudent = async (req, res) => {
   try {
     const faculty = await User.findById(req.user.id);
     if (!faculty || faculty.role !== 'faculty') {
-      return res.status(403).json({ message: 'Only faculty can create student accounts.' });
+      return res.status(403).json({ message: 'Only faculty can initiate student admissions.' });
     }
 
     const department = faculty.department;
-    const year = faculty.assignedYear || '';
 
-    // Check username uniqueness
+    // Check if faculty is assigned to this semester
+    if (!faculty.assignedSemesters.includes(semester)) {
+      return res.status(403).json({ message: `You are not assigned to manage students for ${semester}.` });
+    }
+
+    // Determine year based on semester
+    let year = '';
+    if (semester === 'Sem 1' || semester === 'Sem 2') year = 'First Year';
+    else if (semester === 'Sem 3' || semester === 'Sem 4') year = 'Second Year';
+    else if (semester === 'Sem 5' || semester === 'Sem 6') year = 'Third Year';
+
+    // Check username uniqueness in User
     const existingUsername = await User.findOne({ username: username.toLowerCase().trim() });
     if (existingUsername) {
-      return res.status(400).json({ message: 'Username already taken. Please choose a different one.' });
+      return res.status(400).json({ message: 'Username already taken by an active student.' });
+    }
+
+    // Check username uniqueness in pending admissions
+    const existingAdmission = await Admission.findOne({
+      username: username.toLowerCase().trim(),
+      status: 'pending'
+    });
+    if (existingAdmission) {
+      return res.status(400).json({ message: 'An admission request for this username is already pending approval.' });
     }
 
     // Check rollNumber uniqueness
@@ -42,57 +62,30 @@ export const createStudent = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const newUser = new User({
+    const newRequest = new Admission({
       name,
       username: username.toLowerCase().trim(),
-      email: email ? email.toLowerCase().trim() : undefined,
       passwordHash,
-      role: 'student',
-      status: 'active',
-      department,
-      year,
-      semester,
-      rollNumber: rollNumber.trim(),
-      phone: phone || '',
-      parentName: parentName || '',
-      parentMobile: parentMobile || '',
-      createdByFaculty: faculty._id,
-    });
-
-    const savedUser = await newUser.save();
-
-    const newStudent = new Student({
-      user: savedUser._id,
       rollNumber: rollNumber.trim(),
       enrollmentNumber: enrollmentNumber || '',
       department,
       year,
       semester,
+      email: email ? email.toLowerCase().trim() : undefined,
       phone: phone || '',
       parentName: parentName || '',
       parentMobile: parentMobile || '',
+      address: address || '',
+      status: 'pending',
       createdByFaculty: faculty._id,
     });
-    await newStudent.save();
+
+    await newRequest.save();
 
     res.status(201).json({
       success: true,
-      message: 'Student account created successfully.',
-      student: {
-        uid: savedUser._id.toString(),
-        name: savedUser.name,
-        username: savedUser.username,
-        email: savedUser.email,
-        rollNumber: savedUser.rollNumber,
-        enrollmentNumber: newStudent.enrollmentNumber,
-        department: savedUser.department,
-        year: savedUser.year,
-        semester: savedUser.semester,
-        phone: savedUser.phone,
-        parentName: savedUser.parentName,
-        parentMobile: savedUser.parentMobile,
-        createdAt: savedUser.createdAt,
-      },
+      message: 'Admission request created successfully and is pending admin approval.',
+      admission: newRequest,
     });
   } catch (error) {
     console.error('Create student error:', error);
@@ -101,16 +94,18 @@ export const createStudent = async (req, res) => {
 };
 
 // ──────────────────────────────────────────────────────────
-// FACULTY: Get All Students (in faculty dept + year)
+// FACULTY: Get All Students (in faculty dept + assigned semesters)
 // ──────────────────────────────────────────────────────────
 export const getStudents = async (req, res) => {
   try {
     const faculty = await User.findById(req.user.id);
     if (!faculty) return res.status(404).json({ message: 'Faculty not found.' });
 
-    const filter = { role: 'student', department: faculty.department };
-    if (faculty.assignedYear) {
-      filter.year = faculty.assignedYear;
+    let filter = { role: 'student' };
+
+    if (faculty.role === 'faculty') {
+      filter.department = faculty.department;
+      filter.semester = { $in: faculty.assignedSemesters };
     }
 
     const students = await User.find(filter)
@@ -137,9 +132,14 @@ export const getStudent = async (req, res) => {
       return res.status(404).json({ message: 'Student not found.' });
     }
 
-    // Faculty can only view students in their department
-    if (faculty.department && student.department !== faculty.department) {
-      return res.status(403).json({ message: 'Access denied. Student is in a different department.' });
+    // Faculty can only view students in their department & assigned semesters
+    if (faculty.role === 'faculty') {
+      if (student.department !== faculty.department) {
+        return res.status(403).json({ message: 'Access denied. Student is in a different department.' });
+      }
+      if (!faculty.assignedSemesters.includes(student.semester)) {
+        return res.status(403).json({ message: 'Access denied. Student is not in your assigned semesters.' });
+      }
     }
 
     res.json(student);
@@ -164,9 +164,18 @@ export const updateStudent = async (req, res) => {
       return res.status(404).json({ message: 'Student not found.' });
     }
 
-    // Department check
-    if (faculty.department && student.department !== faculty.department) {
-      return res.status(403).json({ message: 'Access denied. Student is in a different department.' });
+    // Faculty can only update students in their department & assigned semesters
+    if (faculty.role === 'faculty') {
+      if (student.department !== faculty.department) {
+        return res.status(403).json({ message: 'Access denied. Student is in a different department.' });
+      }
+      if (!faculty.assignedSemesters.includes(student.semester)) {
+        return res.status(403).json({ message: 'Access denied. Student is not in your assigned semesters.' });
+      }
+      // If updating semester, check if new semester is also in faculty's assigned semesters
+      if (semester && !faculty.assignedSemesters.includes(semester)) {
+        return res.status(403).json({ message: 'Access denied. Cannot move student to a semester not assigned to you.' });
+      }
     }
 
     // Username uniqueness check
@@ -184,7 +193,15 @@ export const updateStudent = async (req, res) => {
 
     if (name) student.name = name;
     if (rollNumber) student.rollNumber = rollNumber.trim();
-    if (semester) student.semester = semester;
+    if (semester) {
+      student.semester = semester;
+      // Update year based on semester
+      let year = '';
+      if (semester === 'Sem 1' || semester === 'Sem 2') year = 'First Year';
+      else if (semester === 'Sem 3' || semester === 'Sem 4') year = 'Second Year';
+      else if (semester === 'Sem 5' || semester === 'Sem 6') year = 'Third Year';
+      student.year = year;
+    }
     if (phone !== undefined) student.phone = phone;
     if (parentName !== undefined) student.parentName = parentName;
     if (parentMobile !== undefined) student.parentMobile = parentMobile;
@@ -201,7 +218,14 @@ export const updateStudent = async (req, res) => {
     if (studentProfile) {
       if (rollNumber) studentProfile.rollNumber = rollNumber.trim();
       if (enrollmentNumber) studentProfile.enrollmentNumber = enrollmentNumber;
-      if (semester) studentProfile.semester = semester;
+      if (semester) {
+        studentProfile.semester = semester;
+        let year = '';
+        if (semester === 'Sem 1' || semester === 'Sem 2') year = 'First Year';
+        else if (semester === 'Sem 3' || semester === 'Sem 4') year = 'Second Year';
+        else if (semester === 'Sem 5' || semester === 'Sem 6') year = 'Third Year';
+        studentProfile.year = year;
+      }
       if (phone !== undefined) studentProfile.phone = phone;
       if (parentName !== undefined) studentProfile.parentName = parentName;
       if (parentMobile !== undefined) studentProfile.parentMobile = parentMobile;
@@ -243,8 +267,13 @@ export const deleteStudent = async (req, res) => {
       return res.status(404).json({ message: 'Student not found.' });
     }
 
-    if (faculty.department && student.department !== faculty.department) {
-      return res.status(403).json({ message: 'Access denied. Student is in a different department.' });
+    if (faculty.role === 'faculty') {
+      if (student.department !== faculty.department) {
+        return res.status(403).json({ message: 'Access denied. Student is in a different department.' });
+      }
+      if (!faculty.assignedSemesters.includes(student.semester)) {
+        return res.status(403).json({ message: 'Access denied. Student is not in your assigned semesters.' });
+      }
     }
 
     await Student.deleteOne({ user: student._id });
@@ -265,10 +294,11 @@ export const deleteStudent = async (req, res) => {
 // ──────────────────────────────────────────────────────────
 export const adminGetStudents = async (req, res) => {
   try {
-    const { department, year } = req.query;
+    const { department, year, semester } = req.query;
     const filter = { role: 'student' };
     if (department) filter.department = department;
     if (year) filter.year = year;
+    if (semester) filter.semester = semester;
 
     const students = await User.find(filter).select('-passwordHash').sort({ department: 1, name: 1 });
     res.json(students);

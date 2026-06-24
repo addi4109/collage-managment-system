@@ -53,6 +53,12 @@ const AdminResults = React.lazy(() => import('./pages/AdminResults').then(m => (
 const StudentResults = React.lazy(() => import('./pages/StudentResults').then(m => ({ default: m.StudentResults })));
 const LostFoundBoard = React.lazy(() => import('./pages/LostFoundBoard').then(m => ({ default: m.LostFoundBoard })));
 const LostFoundForm = React.lazy(() => import('./pages/LostFoundForm').then(m => ({ default: m.LostFoundForm })));
+const AdmissionsApproval = React.lazy(() => import('./pages/AdmissionsApproval').then(m => ({ default: m.AdmissionsApproval })));
+const PlacementCell = React.lazy(() => import('./pages/PlacementCell').then(m => ({ default: m.PlacementCell })));
+const LibraryManagement = React.lazy(() => import('./pages/LibraryManagement').then(m => ({ default: m.LibraryManagement })));
+const FeeManagement = React.lazy(() => import('./pages/FeeManagement').then(m => ({ default: m.FeeManagement })));
+const AcademicCalendar = React.lazy(() => import('./pages/AcademicCalendar').then(m => ({ default: m.AcademicCalendar })));
+const CertificatesAndId = React.lazy(() => import('./pages/CertificatesAndId').then(m => ({ default: m.CertificatesAndId })));
 
 // Instant micro-loader UI spinner
 const LoadingFallback: React.FC = () => (
@@ -464,6 +470,78 @@ const AppContent: React.FC = () => {
                 <ProtectedRoute allowedRoles={['faculty', 'admin']}>
                   <DashboardLayout>
                     <LostFoundForm />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ERP and Admissions Modules */}
+            <Route
+              path="/admin/admissions"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <DashboardLayout>
+                    <AdmissionsApproval />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/faculty/admissions"
+              element={
+                <ProtectedRoute allowedRoles={['faculty']}>
+                  <DashboardLayout>
+                    <AdmissionsApproval />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/placements"
+              element={
+                <ProtectedRoute allowedRoles={['student', 'faculty', 'admin']}>
+                  <DashboardLayout>
+                    <PlacementCell />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/library"
+              element={
+                <ProtectedRoute allowedRoles={['student', 'faculty', 'admin']}>
+                  <DashboardLayout>
+                    <LibraryManagement />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/fees"
+              element={
+                <ProtectedRoute allowedRoles={['student', 'faculty', 'admin']}>
+                  <DashboardLayout>
+                    <FeeManagement />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute allowedRoles={['student', 'faculty', 'admin']}>
+                  <DashboardLayout>
+                    <AcademicCalendar />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/certificates"
+              element={
+                <ProtectedRoute allowedRoles={['student', 'faculty']}>
+                  <DashboardLayout>
+                    <CertificatesAndId />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

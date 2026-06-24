@@ -186,6 +186,10 @@ export const checkInStudent = async (req, res) => {
       date: new Date(session.date),
       status: 'Present',
       checkInTime: new Date(),
+      department: session.department,
+      year: session.year,
+      semester: session.semester,
+      subject: session.subject || session.courseName,
     });
 
     await attendanceRecord.save();

@@ -66,6 +66,16 @@ const lostFoundSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    year: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    semester: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     createdByName: {
       type: String,
       required: true,

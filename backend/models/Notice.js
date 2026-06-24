@@ -31,6 +31,16 @@ const noticeSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    year: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    semester: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     priority: {
       type: String,
       enum: ['low', 'medium', 'high'],

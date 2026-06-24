@@ -60,6 +60,10 @@ const ResultSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    year: {
+      type: String,
+      trim: true,
+    },
     academicYear: {
       type: String,
       trim: true,
