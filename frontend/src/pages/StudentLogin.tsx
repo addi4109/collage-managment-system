@@ -22,13 +22,14 @@ import { LoadingOverlay } from '../components/LoadingOverlay';
 export const StudentLogin: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const { user, setUser, loading, setLoading } = useAuth();
+  const { user, setUser } = useAuth();
   
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(true);
+  const [localLoading, setLocalLoading] = useState(false);
 
   const [captchaText, setCaptchaText] = useState('');
   const [captchaInput, setCaptchaInput] = useState('');
@@ -75,7 +76,7 @@ export const StudentLogin: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return;
+    if (localLoading) return;
 
     let hasError = false;
     if (!email) {
@@ -101,16 +102,20 @@ export const StudentLogin: React.FC = () => {
       return;
     }
 
-    setLoading(true);
+    console.log('[DEBUG] Frontend: Student login request initiated for email/roll:', email);
+    setLocalLoading(true);
     try {
       const userProfile = await loginWithEmail(email, password, rememberMe, 'student');
+      console.log('[DEBUG] Frontend: Student login success. Received userProfile:', userProfile);
       setUser(userProfile);
       toast.success('Login successful. Redirecting to Student Dashboard...');
+      console.log('[DEBUG] Frontend: Scheduled redirect to /student/dashboard');
       setTimeout(() => {
+        console.log('[DEBUG] Frontend: Executing redirect to /student/dashboard');
         navigate('/student/dashboard');
       }, 1500);
     } catch (err: any) {
-      console.error(err);
+      console.error('[DEBUG] Frontend: Student login error caught:', err);
       const errMsg = err.message || '';
       
       if (errMsg.includes('pending') || errMsg.includes('approval')) {
@@ -129,7 +134,7 @@ export const StudentLogin: React.FC = () => {
         toast.error('Unable to sign in. Please try again later.');
       }
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
 
@@ -144,7 +149,7 @@ export const StudentLogin: React.FC = () => {
         py: 4,
       }}
     >
-      <LoadingOverlay open={loading} message="Signing in..." />
+      <LoadingOverlay open={localLoading} message="Signing in..." />
       <Container maxWidth="xs">
         <Box sx={{ mb: 4, textAlign: 'center' }}>
           <Typography variant="h3" component="h1" className="gradient-text" sx={{ fontWeight: 800, mb: 1, letterSpacing: '-0.025em' }}>
@@ -175,7 +180,7 @@ export const StudentLogin: React.FC = () => {
                     </InputAdornment>
                   ),
                 }}
-                disabled={loading}
+                disabled={localLoading}
                 required
               />
               
@@ -196,7 +201,7 @@ export const StudentLogin: React.FC = () => {
                     </InputAdornment>
                   ),
                 }}
-                disabled={loading}
+                disabled={localLoading}
                 required
               />
 
@@ -230,6 +235,7 @@ export const StudentLogin: React.FC = () => {
                   variant="outlined" 
                   onClick={generateCaptcha} 
                   sx={{ height: 48, minWidth: 80 }}
+                  disabled={localLoading}
                 >
                   Refresh
                 </Button>
@@ -246,7 +252,7 @@ export const StudentLogin: React.FC = () => {
                 }}
                 error={!!captchaError}
                 helperText={captchaError}
-                disabled={loading}
+                disabled={localLoading}
                 required
                 sx={{ mb: 2 }}
               />
@@ -259,6 +265,7 @@ export const StudentLogin: React.FC = () => {
                       onChange={(e) => setRememberMe(e.target.checked)}
                       color="primary"
                       size="small"
+                      disabled={localLoading}
                     />
                   }
                   label={<Typography variant="body2" color="text.secondary">Remember Me</Typography>}
@@ -271,10 +278,10 @@ export const StudentLogin: React.FC = () => {
                 color="primary"
                 type="submit"
                 size="large"
-                disabled={loading || !!emailError || !!passwordError || !!captchaError || !captchaInput}
+                disabled={localLoading || !!emailError || !!passwordError || !!captchaError || !captchaInput}
                 sx={{ mb: 2, height: 48, fontWeight: 600 }}
               >
-                Log In
+                {localLoading ? '[ Logging In... ]' : 'Log In'}
               </Button>
             </form>
 

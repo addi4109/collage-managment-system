@@ -42,7 +42,7 @@ export const loginWithEmail = async (
   }
 
   // Map minimal backend user details to full frontend UserProfile schema
-  const mappedUser: UserProfile & { id?: string; department?: string; departments?: string[]; activeDepartment?: string } = {
+  const mappedUser: UserProfile & { id?: string; department?: string; semester?: string; departments?: string[]; activeDepartment?: string } = {
     uid: data.user.id || data.user.uid || '',
     id: data.user.id || data.user.uid || '',
     name: data.user.name || '',
@@ -50,6 +50,7 @@ export const loginWithEmail = async (
     email: email, // Copy local login email input
     status: 'active',
     department: data.user.department || '',
+    semester: data.user.semester || '',
     departments: data.user.departments || [],
     activeDepartment: data.user.activeDepartment || '',
   };
@@ -74,7 +75,8 @@ export const registerWithEmail = async (
   name: string,
   role: UserRole,
   authCode?: string,
-  department?: string
+  department?: string,
+  semester?: string
 ): Promise<UserProfile> => {
   if (role === 'admin') {
     throw new Error('Public registration of administrators is disabled.');
@@ -89,6 +91,7 @@ export const registerWithEmail = async (
     body.authCode = authCode;
   } else if (role === 'student') {
     body.department = department;
+    body.semester = semester;
   }
 
   const res = await fetch(endpoint, {

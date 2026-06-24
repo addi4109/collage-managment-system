@@ -27,10 +27,10 @@ const generateToken = (user) => {
 };
 
 export const registerStudent = async (req, res) => {
-  const { name, email, password, department } = req.body;
+  const { name, email, password, department, semester } = req.body;
 
-  if (!name || !email || !password || !department) {
-    return res.status(400).json({ message: 'Please provide name, email, password, and department.' });
+  if (!name || !email || !password || !department || !semester) {
+    return res.status(400).json({ message: 'Please provide name, email, password, department, and semester.' });
   }
 
   try {
@@ -49,6 +49,7 @@ export const registerStudent = async (req, res) => {
       role: 'student',
       status: 'active',
       department,
+      semester,
     });
 
     const savedUser = await newUser.save();
@@ -57,6 +58,7 @@ export const registerStudent = async (req, res) => {
       user: savedUser._id,
       rollNumber: 'STU' + Math.floor(100000 + Math.random() * 900000),
       department,
+      semester,
     });
     await newStudent.save();
 
@@ -71,6 +73,7 @@ export const registerStudent = async (req, res) => {
         role: savedUser.role,
         status: savedUser.status,
         department: savedUser.department,
+        semester: savedUser.semester,
         createdAt: savedUser.createdAt,
       },
     });
@@ -163,7 +166,7 @@ export const loginStudent = async (req, res) => {
       query = { _id: studentProfile.user };
     }
 
-    const user = await User.findOne(query).select('_id role passwordHash name email status department');
+    const user = await User.findOne(query).select('_id role passwordHash name email status department semester');
     if (!user || user.role !== 'student') {
       return res.status(401).json({ message: 'Invalid credentials or student account not found.' });
     }
@@ -198,6 +201,7 @@ export const loginStudent = async (req, res) => {
         name: user.name,
         role: user.role,
         department: user.department,
+        semester: user.semester,
       },
     });
   } catch (error) {
@@ -207,32 +211,42 @@ export const loginStudent = async (req, res) => {
 };
 
 export const loginFaculty = async (req, res) => {
+  console.log('[DEBUG] Server: Faculty login - Request received');
   const { email, password } = req.body;
   if (!email || !password) {
+    console.log('[DEBUG] Server: Faculty login - Missing email or password');
     return res.status(400).json({ message: 'Please provide email and password.' });
   }
 
   try {
     const user = await User.findOne({ email }).select('_id role passwordHash name email status departments activeDepartment');
     if (!user || user.role !== 'faculty') {
+      console.log('[DEBUG] Server: Faculty login - User not found or role mismatch');
       return res.status(401).json({ message: 'Invalid credentials or faculty account not found.' });
     }
+    console.log('[DEBUG] Server: Faculty login - User found');
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
+      console.log('[DEBUG] Server: Faculty login - Password verification failed');
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
+    console.log('[DEBUG] Server: Faculty login - Password verified');
 
     if (user.status === 'pending') {
+      console.log('[DEBUG] Server: Faculty login - Status is pending');
       return res.status(403).json({ message: 'Faculty account is awaiting administrator approval.' });
     }
     if (user.status === 'rejected') {
+      console.log('[DEBUG] Server: Faculty login - Status is rejected');
       return res.status(403).json({ message: 'Your account request has been rejected.' });
     }
     if (user.status === 'suspended') {
+      console.log('[DEBUG] Server: Faculty login - Status is suspended');
       return res.status(403).json({ message: 'Your account has been suspended. Contact administration.' });
     }
     if (user.status !== 'approved' && user.status !== 'active') {
+      console.log('[DEBUG] Server: Faculty login - Status is not approved/active');
       return res.status(403).json({ message: 'Your account is not approved.' });
     }
 
@@ -240,6 +254,9 @@ export const loginFaculty = async (req, res) => {
     clearProfileCache(user._id);
 
     const token = generateToken(user);
+    console.log('[DEBUG] Server: Faculty login - Token generated');
+
+    console.log('[DEBUG] Server: Faculty login - Response sent');
     res.json({
       token,
       user: {
@@ -349,6 +366,7 @@ export const getProfile = async (req, res) => {
       status: user.status,
       createdAt: user.createdAt,
       department: user.department,
+      semester: user.semester,
       departments: user.departments,
       activeDepartment: user.activeDepartment,
     };
@@ -358,6 +376,7 @@ export const getProfile = async (req, res) => {
       if (studentDoc) {
         profileData.rollNumber = studentDoc.rollNumber;
         profileData.department = studentDoc.department || user.department;
+        profileData.semester = studentDoc.semester || user.semester;
         profileData.enrolledCourses = studentDoc.enrolledCourses;
       }
     } else if (user.role === 'faculty') {

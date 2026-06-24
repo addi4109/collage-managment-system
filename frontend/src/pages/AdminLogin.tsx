@@ -22,13 +22,14 @@ import { LoadingOverlay } from '../components/LoadingOverlay';
 export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const { user, setUser, loading, setLoading, isAdminVerified } = useAuth();
+  const { user, setUser, isAdminVerified } = useAuth();
   
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(true);
+  const [localLoading, setLocalLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -62,7 +63,7 @@ export const AdminLogin: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return;
+    if (localLoading) return;
 
     let hasError = false;
     if (!email) {
@@ -79,16 +80,20 @@ export const AdminLogin: React.FC = () => {
       return;
     }
 
-    setLoading(true);
+    console.log('[DEBUG] Frontend: Admin login request initiated for email:', email);
+    setLocalLoading(true);
     try {
       const userProfile = await loginWithEmail(email, password, rememberMe, 'admin');
+      console.log('[DEBUG] Frontend: Admin login success. Received userProfile:', userProfile);
       setUser(userProfile);
       toast.success('Administrator login successful. Redirecting...');
+      console.log('[DEBUG] Frontend: Scheduled redirect to /admin/dashboard');
       setTimeout(() => {
+        console.log('[DEBUG] Frontend: Executing redirect to /admin/dashboard');
         navigate('/admin/dashboard');
       }, 1500);
     } catch (err: any) {
-      console.error(err);
+      console.error('[DEBUG] Frontend: Admin login error caught:', err);
       const errMsg = err.message || '';
       
       if (errMsg.includes('pending') || errMsg.includes('approval')) {
@@ -107,7 +112,7 @@ export const AdminLogin: React.FC = () => {
         toast.error('Unable to sign in. Please try again later.');
       }
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
 
@@ -122,7 +127,7 @@ export const AdminLogin: React.FC = () => {
         py: 4,
       }}
     >
-      <LoadingOverlay open={loading} message="Authenticating administrator..." />
+      <LoadingOverlay open={localLoading} message="Authenticating administrator..." />
       <Container maxWidth="xs">
         <Box sx={{ mb: 4, textAlign: 'center' }}>
           <Typography variant="h3" component="h1" className="gradient-text-orange" sx={{ fontWeight: 800, mb: 1, letterSpacing: '-0.025em' }}>
@@ -153,7 +158,7 @@ export const AdminLogin: React.FC = () => {
                     </InputAdornment>
                   ),
                 }}
-                disabled={loading}
+                disabled={localLoading}
                 required
               />
               
@@ -174,7 +179,7 @@ export const AdminLogin: React.FC = () => {
                     </InputAdornment>
                   ),
                 }}
-                disabled={loading}
+                disabled={localLoading}
                 required
               />
 
@@ -186,6 +191,7 @@ export const AdminLogin: React.FC = () => {
                       onChange={(e) => setRememberMe(e.target.checked)}
                       color="warning"
                       size="small"
+                      disabled={localLoading}
                     />
                   }
                   label={<Typography variant="body2" color="text.secondary">Remember Me</Typography>}
@@ -198,7 +204,7 @@ export const AdminLogin: React.FC = () => {
                 color="warning"
                 type="submit"
                 size="large"
-                disabled={loading || !!emailError || !!passwordError}
+                disabled={localLoading || !!emailError || !!passwordError}
                 sx={{
                   mb: 2,
                   height: 48,
@@ -209,7 +215,7 @@ export const AdminLogin: React.FC = () => {
                   },
                 }}
               >
-                Log In
+                {localLoading ? '[ Logging In... ]' : 'Log In'}
               </Button>
             </form>
 

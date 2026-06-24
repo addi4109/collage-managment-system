@@ -38,6 +38,13 @@ const userSchema = new mongoose.Schema(
       },
       trim: true,
     },
+    semester: {
+      type: String,
+      required: function () {
+        return this.role === 'student';
+      },
+      trim: true,
+    },
     departments: {
       type: [String],
       default: [],

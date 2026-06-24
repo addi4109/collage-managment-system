@@ -16,6 +16,10 @@ const studentSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    semester: {
+      type: String,
+      default: '',
+    },
     enrolledCourses: {
       type: [String],
       default: [],

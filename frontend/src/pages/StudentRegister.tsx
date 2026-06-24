@@ -23,7 +23,7 @@ import { LoadingOverlay } from '../components/LoadingOverlay';
 export const StudentRegister: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const { user, setUser, loading, setLoading } = useAuth();
+  const { user, setUser } = useAuth();
 
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
@@ -31,6 +31,9 @@ export const StudentRegister: React.FC = () => {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [department, setDepartment] = useState('');
   const [departmentError, setDepartmentError] = useState<string | null>(null);
+  const [semester, setSemester] = useState('');
+  const [semesterError, setSemesterError] = useState<string | null>(null);
+  const [localLoading, setLocalLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -107,6 +110,10 @@ export const StudentRegister: React.FC = () => {
       setDepartmentError('Department selection is required.');
       hasError = true;
     }
+    if (!semester) {
+      setSemesterError('Semester selection is required.');
+      hasError = true;
+    }
     if (!password) {
       setPasswordError('Password is required.');
       hasError = true;
@@ -116,14 +123,14 @@ export const StudentRegister: React.FC = () => {
       hasError = true;
     }
 
-    if (hasError || emailError || departmentError || passwordError || confirmError) {
+    if (hasError || emailError || departmentError || semesterError || passwordError || confirmError) {
       toast.warning('Please correct all validation errors before submitting.');
       return;
     }
 
-    setLoading(true);
+    setLocalLoading(true);
     try {
-      const userProfile = await registerWithEmail(email, password, name, 'student', undefined, department);
+      const userProfile = await registerWithEmail(email, password, name, 'student', undefined, department, semester);
       toast.success('Student account created successfully.');
       toast.info('Redirecting to login...');
       setUser(userProfile);
@@ -142,7 +149,7 @@ export const StudentRegister: React.FC = () => {
         toast.error('Unable to create account. Please try again later.');
       }
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
 
@@ -157,7 +164,7 @@ export const StudentRegister: React.FC = () => {
         py: 4,
       }}
     >
-      <LoadingOverlay open={loading} message="Creating your account..." />
+      <LoadingOverlay open={localLoading} message="Creating your account..." />
       <Container maxWidth="xs">
         <Box sx={{ mb: 4, textAlign: 'center' }}>
           <Typography variant="h3" component="h1" className="gradient-text" sx={{ fontWeight: 800, mb: 1, letterSpacing: '-0.025em' }}>
@@ -188,7 +195,7 @@ export const StudentRegister: React.FC = () => {
                     </InputAdornment>
                   ),
                 }}
-                disabled={loading}
+                disabled={localLoading}
                 required
               />
 
@@ -209,7 +216,7 @@ export const StudentRegister: React.FC = () => {
                     </InputAdornment>
                   ),
                 }}
-                disabled={loading}
+                disabled={localLoading}
                 required
               />
 
@@ -226,14 +233,42 @@ export const StudentRegister: React.FC = () => {
                 }}
                 error={!!departmentError}
                 helperText={departmentError}
-                disabled={loading}
+                disabled={localLoading}
                 required
               >
                 <MenuItem value="Computer Engineering">Computer Engineering</MenuItem>
-                <MenuItem value="Information Technology">Information Technology</MenuItem>
                 <MenuItem value="Mechanical Engineering">Mechanical Engineering</MenuItem>
                 <MenuItem value="Civil Engineering">Civil Engineering</MenuItem>
                 <MenuItem value="Chemical Engineering">Chemical Engineering</MenuItem>
+                <MenuItem value="Information Technology">Information Technology</MenuItem>
+                <MenuItem value="Electronics Engineering">Electronics Engineering</MenuItem>
+                <MenuItem value="Electrical Engineering">Electrical Engineering</MenuItem>
+              </TextField>
+
+              <TextField
+                fullWidth
+                select
+                label="Semester"
+                margin="normal"
+                variant="outlined"
+                value={semester}
+                onChange={(e) => {
+                  setSemester(e.target.value);
+                  setSemesterError(null);
+                }}
+                error={!!semesterError}
+                helperText={semesterError}
+                disabled={localLoading}
+                required
+              >
+                <MenuItem value="Semester 1">Semester 1</MenuItem>
+                <MenuItem value="Semester 2">Semester 2</MenuItem>
+                <MenuItem value="Semester 3">Semester 3</MenuItem>
+                <MenuItem value="Semester 4">Semester 4</MenuItem>
+                <MenuItem value="Semester 5">Semester 5</MenuItem>
+                <MenuItem value="Semester 6">Semester 6</MenuItem>
+                <MenuItem value="Semester 7">Semester 7</MenuItem>
+                <MenuItem value="Semester 8">Semester 8</MenuItem>
               </TextField>
 
               <TextField
@@ -253,7 +288,7 @@ export const StudentRegister: React.FC = () => {
                     </InputAdornment>
                   ),
                 }}
-                disabled={loading}
+                disabled={localLoading}
                 required
               />
 
@@ -276,7 +311,7 @@ export const StudentRegister: React.FC = () => {
                     </InputAdornment>
                   ),
                 }}
-                disabled={loading}
+                disabled={localLoading}
                 required
               />
 
@@ -286,10 +321,10 @@ export const StudentRegister: React.FC = () => {
                 color="primary"
                 type="submit"
                 size="large"
-                disabled={loading || !!nameError || !!emailError || !!passwordError || !!confirmError}
+                disabled={localLoading || !!nameError || !!emailError || !!departmentError || !!semesterError || !department || !semester || !!passwordError || !!confirmError}
                 sx={{ mt: 3, mb: 2, height: 48, fontWeight: 600 }}
               >
-                Create Account
+                {localLoading ? 'Creating Account...' : 'Create Account'}
               </Button>
             </form>
 

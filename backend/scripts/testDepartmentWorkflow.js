@@ -58,6 +58,7 @@ const runTest = async () => {
         email: studentEmail,
         password: studentPassword,
         department: studentDept,
+        semester: 'Semester 1',
       },
     };
     const registerRes = mockResponse();

@@ -377,7 +377,7 @@ export const StudentDashboard: React.FC = () => {
                         Semester
                       </Typography>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {(user as any)?.semester || '4th Semester'}
+                        {(user as any)?.semester || 'N/A'}
                       </Typography>
                     </Grid>
                     <Grid item xs={12} sx={{ mt: 1 }}>
