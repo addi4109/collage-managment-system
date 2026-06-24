@@ -129,10 +129,12 @@ export const registerFaculty = async (req, res) => {
     });
     await newFaculty.save();
 
-    const token = generateToken(savedUser);
-
+    // NOTE: Do NOT return a JWT token for pending faculty.
+    // Faculty accounts require admin approval before they can log in.
+    // Returning a token here would allow pending users to bypass the login status check.
     res.status(201).json({
-      token,
+      success: true,
+      message: 'Registration submitted successfully. Your account is pending administrator approval. You will be able to log in once approved.',
       user: {
         uid: savedUser._id.toString(),
         email: savedUser.email,
@@ -349,17 +351,30 @@ export const forgotPassword = async (req, res) => {
 export const getProfile = async (req, res) => {
   const cacheKey = req.user.id;
   const now = Date.now();
-  
-  const cachedProfile = profileCache.get(cacheKey);
-  if (cachedProfile && (now - cachedProfile.timestamp < PROFILE_CACHE_TTL)) {
-    return res.json(cachedProfile.data);
-  }
 
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User profile not found.' });
     }
+
+    // If a faculty account is still pending or rejected, revoke the session.
+    // This ensures that if a faculty member has a token from before admin
+    // approval, they cannot use it to access the system.
+    if (user.role === 'faculty' && (user.status === 'pending' || user.status === 'rejected')) {
+      return res.status(403).json({
+        message: user.status === 'pending'
+          ? 'Your account is awaiting administrator approval. Please try again after approval.'
+          : 'Your account registration has been rejected. Contact the administrator.',
+      });
+    }
+
+    if (user.role === 'faculty' && user.status === 'suspended') {
+      return res.status(403).json({
+        message: 'Your account has been suspended. Please contact the administrator.',
+      });
+    }
+
     const profileData = {
       uid: user._id.toString(),
       email: user.email,
@@ -369,14 +384,19 @@ export const getProfile = async (req, res) => {
       department: user.department,
       semester: user.semester,
       assignedSubjects: user.assignedSubjects || [],
+      assignedSemester: user.assignedSemester || null,
       approvedByAdmin: user.approvedByAdmin || false,
       createdAt: user.createdAt,
     };
 
-    profileCache.set(cacheKey, {
-      data: profileData,
-      timestamp: now,
-    });
+    // Only cache non-faculty profiles (or approved faculty) to avoid serving
+    // stale status data after admin approval changes.
+    if (user.role !== 'faculty') {
+      profileCache.set(cacheKey, {
+        data: profileData,
+        timestamp: now,
+      });
+    }
 
     res.json(profileData);
   } catch (error) {

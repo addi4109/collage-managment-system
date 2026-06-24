@@ -108,6 +108,16 @@ export const registerWithEmail = async (
     throw new Error(data.message || 'Registration failed.');
   }
 
+  // For faculty: registration creates a PENDING account (no token returned).
+  // Faculty must wait for admin approval and then log in manually.
+  // Do NOT store any token or auto-login for faculty registrations.
+  if (role === 'faculty') {
+    // Clear any stale token that might exist from a previous session
+    localStorage.removeItem('eh_token');
+    sessionStorage.removeItem('eh_token');
+    return data.user;
+  }
+
   if (data.token) {
     localStorage.setItem('eh_token', data.token);
     sessionStorage.removeItem('eh_token');

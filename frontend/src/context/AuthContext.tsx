@@ -76,12 +76,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (profile) {
             setUserState(profile);
           } else {
+            // Profile fetch returned null — token is invalid/expired or
+            // the account is pending/rejected/suspended (403 handled in userService)
+            localStorage.removeItem('eh_token');
+            sessionStorage.removeItem('eh_token');
             setUserState(null);
-            // Only trigger toast if a token actually existed but profile fetch returned null (expired)
-            toast.error('Your session has expired. Please login again.');
           }
         } catch (err: any) {
           console.error('JWT session restore error:', err);
+          localStorage.removeItem('eh_token');
+          sessionStorage.removeItem('eh_token');
           setErrorState(err.message || 'Authentication session restore error');
           setUserState(null);
         } finally {

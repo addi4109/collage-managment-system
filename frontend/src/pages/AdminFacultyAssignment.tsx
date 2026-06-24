@@ -321,9 +321,22 @@ export const AdminFacultyAssignment: React.FC = () => {
                               size="small"
                               variant="contained"
                               color="success"
-                              onClick={() => handleUpdateStatus(fac._id, 'active')}
+                              startIcon={<CheckCircleIcon />}
+                              onClick={() => handleUpdateStatus(fac._id, 'approved')}
                             >
-                              Activate
+                              Re-Activate
+                            </Button>
+                          )}
+
+                          {fac.status === 'rejected' && (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="warning"
+                              startIcon={<CheckCircleIcon />}
+                              onClick={() => handleUpdateStatus(fac._id, 'approved')}
+                            >
+                              Approve (Override)
                             </Button>
                           )}
                         </Box>
