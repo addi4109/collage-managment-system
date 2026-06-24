@@ -26,6 +26,11 @@ const assignmentSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    department: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     attachment: {
       type: String, // Optional base64 Data URI
       default: '',

@@ -8,6 +8,8 @@ export interface UserProfile {
   createdAt?: string;
   status?: string;
   department?: string;
+  departments?: string[];
+  activeDepartment?: string;
   enrolledCourses?: string[]; // Array of courseIds
   phoneNumber?: string;
 }

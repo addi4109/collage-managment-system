@@ -9,6 +9,7 @@ import {
   Button,
   Box,
   InputAdornment,
+  MenuItem,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
@@ -28,6 +29,8 @@ export const StudentRegister: React.FC = () => {
   const [nameError, setNameError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [department, setDepartment] = useState('');
+  const [departmentError, setDepartmentError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -100,6 +103,10 @@ export const StudentRegister: React.FC = () => {
       setEmailError('Email address is required.');
       hasError = true;
     }
+    if (!department) {
+      setDepartmentError('Department selection is required.');
+      hasError = true;
+    }
     if (!password) {
       setPasswordError('Password is required.');
       hasError = true;
@@ -109,14 +116,14 @@ export const StudentRegister: React.FC = () => {
       hasError = true;
     }
 
-    if (hasError || emailError || passwordError || confirmError) {
+    if (hasError || emailError || departmentError || passwordError || confirmError) {
       toast.warning('Please correct all validation errors before submitting.');
       return;
     }
 
     setLoading(true);
     try {
-      const userProfile = await registerWithEmail(email, password, name, 'student');
+      const userProfile = await registerWithEmail(email, password, name, 'student', undefined, department);
       toast.success('Student account created successfully.');
       toast.info('Redirecting to login...');
       setUser(userProfile);
@@ -205,6 +212,29 @@ export const StudentRegister: React.FC = () => {
                 disabled={loading}
                 required
               />
+
+              <TextField
+                fullWidth
+                select
+                label="Department"
+                margin="normal"
+                variant="outlined"
+                value={department}
+                onChange={(e) => {
+                  setDepartment(e.target.value);
+                  setDepartmentError(null);
+                }}
+                error={!!departmentError}
+                helperText={departmentError}
+                disabled={loading}
+                required
+              >
+                <MenuItem value="Computer Engineering">Computer Engineering</MenuItem>
+                <MenuItem value="Information Technology">Information Technology</MenuItem>
+                <MenuItem value="Mechanical Engineering">Mechanical Engineering</MenuItem>
+                <MenuItem value="Civil Engineering">Civil Engineering</MenuItem>
+                <MenuItem value="Chemical Engineering">Chemical Engineering</MenuItem>
+              </TextField>
 
               <TextField
                 fullWidth

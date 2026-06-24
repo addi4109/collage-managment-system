@@ -25,6 +25,11 @@ const examSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    department: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     status: {
       type: String,
       enum: ['draft', 'pending', 'approved', 'rejected', 'scheduled', 'active', 'completed'],

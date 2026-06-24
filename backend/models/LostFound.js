@@ -61,6 +61,11 @@ const lostFoundSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    department: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     createdByName: {
       type: String,
       required: true,

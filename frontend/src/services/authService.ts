@@ -42,13 +42,16 @@ export const loginWithEmail = async (
   }
 
   // Map minimal backend user details to full frontend UserProfile schema
-  const mappedUser: UserProfile & { id?: string } = {
+  const mappedUser: UserProfile & { id?: string; department?: string; departments?: string[]; activeDepartment?: string } = {
     uid: data.user.id || data.user.uid || '',
     id: data.user.id || data.user.uid || '',
     name: data.user.name || '',
     role: (data.user.role || resolvedRole) as UserRole,
     email: email, // Copy local login email input
     status: 'active',
+    department: data.user.department || '',
+    departments: data.user.departments || [],
+    activeDepartment: data.user.activeDepartment || '',
   };
 
   try {
@@ -70,7 +73,8 @@ export const registerWithEmail = async (
   password: string,
   name: string,
   role: UserRole,
-  authCode?: string
+  authCode?: string,
+  department?: string
 ): Promise<UserProfile> => {
   if (role === 'admin') {
     throw new Error('Public registration of administrators is disabled.');
@@ -83,6 +87,8 @@ export const registerWithEmail = async (
   const body: any = { name, email, password };
   if (role === 'faculty') {
     body.authCode = authCode;
+  } else if (role === 'student') {
+    body.department = department;
   }
 
   const res = await fetch(endpoint, {
@@ -114,6 +120,31 @@ export const registerWithEmail = async (
   }
 
   return data.user;
+};
+
+export const getFacultyDepartments = async (): Promise<{ departments: string[]; activeDepartment: string }> => {
+  const res = await fetch(`${API_URL}/auth/faculty/departments`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to fetch departments.');
+  }
+  return data;
+};
+
+export const updateActiveDepartment = async (department: string): Promise<any> => {
+  const res = await fetch(`${API_URL}/auth/faculty/active-department`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify({ department }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to update active department.');
+  }
+  return data;
 };
 
 export const logoutUser = async (): Promise<void> => {

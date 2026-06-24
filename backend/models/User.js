@@ -31,6 +31,21 @@ const userSchema = new mongoose.Schema(
       enum: ['pending', 'approved', 'rejected', 'active', 'suspended'],
       default: 'active',
     },
+    department: {
+      type: String,
+      required: function () {
+        return this.role === 'student';
+      },
+      trim: true,
+    },
+    departments: {
+      type: [String],
+      default: [],
+    },
+    activeDepartment: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,

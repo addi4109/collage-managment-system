@@ -20,6 +20,7 @@ export const createExam = async (req, res) => {
       duration: Number(duration),
       totalMarks: Number(totalMarks),
       createdBy: req.user.id,
+      department: req.user.role === 'faculty' ? req.user.activeDepartment : '',
       status,
     });
 
@@ -164,7 +165,7 @@ export const startExam = async (req, res) => {
 
 export const getFacultyExams = async (req, res) => {
   try {
-    const filter = req.user.role === 'admin' ? {} : { createdBy: req.user.id };
+    const filter = req.user.role === 'admin' ? {} : { createdBy: req.user.id, department: req.user.activeDepartment };
     const exams = await Exam.find(filter).sort({ createdAt: -1 });
     
     // Map question counts
@@ -301,10 +302,16 @@ export const rejectExam = async (req, res) => {
 
 export const getAvailableExams = async (req, res) => {
   try {
-    // Return all scheduled, active, or completed exams that are approved/scheduled/active
-    const exams = await Exam.find({
+    // Return all scheduled, active, or completed exams that match student department or global
+    const filter = {
       status: { $in: ['scheduled', 'active', 'completed'] },
-    }).sort({ scheduledAt: 1 });
+      $or: [
+        { department: req.user.department },
+        { department: '' },
+        { department: { $exists: false } }
+      ]
+    };
+    const exams = await Exam.find(filter).sort({ scheduledAt: 1 });
 
     // Attach student attempts status if it exists
     const examStatuses = await Promise.all(

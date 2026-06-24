@@ -26,6 +26,11 @@ const noticeSchema = new mongoose.Schema(
       required: true,
       enum: ['faculty', 'admin'],
     },
+    department: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     priority: {
       type: String,
       enum: ['low', 'medium', 'high'],

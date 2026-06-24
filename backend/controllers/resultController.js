@@ -71,7 +71,11 @@ const evaluateResultMetrics = (resultDoc) => {
 // 1. Get Students List for dropdown
 export const getStudentList = async (req, res) => {
   try {
-    const studentUsers = await User.find({ role: 'student', status: 'active' }).select('name email');
+    const userQuery = { role: 'student', status: 'active' };
+    if (req.user.role === 'faculty') {
+      userQuery.department = req.user.activeDepartment;
+    }
+    const studentUsers = await User.find(userQuery).select('name email');
     const list = await Promise.all(
       studentUsers.map(async (u) => {
         const profile = await Student.findOne({ user: u._id }).select('rollNumber department');
@@ -110,6 +114,10 @@ export const createResult = async (req, res) => {
 
   if (!studentId || !studentName || !department || !subjects || !Array.isArray(subjects) || subjects.length === 0) {
     return res.status(400).json({ message: 'Student information, department, and subjects marks are required.' });
+  }
+
+  if (req.user.role === 'faculty' && department !== req.user.activeDepartment) {
+    return res.status(403).json({ message: 'Unauthorized. You can only create results for your active department.' });
   }
 
   try {
@@ -238,7 +246,7 @@ export const submitResult = async (req, res) => {
 // 5. List Faculty submissions
 export const getFacultyResults = async (req, res) => {
   try {
-    const list = await Result.find({ facultyId: req.user.id }).sort({ createdAt: -1 });
+    const list = await Result.find({ facultyId: req.user.id, department: req.user.activeDepartment }).sort({ createdAt: -1 });
     res.json(list);
   } catch (error) {
     console.error('Get faculty results error:', error);

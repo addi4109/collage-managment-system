@@ -12,7 +12,7 @@ import {
   FormControlLabel,
   Checkbox,
 } from '@mui/material';
-import EmailIcon from '@mui/icons-material/Email';
+import PersonIcon from '@mui/icons-material/Person';
 import LockIcon from '@mui/icons-material/Lock';
 import { loginWithEmail } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
@@ -30,6 +30,25 @@ export const StudentLogin: React.FC = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(true);
 
+  const [captchaText, setCaptchaText] = useState('');
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
+
+  const generateCaptcha = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    let result = '';
+    for (let i = 0; i < 5; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setCaptchaText(result);
+    setCaptchaInput('');
+    setCaptchaError(null);
+  };
+
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
+
   useEffect(() => {
     if (user) {
       navigate('/student/dashboard');
@@ -38,10 +57,8 @@ export const StudentLogin: React.FC = () => {
 
   const handleEmailChange = (val: string) => {
     setEmail(val);
-    if (!val) {
-      setEmailError('Email address is required.');
-    } else if (!/\S+@\S+\.\S+/.test(val)) {
-      setEmailError('Enter a valid email address.');
+    if (!val.trim()) {
+      setEmailError('Roll Number or Email address is required.');
     } else {
       setEmailError(null);
     }
@@ -62,7 +79,7 @@ export const StudentLogin: React.FC = () => {
 
     let hasError = false;
     if (!email) {
-      setEmailError('Email address is required.');
+      setEmailError('Roll Number or Email address is required.');
       hasError = true;
     }
     if (!password) {
@@ -70,7 +87,16 @@ export const StudentLogin: React.FC = () => {
       hasError = true;
     }
 
-    if (hasError || emailError || passwordError) {
+    if (!captchaInput) {
+      setCaptchaError('Captcha verification is required.');
+      hasError = true;
+    } else if (captchaInput.trim().toLowerCase() !== captchaText.toLowerCase()) {
+      setCaptchaError('Incorrect captcha code. Please try again.');
+      generateCaptcha();
+      return;
+    }
+
+    if (hasError || emailError || passwordError || captchaError) {
       toast.warning('Please correct all validation errors.');
       return;
     }
@@ -134,8 +160,8 @@ export const StudentLogin: React.FC = () => {
             <form onSubmit={handleSubmit} noValidate>
               <TextField
                 fullWidth
-                label="Email Address"
-                type="email"
+                label="Roll Number / Email Address"
+                type="text"
                 margin="normal"
                 variant="outlined"
                 value={email}
@@ -145,7 +171,7 @@ export const StudentLogin: React.FC = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <EmailIcon color="action" />
+                      <PersonIcon color="action" />
                     </InputAdornment>
                   ),
                 }}
@@ -174,6 +200,57 @@ export const StudentLogin: React.FC = () => {
                 required
               />
 
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2, mb: 1 }}>
+                <Box
+                  sx={{
+                    flexGrow: 1,
+                    height: 48,
+                    bgcolor: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px dashed rgba(255, 255, 255, 0.15)',
+                    borderRadius: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    letterSpacing: 6,
+                    fontSize: '1.25rem',
+                    fontWeight: 700,
+                    color: '#a5b4fc',
+                    fontFamily: 'monospace',
+                    userSelect: 'none',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    background: 'linear-gradient(45deg, rgba(99, 102, 241, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%)',
+                  }}
+                >
+                  <Box sx={{ position: 'absolute', width: '150%', height: 2, bgcolor: 'rgba(255,255,255,0.08)', transform: 'rotate(15deg)' }} />
+                  <Box sx={{ position: 'absolute', width: '150%', height: 2, bgcolor: 'rgba(255,255,255,0.08)', transform: 'rotate(-10deg)' }} />
+                  <span style={{ transform: 'rotate(-3deg)' }}>{captchaText}</span>
+                </Box>
+                <Button 
+                  variant="outlined" 
+                  onClick={generateCaptcha} 
+                  sx={{ height: 48, minWidth: 80 }}
+                >
+                  Refresh
+                </Button>
+              </Box>
+
+              <TextField
+                fullWidth
+                label="Enter Captcha"
+                variant="outlined"
+                value={captchaInput}
+                onChange={(e) => {
+                  setCaptchaInput(e.target.value);
+                  setCaptchaError(null);
+                }}
+                error={!!captchaError}
+                helperText={captchaError}
+                disabled={loading}
+                required
+                sx={{ mb: 2 }}
+              />
+
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, mb: 2 }}>
                 <FormControlLabel
                   control={
@@ -194,7 +271,7 @@ export const StudentLogin: React.FC = () => {
                 color="primary"
                 type="submit"
                 size="large"
-                disabled={loading || !!emailError || !!passwordError}
+                disabled={loading || !!emailError || !!passwordError || !!captchaError || !captchaInput}
                 sx={{ mb: 2, height: 48, fontWeight: 600 }}
               >
                 Log In

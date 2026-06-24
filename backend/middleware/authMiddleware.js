@@ -33,7 +33,7 @@ export const authenticateToken = async (req, res, next) => {
     }
 
     // Optimize DB lookup: Select only required fields
-    const user = await User.findById(decoded.id).select('_id email name role status');
+    const user = await User.findById(decoded.id).select('_id email name role status department departments activeDepartment');
 
     if (!user) {
       return res.status(401).json({ message: 'User not found.' });
@@ -49,6 +49,9 @@ export const authenticateToken = async (req, res, next) => {
       name: user.name,
       role: user.role,
       status: user.status,
+      department: user.department,
+      departments: user.departments,
+      activeDepartment: user.activeDepartment,
     };
 
     // Store in cache

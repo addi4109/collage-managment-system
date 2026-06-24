@@ -16,6 +16,14 @@ const facultySchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    departments: {
+      type: [String],
+      default: [],
+    },
+    activeDepartment: {
+      type: String,
+      default: '',
+    },
     isHOD: {
       type: Boolean,
       default: false,

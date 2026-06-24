@@ -16,6 +16,7 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  TextField,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -28,7 +29,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { useAuthStore } from '../store/authStore';
-import { logoutUser } from '../services/authService';
+import { logoutUser, updateActiveDepartment } from '../services/authService';
 import { AiChatbotBubble } from './AiChatbotBubble';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import HelpCenterIcon from '@mui/icons-material/HelpCenter';
@@ -44,7 +45,7 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const { user, clearState } = useAuthStore();
+  const { user, setUser, setLoading, clearState } = useAuthStore();
   const { themeMode, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
   const toast = useToast();
@@ -61,6 +62,27 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleDepartmentChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedDept = e.target.value;
+    try {
+      setLoading(true);
+      await updateActiveDepartment(selectedDept);
+      if (user) {
+        setUser({
+          ...user,
+          activeDepartment: selectedDept,
+        });
+      }
+      toast.success(`Switched active department to ${selectedDept}`);
+      window.location.reload();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Failed to switch active department.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -512,9 +534,43 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             <MenuIcon />
           </IconButton>
 
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.secondary', display: { xs: 'none', sm: 'block' } }}>
             Portal Workspace
           </Typography>
+
+          {user?.role === 'faculty' && user?.departments && user.departments.length > 0 && (
+            <TextField
+              select
+              size="small"
+              value={user.activeDepartment || ''}
+              onChange={handleDepartmentChange}
+              variant="outlined"
+              sx={{
+                mx: 2,
+                minWidth: 200,
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderRadius: 1,
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255, 255, 255, 0.15)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255, 255, 255, 0.25)',
+                },
+                '& .MuiSelect-select': {
+                  color: '#a5b4fc',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  py: 1,
+                },
+              }}
+            >
+              {user.departments.map((dept) => (
+                <MenuItem key={dept} value={dept}>
+                  {dept}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <IconButton onClick={toggleTheme} color="inherit">

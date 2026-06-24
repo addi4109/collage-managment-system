@@ -26,7 +26,7 @@ export const createSession = async (req, res) => {
       facultyName,
       courseName,
       sessionTitle,
-      department: department || '',
+      department: req.user.role === 'faculty' ? req.user.activeDepartment : (department || ''),
       date: new Date(date),
       startTime,
       duration: Number(duration) || 5,
@@ -109,7 +109,7 @@ export const endSession = async (req, res) => {
 // Retrieve all sessions created by the logged-in faculty
 export const getSessions = async (req, res) => {
   try {
-    const filter = req.user.role === 'admin' ? {} : { facultyId: req.user.id };
+    const filter = req.user.role === 'admin' ? {} : { facultyId: req.user.id, department: req.user.activeDepartment };
     const sessions = await AttendanceSession.find(filter).sort({ createdAt: -1 });
     res.json(sessions);
   } catch (error) {

@@ -4,7 +4,11 @@ import AttendanceSession from '../models/AttendanceSession.js';
 
 export const getStudents = async (req, res) => {
   try {
-    const students = await Student.find()
+    const query = {};
+    if (req.user.role === 'faculty') {
+      query.department = req.user.activeDepartment;
+    }
+    const students = await Student.find(query)
       .populate({
         path: 'user',
         select: 'name email status role'
@@ -106,6 +110,11 @@ export const checkInStudent = async (req, res) => {
       return res.status(404).json({ message: 'Active check-in session not found or has been ended.' });
     }
 
+    // Check student department matches session department
+    if (session.department && session.department !== req.user.department) {
+      return res.status(403).json({ message: `Unauthorized. This session is for the ${session.department} department.` });
+    }
+
     // Check if expired
     const now = new Date();
     if (session.expiresAt && now > new Date(session.expiresAt)) {
@@ -158,7 +167,7 @@ export const checkInStudent = async (req, res) => {
 
 export const getFacultySessions = async (req, res) => {
   try {
-    const filter = req.user.role === 'admin' ? {} : { facultyId: req.user.id };
+    const filter = req.user.role === 'admin' ? {} : { facultyId: req.user.id, department: req.user.activeDepartment };
     const sessions = await AttendanceSession.find(filter).sort({ createdAt: -1 });
     res.json(sessions);
   } catch (error) {

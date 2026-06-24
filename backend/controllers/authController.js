@@ -27,10 +27,10 @@ const generateToken = (user) => {
 };
 
 export const registerStudent = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, department } = req.body;
 
-  if (!name || !email || !password) {
-    return res.status(400).json({ message: 'Please provide name, email, and password.' });
+  if (!name || !email || !password || !department) {
+    return res.status(400).json({ message: 'Please provide name, email, password, and department.' });
   }
 
   try {
@@ -48,6 +48,7 @@ export const registerStudent = async (req, res) => {
       passwordHash,
       role: 'student',
       status: 'active',
+      department,
     });
 
     const savedUser = await newUser.save();
@@ -55,7 +56,7 @@ export const registerStudent = async (req, res) => {
     const newStudent = new Student({
       user: savedUser._id,
       rollNumber: 'STU' + Math.floor(100000 + Math.random() * 900000),
-      department: 'Computer Science',
+      department,
     });
     await newStudent.save();
 
@@ -69,6 +70,7 @@ export const registerStudent = async (req, res) => {
         name: savedUser.name,
         role: savedUser.role,
         status: savedUser.status,
+        department: savedUser.department,
         createdAt: savedUser.createdAt,
       },
     });
@@ -98,12 +100,16 @@ export const registerFaculty = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
+    const defaultDepts = ['Computer Engineering', 'Information Technology'];
+
     const newUser = new User({
       name,
       email,
       passwordHash,
       role: 'faculty',
       status: 'active',
+      departments: defaultDepts,
+      activeDepartment: defaultDepts[0],
     });
 
     const savedUser = await newUser.save();
@@ -111,7 +117,9 @@ export const registerFaculty = async (req, res) => {
     const newFaculty = new Faculty({
       user: savedUser._id,
       employeeId: 'FAC' + Math.floor(1000 + Math.random() * 9000),
-      department: 'Engineering',
+      department: defaultDepts[0],
+      departments: defaultDepts,
+      activeDepartment: defaultDepts[0],
     });
     await newFaculty.save();
 
@@ -125,6 +133,8 @@ export const registerFaculty = async (req, res) => {
         name: savedUser.name,
         role: savedUser.role,
         status: savedUser.status,
+        departments: savedUser.departments,
+        activeDepartment: savedUser.activeDepartment,
         createdAt: savedUser.createdAt,
       },
     });
@@ -135,14 +145,25 @@ export const registerFaculty = async (req, res) => {
 };
 
 export const loginStudent = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password } = req.body; // email field holds rollNumber or email
   if (!email || !password) {
-    return res.status(400).json({ message: 'Please provide email and password.' });
+    return res.status(400).json({ message: 'Please provide roll number/email and password.' });
   }
 
   try {
-    // Optimize DB query: Select only required fields
-    const user = await User.findOne({ email }).select('_id role passwordHash name email status');
+    let query = {};
+    if (email.includes('@')) {
+      query = { email: email.toLowerCase() };
+    } else {
+      // Find Student with this rollNumber
+      const studentProfile = await Student.findOne({ rollNumber: email.trim() });
+      if (!studentProfile) {
+        return res.status(401).json({ message: 'Invalid credentials or student roll number not found.' });
+      }
+      query = { _id: studentProfile.user };
+    }
+
+    const user = await User.findOne(query).select('_id role passwordHash name email status department');
     if (!user || user.role !== 'student') {
       return res.status(401).json({ message: 'Invalid credentials or student account not found.' });
     }
@@ -165,7 +186,7 @@ export const loginStudent = async (req, res) => {
       return res.status(403).json({ message: 'Your account is not approved.' });
     }
 
-    // Invalidate cached instances on fresh login to prevent stale states
+    // Invalidate caches
     clearUserCache(user._id);
     clearProfileCache(user._id);
 
@@ -176,6 +197,7 @@ export const loginStudent = async (req, res) => {
         id: user._id.toString(),
         name: user.name,
         role: user.role,
+        department: user.department,
       },
     });
   } catch (error) {
@@ -191,8 +213,7 @@ export const loginFaculty = async (req, res) => {
   }
 
   try {
-    // Optimize DB query: Select only required fields
-    const user = await User.findOne({ email }).select('_id role passwordHash name email status');
+    const user = await User.findOne({ email }).select('_id role passwordHash name email status departments activeDepartment');
     if (!user || user.role !== 'faculty') {
       return res.status(401).json({ message: 'Invalid credentials or faculty account not found.' });
     }
@@ -215,7 +236,6 @@ export const loginFaculty = async (req, res) => {
       return res.status(403).json({ message: 'Your account is not approved.' });
     }
 
-    // Invalidate cached instances on fresh login to prevent stale states
     clearUserCache(user._id);
     clearProfileCache(user._id);
 
@@ -226,6 +246,8 @@ export const loginFaculty = async (req, res) => {
         id: user._id.toString(),
         name: user.name,
         role: user.role,
+        departments: user.departments,
+        activeDepartment: user.activeDepartment,
       },
     });
   } catch (error) {
@@ -241,7 +263,6 @@ export const loginAdmin = async (req, res) => {
   }
 
   try {
-    // Optimize DB query: Select only required fields
     const user = await User.findOne({ email }).select('_id role passwordHash name email status');
     if (!user || user.role !== 'admin') {
       return res.status(401).json({ message: 'Invalid credentials or administrator account not found.' });
@@ -265,7 +286,6 @@ export const loginAdmin = async (req, res) => {
       return res.status(403).json({ message: 'Your account is not approved.' });
     }
 
-    // Invalidate cached instances on fresh login to prevent stale states
     clearUserCache(user._id);
     clearProfileCache(user._id);
 
@@ -310,7 +330,6 @@ export const getProfile = async (req, res) => {
   const cacheKey = req.user.id;
   const now = Date.now();
   
-  // Check if profile response is cached
   const cachedProfile = profileCache.get(cacheKey);
   if (cachedProfile && (now - cachedProfile.timestamp < PROFILE_CACHE_TTL)) {
     return res.json(cachedProfile.data);
@@ -329,25 +348,29 @@ export const getProfile = async (req, res) => {
       role: user.role,
       status: user.status,
       createdAt: user.createdAt,
+      department: user.department,
+      departments: user.departments,
+      activeDepartment: user.activeDepartment,
     };
 
     if (user.role === 'student') {
       const studentDoc = await Student.findOne({ user: user._id });
       if (studentDoc) {
         profileData.rollNumber = studentDoc.rollNumber;
-        profileData.department = studentDoc.department;
+        profileData.department = studentDoc.department || user.department;
         profileData.enrolledCourses = studentDoc.enrolledCourses;
       }
     } else if (user.role === 'faculty') {
       const facultyDoc = await Faculty.findOne({ user: user._id });
       if (facultyDoc) {
         profileData.employeeId = facultyDoc.employeeId;
-        profileData.department = facultyDoc.department;
+        profileData.department = facultyDoc.department || user.activeDepartment;
+        profileData.departments = facultyDoc.departments || user.departments;
+        profileData.activeDepartment = facultyDoc.activeDepartment || user.activeDepartment;
         profileData.isHOD = facultyDoc.isHOD;
       }
     }
 
-    // Cache profile results
     profileCache.set(cacheKey, {
       data: profileData,
       timestamp: now,

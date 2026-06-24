@@ -20,6 +20,7 @@ export const createNotice = async (req, res) => {
       createdBy: req.user.id,
       createdByName: req.user.name,
       role: req.user.role,
+      department: req.user.role === 'faculty' ? req.user.activeDepartment : '',
       priority: priority || 'low',
     });
 
@@ -34,7 +35,21 @@ export const createNotice = async (req, res) => {
 // Get all notices, sorted by newest first
 export const getAllNotices = async (req, res) => {
   try {
-    const notices = await Notice.find().sort({ createdAt: -1 });
+    const filter = {};
+    if (req.user.role === 'student') {
+      filter.$or = [
+        { department: req.user.department },
+        { department: '' },
+        { department: { $exists: false } }
+      ];
+    } else if (req.user.role === 'faculty') {
+      filter.$or = [
+        { department: req.user.activeDepartment },
+        { department: '' },
+        { department: { $exists: false } }
+      ];
+    }
+    const notices = await Notice.find(filter).sort({ createdAt: -1 });
     res.json(notices);
   } catch (error) {
     console.error('Fetch notices error:', error);

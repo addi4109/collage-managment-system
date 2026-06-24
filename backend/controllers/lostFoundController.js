@@ -21,6 +21,7 @@ export const createLostFound = async (req, res) => {
       date: new Date(date),
       imageUrl: imageUrl || '',
       createdBy: req.user.id,
+      department: req.user.role === 'faculty' ? req.user.activeDepartment : '',
       createdByName: req.user.name,
       replies: [],
       status: 'active',
@@ -106,7 +107,21 @@ export const deleteLostFound = async (req, res) => {
 // Get all Lost & Found items (All roles)
 export const getAllLostFound = async (req, res) => {
   try {
-    const items = await LostFound.find().sort({ createdAt: -1 });
+    const filter = {};
+    if (req.user.role === 'student') {
+      filter.$or = [
+        { department: req.user.department },
+        { department: '' },
+        { department: { $exists: false } }
+      ];
+    } else if (req.user.role === 'faculty') {
+      filter.$or = [
+        { department: req.user.activeDepartment },
+        { department: '' },
+        { department: { $exists: false } }
+      ];
+    }
+    const items = await LostFound.find(filter).sort({ createdAt: -1 });
     res.json(items);
   } catch (error) {
     console.error('Get all LostFound error:', error);
