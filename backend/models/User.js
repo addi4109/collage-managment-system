@@ -7,10 +7,18 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    username: {
+      type: String,
+      unique: true,
+      sparse: true, // allows null/undefined without unique conflict for old records
+      trim: true,
+      lowercase: true,
+      index: true,
+    },
     email: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true,
       trim: true,
       lowercase: true,
       index: true,
@@ -33,18 +41,13 @@ const userSchema = new mongoose.Schema(
     },
     department: {
       type: String,
-      required: function () {
-        return this.role === 'student' || this.role === 'faculty';
-      },
       trim: true,
     },
     semester: {
       type: String,
-      required: function () {
-        return this.role === 'student';
-      },
       trim: true,
     },
+    // Faculty-specific
     assignedSubjects: {
       type: [String],
       default: [],
@@ -55,13 +58,59 @@ const userSchema = new mongoose.Schema(
       max: 8,
       default: null,
     },
+    assignedYear: {
+      type: String,
+      enum: ['First Year', 'Second Year', 'Third Year', ''],
+      default: '',
+    },
     approvedByAdmin: {
       type: Boolean,
       default: function () {
-        // Default to true for admin and student, but false for faculty (needs manual approval)
         return this.role !== 'faculty';
       },
     },
+    employeeId: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    phone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    // Student-specific
+    rollNumber: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    enrollmentNumber: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    year: {
+      type: String,
+      enum: ['First Year', 'Second Year', 'Third Year', ''],
+      default: '',
+    },
+    parentName: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    parentMobile: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    createdByFaculty: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    // Legacy fields (kept for backward compatibility)
     departments: {
       type: [String],
       default: [],

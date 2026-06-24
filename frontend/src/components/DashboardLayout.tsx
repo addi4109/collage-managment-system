@@ -27,6 +27,7 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import PeopleIcon from '@mui/icons-material/People';
 import { useAuthStore } from '../store/authStore';
 import { logoutUser } from '../services/authService';
 import { AiChatbotBubble } from './AiChatbotBubble';
@@ -211,18 +212,29 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         {/* Faculty Specific Links */}
         {user?.role === 'faculty' && (
           <>
+            {/* Student Management — first and most important */}
             <ListItem disablePadding>
               <ListItemButton
-                onClick={() => navigate('/attendance/sessions')}
+                onClick={() => navigate('/faculty/students')}
                 sx={{
-                  borderRadius: 2,
-                  mb: 0.5,
-                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                  borderRadius: 2, mb: 0.5,
+                  background: 'linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(16,185,129,0.06) 100%)',
+                  border: '1px solid rgba(16,185,129,0.15)',
+                  '&:hover': { backgroundColor: 'rgba(16,185,129,0.15)' },
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 40 }}>
-                  <QrCodeScannerIcon color="secondary" />
+                  <PeopleIcon sx={{ color: '#10b981' }} />
                 </ListItemIcon>
+                <ListItemText primary="Student Management" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 700, color: '#10b981' }} />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => navigate('/attendance/sessions')}
+                sx={{ borderRadius: 2, mb: 0.5, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}><QrCodeScannerIcon color="secondary" /></ListItemIcon>
                 <ListItemText primary="Manage Sessions" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>

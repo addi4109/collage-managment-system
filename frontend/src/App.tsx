@@ -15,11 +15,10 @@ import CircularProgress from '@mui/material/CircularProgress';
 // Lazy load authentication views
 const AuthLanding = React.lazy(() => import('./pages/AuthLanding').then(m => ({ default: m.AuthLanding })));
 const StudentLogin = React.lazy(() => import('./pages/StudentLogin').then(m => ({ default: m.StudentLogin })));
-const StudentRegister = React.lazy(() => import('./pages/StudentRegister').then(m => ({ default: m.StudentRegister })));
 const FacultyLogin = React.lazy(() => import('./pages/FacultyLogin').then(m => ({ default: m.FacultyLogin })));
 const AdminLogin = React.lazy(() => import('./pages/AdminLogin').then(m => ({ default: m.AdminLogin })));
-const AdminRegister = React.lazy(() => import('./pages/AdminRegister').then(m => ({ default: m.AdminRegister })));
 const AdminFacultyAssignment = React.lazy(() => import('./pages/AdminFacultyAssignment').then(m => ({ default: m.AdminFacultyAssignment })));
+const FacultyStudentManagement = React.lazy(() => import('./pages/FacultyStudentManagement').then(m => ({ default: m.FacultyStudentManagement })));
 const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword').then(m => ({ default: m.ForgotPassword })));
 const Unauthorized = React.lazy(() => import('./pages/Unauthorized'));
 
@@ -104,14 +103,16 @@ const AppContent: React.FC = () => {
       <Router>
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
-            {/* Public Credentials Pages */}
+            {/* Public Credential Pages — No Registration Routes */}
             <Route path="/student/login" element={<StudentLogin />} />
-            <Route path="/student/register" element={<StudentRegister />} />
             <Route path="/faculty/login" element={<FacultyLogin />} />
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/register" element={<AdminRegister />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
+            {/* Redirect stale register URLs to login */}
+            <Route path="/student/register" element={<Navigate to="/student/login" replace />} />
+            <Route path="/faculty/register" element={<Navigate to="/faculty/login" replace />} />
+            <Route path="/admin/register" element={<Navigate to="/admin/login" replace />} />
 
             {/* Default Route Forwarder or Guest Landing */}
             <Route
@@ -258,6 +259,16 @@ const AppContent: React.FC = () => {
                 <ProtectedRoute allowedRoles={['admin']}>
                   <DashboardLayout>
                     <AdminFacultyAssignment />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/faculty/students"
+              element={
+                <ProtectedRoute allowedRoles={['faculty']}>
+                  <DashboardLayout>
+                    <FacultyStudentManagement />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

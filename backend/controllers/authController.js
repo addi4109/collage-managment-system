@@ -7,7 +7,7 @@ import Admin from '../models/Admin.js';
 import Department from '../models/Department.js';
 import { clearUserCache } from '../middleware/authMiddleware.js';
 
-// Cache for full profile responses to reduce database lookups
+// Cache for full profile responses (non-faculty only) to reduce DB lookups
 const profileCache = new Map();
 const PROFILE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -27,17 +27,30 @@ const generateToken = (user) => {
   );
 };
 
-export const registerStudent = async (req, res) => {
-  const { name, email, password, department, semester } = req.body;
+// ──────────────────────────────────────────────────────────
+// ADMIN: Create Faculty Account
+// Only admin can create faculty accounts. No public registration.
+// ──────────────────────────────────────────────────────────
+export const adminCreateFaculty = async (req, res) => {
+  const { name, username, email, password, department, assignedYear, assignedSubjects, employeeId, phone } = req.body;
 
-  if (!name || !email || !password || !department || !semester) {
-    return res.status(400).json({ message: 'Please provide name, email, password, department, and semester.' });
+  if (!name || !username || !password || !department) {
+    return res.status(400).json({ message: 'Name, username, password, and department are required.' });
   }
 
   try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'An account with this email already exists.' });
+    // Check username uniqueness
+    const existingUsername = await User.findOne({ username: username.toLowerCase().trim() });
+    if (existingUsername) {
+      return res.status(400).json({ message: 'Username already taken. Please choose a different username.' });
+    }
+
+    // Check email uniqueness if provided
+    if (email) {
+      const existingEmail = await User.findOne({ email: email.toLowerCase().trim() });
+      if (existingEmail) {
+        return res.status(400).json({ message: 'An account with this email already exists.' });
+      }
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -45,156 +58,209 @@ export const registerStudent = async (req, res) => {
 
     const newUser = new User({
       name,
-      email,
-      passwordHash,
-      role: 'student',
-      status: 'active',
-      department,
-      semester,
-    });
-
-    const savedUser = await newUser.save();
-
-    const newStudent = new Student({
-      user: savedUser._id,
-      rollNumber: 'STU' + Math.floor(100000 + Math.random() * 900000),
-      department,
-      semester,
-    });
-    await newStudent.save();
-
-    const token = generateToken(savedUser);
-
-    res.status(201).json({
-      token,
-      user: {
-        uid: savedUser._id.toString(),
-        email: savedUser.email,
-        name: savedUser.name,
-        role: savedUser.role,
-        status: savedUser.status,
-        department: savedUser.department,
-        semester: savedUser.semester,
-        createdAt: savedUser.createdAt,
-      },
-    });
-  } catch (error) {
-    console.error('Student registration error:', error);
-    res.status(500).json({ message: 'Internal server error during registration.' });
-  }
-};
-export const registerFaculty = async (req, res) => {
-  const { name, email, password, department, departmentSecretCode } = req.body;
-
-  if (!name || !email || !password || !department || !departmentSecretCode) {
-    return res.status(400).json({ message: 'Please provide name, email, password, department, and department secret code.' });
-  }
-
-  try {
-    const dept = await Department.findOne({ departmentName: department, status: 'active' });
-    if (!dept) {
-      return res.status(400).json({ message: 'Selected department is not active or does not exist.' });
-    }
-    if (dept.departmentSecretCode !== departmentSecretCode) {
-      return res.status(400).json({ message: 'Invalid secret code for selected department. Registration denied.' });
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'An account with this email already exists.' });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-
-    const newUser = new User({
-      name,
-      email,
+      username: username.toLowerCase().trim(),
+      email: email ? email.toLowerCase().trim() : undefined,
       passwordHash,
       role: 'faculty',
-      status: 'pending',
+      status: 'approved',
+      approvedByAdmin: true,
       department,
-      assignedSubjects: [],
-      approvedByAdmin: false,
+      assignedYear: assignedYear || '',
+      assignedSubjects: assignedSubjects || [],
+      employeeId: employeeId || 'FAC' + Math.floor(1000 + Math.random() * 9000),
+      phone: phone || '',
     });
 
     const savedUser = await newUser.save();
 
     const newFaculty = new Faculty({
       user: savedUser._id,
-      employeeId: 'FAC' + Math.floor(1000 + Math.random() * 9000),
+      employeeId: savedUser.employeeId,
       department,
-      assignedSubjects: [],
-      approvedByAdmin: false,
+      assignedSubjects: assignedSubjects || [],
+      approvedByAdmin: true,
     });
     await newFaculty.save();
 
-    // NOTE: Do NOT return a JWT token for pending faculty.
-    // Faculty accounts require admin approval before they can log in.
-    // Returning a token here would allow pending users to bypass the login status check.
     res.status(201).json({
       success: true,
-      message: 'Registration submitted successfully. Your account is pending administrator approval. You will be able to log in once approved.',
+      message: 'Faculty account created successfully.',
       user: {
         uid: savedUser._id.toString(),
-        email: savedUser.email,
         name: savedUser.name,
+        username: savedUser.username,
+        email: savedUser.email,
         role: savedUser.role,
         status: savedUser.status,
         department: savedUser.department,
+        assignedYear: savedUser.assignedYear,
         assignedSubjects: savedUser.assignedSubjects,
-        approvedByAdmin: savedUser.approvedByAdmin,
+        employeeId: savedUser.employeeId,
+        phone: savedUser.phone,
         createdAt: savedUser.createdAt,
       },
     });
   } catch (error) {
-    console.error('Faculty registration error:', error);
-    res.status(500).json({ message: 'Internal server error during registration.' });
+    console.error('Admin create faculty error:', error);
+    res.status(500).json({ message: 'Internal server error creating faculty account.' });
   }
 };
+
+// ──────────────────────────────────────────────────────────
+// ADMIN: Update Faculty Account
+// ──────────────────────────────────────────────────────────
+export const adminUpdateFaculty = async (req, res) => {
+  const { id } = req.params;
+  const { name, username, email, password, department, assignedYear, assignedSubjects, employeeId, phone, status } = req.body;
+
+  try {
+    const user = await User.findById(id);
+    if (!user || user.role !== 'faculty') {
+      return res.status(404).json({ message: 'Faculty account not found.' });
+    }
+
+    // Check username uniqueness if being changed
+    if (username && username.toLowerCase().trim() !== user.username) {
+      const existing = await User.findOne({ username: username.toLowerCase().trim() });
+      if (existing) {
+        return res.status(400).json({ message: 'Username already taken.' });
+      }
+      user.username = username.toLowerCase().trim();
+    }
+
+    if (email && email.toLowerCase().trim() !== user.email) {
+      const existing = await User.findOne({ email: email.toLowerCase().trim() });
+      if (existing) {
+        return res.status(400).json({ message: 'Email already in use.' });
+      }
+      user.email = email.toLowerCase().trim();
+    }
+
+    if (name) user.name = name;
+    if (department) user.department = department;
+    if (assignedYear !== undefined) user.assignedYear = assignedYear;
+    if (assignedSubjects) user.assignedSubjects = assignedSubjects;
+    if (employeeId) user.employeeId = employeeId;
+    if (phone !== undefined) user.phone = phone;
+    if (status) {
+      user.status = status;
+      user.approvedByAdmin = (status === 'approved' || status === 'active');
+    }
+
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.passwordHash = await bcrypt.hash(password, salt);
+    }
+
+    await user.save();
+
+    // Sync Faculty profile doc
+    const facultyProfile = await Faculty.findOne({ user: user._id });
+    if (facultyProfile) {
+      if (department) facultyProfile.department = department;
+      if (assignedSubjects) facultyProfile.assignedSubjects = assignedSubjects;
+      if (status) facultyProfile.approvedByAdmin = user.approvedByAdmin;
+      if (employeeId) facultyProfile.employeeId = employeeId;
+      await facultyProfile.save();
+    }
+
+    clearUserCache(user._id);
+    clearProfileCache(user._id);
+
+    res.json({
+      success: true,
+      message: 'Faculty account updated.',
+      user: {
+        uid: user._id.toString(),
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        department: user.department,
+        assignedYear: user.assignedYear,
+        assignedSubjects: user.assignedSubjects,
+        employeeId: user.employeeId,
+        phone: user.phone,
+      },
+    });
+  } catch (error) {
+    console.error('Admin update faculty error:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+// ──────────────────────────────────────────────────────────
+// ADMIN: Delete Faculty Account
+// ──────────────────────────────────────────────────────────
+export const adminDeleteFaculty = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await User.findById(id);
+    if (!user || user.role !== 'faculty') {
+      return res.status(404).json({ message: 'Faculty account not found.' });
+    }
+
+    await Faculty.deleteOne({ user: user._id });
+    await User.deleteOne({ _id: user._id });
+
+    clearUserCache(user._id);
+    clearProfileCache(user._id);
+
+    res.json({ success: true, message: 'Faculty account deleted successfully.' });
+  } catch (error) {
+    console.error('Admin delete faculty error:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+// ──────────────────────────────────────────────────────────
+// STUDENT LOGIN
+// Uses username or rollNumber (no email lookup)
+// ──────────────────────────────────────────────────────────
 export const loginStudent = async (req, res) => {
-  const { email, password } = req.body; // email field holds rollNumber or email
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Please provide roll number/email and password.' });
+  const { email, password } = req.body; // 'email' field holds username or rollNumber from frontend
+  const identifier = email; // rename for clarity
+
+  if (!identifier || !password) {
+    return res.status(400).json({ message: 'Please provide username and password.' });
   }
 
   try {
-    let query = {};
-    if (email.includes('@')) {
-      query = { email: email.toLowerCase() };
-    } else {
-      // Find Student with this rollNumber
-      const studentProfile = await Student.findOne({ rollNumber: email.trim() });
-      if (!studentProfile) {
-        return res.status(401).json({ message: 'Invalid credentials or student roll number not found.' });
+    let user;
+
+    // Try username lookup first
+    user = await User.findOne({ username: identifier.toLowerCase().trim() })
+      .select('_id role passwordHash name username email status department semester rollNumber enrollmentNumber year phone');
+
+    // Fallback: try rollNumber lookup via Student model
+    if (!user) {
+      const studentProfile = await Student.findOne({ rollNumber: identifier.trim() });
+      if (studentProfile) {
+        user = await User.findById(studentProfile.user)
+          .select('_id role passwordHash name username email status department semester rollNumber enrollmentNumber year phone');
       }
-      query = { _id: studentProfile.user };
     }
 
-    const user = await User.findOne(query).select('_id role passwordHash name email status department semester');
     if (!user || user.role !== 'student') {
-      return res.status(401).json({ message: 'Invalid credentials or student account not found.' });
+      return res.status(401).json({ message: 'Invalid username or password.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
+      return res.status(401).json({ message: 'Invalid username or password.' });
     }
 
     if (user.status === 'pending') {
-      return res.status(403).json({ message: 'Your account is pending administrator approval.' });
-    }
-    if (user.status === 'rejected') {
-      return res.status(403).json({ message: 'Your account request has been rejected.' });
+      return res.status(403).json({ message: 'Your account is not yet active. Contact your faculty.' });
     }
     if (user.status === 'suspended') {
       return res.status(403).json({ message: 'Your account has been suspended. Contact administration.' });
     }
     if (user.status !== 'approved' && user.status !== 'active') {
-      return res.status(403).json({ message: 'Your account is not approved.' });
+      return res.status(403).json({ message: 'Your account is not active.' });
     }
 
-    // Invalidate caches
     clearUserCache(user._id);
     clearProfileCache(user._id);
 
@@ -204,9 +270,14 @@ export const loginStudent = async (req, res) => {
       user: {
         id: user._id.toString(),
         name: user.name,
+        username: user.username,
         role: user.role,
         department: user.department,
+        year: user.year,
         semester: user.semester,
+        rollNumber: user.rollNumber,
+        enrollmentNumber: user.enrollmentNumber,
+        phone: user.phone,
       },
     });
   } catch (error) {
@@ -214,43 +285,49 @@ export const loginStudent = async (req, res) => {
     res.status(500).json({ message: 'Internal server error.' });
   }
 };
+
+// ──────────────────────────────────────────────────────────
+// FACULTY LOGIN
+// Uses username or email
+// ──────────────────────────────────────────────────────────
 export const loginFaculty = async (req, res) => {
   console.log('[DEBUG] Server: Faculty login - Request received');
-  const { email, password } = req.body;
-  if (!email || !password) {
-    console.log('[DEBUG] Server: Faculty login - Missing email or password');
-    return res.status(400).json({ message: 'Please provide email and password.' });
+  const { email, password } = req.body; // 'email' can be username or email
+  const identifier = email;
+
+  if (!identifier || !password) {
+    return res.status(400).json({ message: 'Please provide username and password.' });
   }
 
   try {
-    const user = await User.findOne({ email }).select('_id role passwordHash name email status department assignedSubjects approvedByAdmin');
+    // Try username lookup first, then email
+    let user = await User.findOne({ username: identifier.toLowerCase().trim() })
+      .select('_id role passwordHash name username email status department assignedSubjects assignedYear approvedByAdmin');
+
+    if (!user) {
+      user = await User.findOne({ email: identifier.toLowerCase().trim() })
+        .select('_id role passwordHash name username email status department assignedSubjects assignedYear approvedByAdmin');
+    }
+
     if (!user || user.role !== 'faculty') {
-      console.log('[DEBUG] Server: Faculty login - User not found or role mismatch');
       return res.status(401).json({ message: 'Invalid credentials or faculty account not found.' });
     }
-    console.log('[DEBUG] Server: Faculty login - User found');
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      console.log('[DEBUG] Server: Faculty login - Password verification failed');
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
-    console.log('[DEBUG] Server: Faculty login - Password verified');
 
     if (user.status === 'pending') {
-      console.log('[DEBUG] Server: Faculty login - Status is pending');
       return res.status(403).json({ message: 'Faculty account is awaiting administrator approval.' });
     }
     if (user.status === 'rejected') {
-      console.log('[DEBUG] Server: Faculty login - Status is rejected');
       return res.status(403).json({ message: 'Your account request has been rejected.' });
     }
     if (user.status === 'suspended') {
-      console.log('[DEBUG] Server: Faculty login - Status is suspended');
       return res.status(403).json({ message: 'Your account has been suspended. Contact administration.' });
     }
     if (user.status !== 'approved' && user.status !== 'active') {
-      console.log('[DEBUG] Server: Faculty login - Status is not approved/active');
       return res.status(403).json({ message: 'Your account is not approved.' });
     }
 
@@ -258,17 +335,17 @@ export const loginFaculty = async (req, res) => {
     clearProfileCache(user._id);
 
     const token = generateToken(user);
-    console.log('[DEBUG] Server: Faculty login - Token generated');
 
-    console.log('[DEBUG] Server: Faculty login - Response sent');
     res.json({
       token,
       user: {
         id: user._id.toString(),
         name: user.name,
+        username: user.username,
         role: user.role,
         department: user.department,
         assignedSubjects: user.assignedSubjects || [],
+        assignedYear: user.assignedYear || '',
         approvedByAdmin: user.approvedByAdmin || false,
       },
     });
@@ -278,6 +355,9 @@ export const loginFaculty = async (req, res) => {
   }
 };
 
+// ──────────────────────────────────────────────────────────
+// ADMIN LOGIN
+// ──────────────────────────────────────────────────────────
 export const loginAdmin = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -295,15 +375,9 @@ export const loginAdmin = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
 
-    if (user.status === 'pending') {
-      return res.status(403).json({ message: 'Your account is pending administrator approval.' });
-    }
-    if (user.status === 'rejected') {
-      return res.status(403).json({ message: 'Your account request has been rejected.' });
-    }
-    if (user.status === 'suspended') {
-      return res.status(403).json({ message: 'Your account has been suspended. Contact administration.' });
-    }
+    if (user.status === 'pending') return res.status(403).json({ message: 'Your account is pending approval.' });
+    if (user.status === 'rejected') return res.status(403).json({ message: 'Your account request has been rejected.' });
+    if (user.status === 'suspended') return res.status(403).json({ message: 'Your account has been suspended.' });
     if (user.status !== 'approved' && user.status !== 'active') {
       return res.status(403).json({ message: 'Your account is not approved.' });
     }
@@ -314,11 +388,7 @@ export const loginAdmin = async (req, res) => {
     const token = generateToken(user);
     res.json({
       token,
-      user: {
-        id: user._id.toString(),
-        name: user.name,
-        role: user.role,
-      },
+      user: { id: user._id.toString(), name: user.name, role: user.role },
     });
   } catch (error) {
     console.error('Admin login error:', error);
@@ -335,7 +405,6 @@ export const forgotPassword = async (req, res) => {
   if (!email) {
     return res.status(400).json({ message: 'Please provide your email address.' });
   }
-
   try {
     const user = await User.findOne({ email });
     if (!user) {
@@ -348,6 +417,9 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
+// ──────────────────────────────────────────────────────────
+// GET PROFILE
+// ──────────────────────────────────────────────────────────
 export const getProfile = async (req, res) => {
   const cacheKey = req.user.id;
   const now = Date.now();
@@ -358,44 +430,46 @@ export const getProfile = async (req, res) => {
       return res.status(404).json({ message: 'User profile not found.' });
     }
 
-    // If a faculty account is still pending or rejected, revoke the session.
-    // This ensures that if a faculty member has a token from before admin
-    // approval, they cannot use it to access the system.
+    // Block pending/rejected/suspended faculty from using token
     if (user.role === 'faculty' && (user.status === 'pending' || user.status === 'rejected')) {
       return res.status(403).json({
         message: user.status === 'pending'
-          ? 'Your account is awaiting administrator approval. Please try again after approval.'
+          ? 'Your account is awaiting administrator approval.'
           : 'Your account registration has been rejected. Contact the administrator.',
       });
     }
-
     if (user.role === 'faculty' && user.status === 'suspended') {
-      return res.status(403).json({
-        message: 'Your account has been suspended. Please contact the administrator.',
-      });
+      return res.status(403).json({ message: 'Your account has been suspended.' });
     }
 
     const profileData = {
       uid: user._id.toString(),
-      email: user.email,
+      id: user._id.toString(),
+      email: user.email || '',
+      username: user.username || '',
       role: user.role,
       name: user.name,
       status: user.status,
-      department: user.department,
-      semester: user.semester,
+      department: user.department || '',
+      semester: user.semester || '',
+      year: user.year || '',
+      rollNumber: user.rollNumber || '',
+      enrollmentNumber: user.enrollmentNumber || '',
+      phone: user.phone || '',
+      parentName: user.parentName || '',
+      parentMobile: user.parentMobile || '',
       assignedSubjects: user.assignedSubjects || [],
       assignedSemester: user.assignedSemester || null,
+      assignedYear: user.assignedYear || '',
+      employeeId: user.employeeId || '',
       approvedByAdmin: user.approvedByAdmin || false,
+      createdByFaculty: user.createdByFaculty || null,
       createdAt: user.createdAt,
     };
 
-    // Only cache non-faculty profiles (or approved faculty) to avoid serving
-    // stale status data after admin approval changes.
+    // Only cache non-faculty profiles
     if (user.role !== 'faculty') {
-      profileCache.set(cacheKey, {
-        data: profileData,
-        timestamp: now,
-      });
+      profileCache.set(cacheKey, { data: profileData, timestamp: now });
     }
 
     res.json(profileData);

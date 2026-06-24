@@ -23,9 +23,9 @@ export const StudentLogin: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const { user, setUser } = useAuth();
-  
-  const [email, setEmail] = useState('');
-  const [emailError, setEmailError] = useState<string | null>(null);
+
+  const [username, setUsername] = useState('');
+  const [usernameError, setUsernameError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(true);
@@ -46,93 +46,51 @@ export const StudentLogin: React.FC = () => {
     setCaptchaError(null);
   };
 
-  useEffect(() => {
-    generateCaptcha();
-  }, []);
+  useEffect(() => { generateCaptcha(); }, []);
 
   useEffect(() => {
-    if (user) {
-      navigate('/student/dashboard');
-    }
+    if (user) navigate('/student/dashboard');
   }, [user, navigate]);
-
-  const handleEmailChange = (val: string) => {
-    setEmail(val);
-    if (!val.trim()) {
-      setEmailError('Roll Number or Email address is required.');
-    } else {
-      setEmailError(null);
-    }
-  };
-
-  const handlePasswordChange = (val: string) => {
-    setPassword(val);
-    if (!val) {
-      setPasswordError('Password is required.');
-    } else {
-      setPasswordError(null);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (localLoading) return;
 
     let hasError = false;
-    if (!email) {
-      setEmailError('Roll Number or Email address is required.');
+    if (!username.trim()) {
+      setUsernameError('Username is required.');
       hasError = true;
     }
     if (!password) {
       setPasswordError('Password is required.');
       hasError = true;
     }
-
     if (!captchaInput) {
       setCaptchaError('Captcha verification is required.');
       hasError = true;
     } else if (captchaInput.trim().toLowerCase() !== captchaText.toLowerCase()) {
-      setCaptchaError('Incorrect captcha code. Please try again.');
+      setCaptchaError('Incorrect captcha. Please try again.');
       generateCaptcha();
       return;
     }
+    if (hasError) return;
 
-    if (hasError || emailError || passwordError || captchaError) {
-      toast.warning('Please correct all validation errors.');
-      return;
-    }
-
-    console.log('[DEBUG] Frontend: Student login request initiated for email/roll:', email);
     setLocalLoading(true);
     try {
-      const userProfile = await loginWithEmail(email, password, rememberMe, 'student');
-      console.log('[DEBUG] Frontend: Student login success. Received userProfile:', userProfile);
+      const userProfile = await loginWithEmail(username.trim(), password, rememberMe, 'student');
       setUser(userProfile);
-      toast.success('Login successful. Redirecting to Student Dashboard...');
-      console.log('[DEBUG] Frontend: Scheduled redirect to /student/dashboard');
-      setTimeout(() => {
-        console.log('[DEBUG] Frontend: Executing redirect to /student/dashboard');
-        navigate('/student/dashboard');
-      }, 1500);
+      toast.success('Login successful. Welcome!');
+      setTimeout(() => navigate('/student/dashboard'), 1200);
     } catch (err: any) {
-      console.error('[DEBUG] Frontend: Student login error caught:', err);
       const errMsg = err.message || '';
-      
-      if (errMsg.includes('pending') || errMsg.includes('approval')) {
-        toast.error('Your account is pending administrator approval.');
-      } else if (errMsg.includes('rejected')) {
-        toast.error('Your account request has been rejected.');
+      if (errMsg.includes('pending') || errMsg.includes('not yet active')) {
+        toast.error('Your account is not yet active. Contact your faculty.');
       } else if (errMsg.includes('suspended')) {
         toast.error('Your account has been suspended. Contact administration.');
-      } else if (err.status === 401 || errMsg.includes('credentials') || errMsg.includes('password') || errMsg.includes('found') || errMsg.includes('Invalid')) {
-        toast.error('Invalid email or password.');
-      } else if (!navigator.onLine) {
-        toast.error('No internet connection detected.');
-      } else if (errMsg.includes('fetch') || errMsg.includes('network') || errMsg.includes('ECONNREFUSED')) {
-        toast.error('Server is temporarily unavailable.');
       } else {
-        toast.error('Unable to sign in. Please try again later.');
+        toast.error('Invalid username or password.');
       }
+      generateCaptcha();
     } finally {
       setLocalLoading(false);
     }
@@ -152,11 +110,11 @@ export const StudentLogin: React.FC = () => {
       <LoadingOverlay open={localLoading} message="Signing in..." />
       <Container maxWidth="xs">
         <Box sx={{ mb: 4, textAlign: 'center' }}>
-          <Typography variant="h3" component="h1" className="gradient-text" sx={{ fontWeight: 800, mb: 1, letterSpacing: '-0.025em' }}>
+          <Typography variant="h3" component="h1" className="gradient-text" sx={{ fontWeight: 800, mb: 1 }}>
             Student Login
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Access your course syllabi, assignments, and grades
+            Enter the credentials provided by your faculty
           </Typography>
         </Box>
 
@@ -165,14 +123,14 @@ export const StudentLogin: React.FC = () => {
             <form onSubmit={handleSubmit} noValidate>
               <TextField
                 fullWidth
-                label="Roll Number / Email Address"
+                label="Username"
                 type="text"
                 margin="normal"
                 variant="outlined"
-                value={email}
-                onChange={(e) => handleEmailChange(e.target.value)}
-                error={!!emailError}
-                helperText={emailError}
+                value={username}
+                onChange={(e) => { setUsername(e.target.value); setUsernameError(null); }}
+                error={!!usernameError}
+                helperText={usernameError}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -182,8 +140,9 @@ export const StudentLogin: React.FC = () => {
                 }}
                 disabled={localLoading}
                 required
+                autoComplete="username"
               />
-              
+
               <TextField
                 fullWidth
                 label="Password"
@@ -191,7 +150,7 @@ export const StudentLogin: React.FC = () => {
                 margin="normal"
                 variant="outlined"
                 value={password}
-                onChange={(e) => handlePasswordChange(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setPasswordError(null); }}
                 error={!!passwordError}
                 helperText={passwordError}
                 InputProps={{
@@ -203,8 +162,10 @@ export const StudentLogin: React.FC = () => {
                 }}
                 disabled={localLoading}
                 required
+                autoComplete="current-password"
               />
 
+              {/* Captcha */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2, mb: 1 }}>
                 <Box
                   sx={{
@@ -224,19 +185,14 @@ export const StudentLogin: React.FC = () => {
                     userSelect: 'none',
                     position: 'relative',
                     overflow: 'hidden',
-                    background: 'linear-gradient(45deg, rgba(99, 102, 241, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%)',
+                    background: 'linear-gradient(45deg, rgba(99,102,241,0.1) 0%, rgba(6,182,212,0.1) 100%)',
                   }}
                 >
                   <Box sx={{ position: 'absolute', width: '150%', height: 2, bgcolor: 'rgba(255,255,255,0.08)', transform: 'rotate(15deg)' }} />
                   <Box sx={{ position: 'absolute', width: '150%', height: 2, bgcolor: 'rgba(255,255,255,0.08)', transform: 'rotate(-10deg)' }} />
                   <span style={{ transform: 'rotate(-3deg)' }}>{captchaText}</span>
                 </Box>
-                <Button 
-                  variant="outlined" 
-                  onClick={generateCaptcha} 
-                  sx={{ height: 48, minWidth: 80 }}
-                  disabled={localLoading}
-                >
+                <Button variant="outlined" onClick={generateCaptcha} sx={{ height: 48, minWidth: 80 }} disabled={localLoading}>
                   Refresh
                 </Button>
               </Box>
@@ -246,10 +202,7 @@ export const StudentLogin: React.FC = () => {
                 label="Enter Captcha"
                 variant="outlined"
                 value={captchaInput}
-                onChange={(e) => {
-                  setCaptchaInput(e.target.value);
-                  setCaptchaError(null);
-                }}
+                onChange={(e) => { setCaptchaInput(e.target.value); setCaptchaError(null); }}
                 error={!!captchaError}
                 helperText={captchaError}
                 disabled={localLoading}
@@ -257,7 +210,7 @@ export const StudentLogin: React.FC = () => {
                 sx={{ mb: 2 }}
               />
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, mb: 2 }}>
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -278,28 +231,26 @@ export const StudentLogin: React.FC = () => {
                 color="primary"
                 type="submit"
                 size="large"
-                disabled={localLoading || !!emailError || !!passwordError || !!captchaError || !captchaInput}
+                disabled={localLoading || !captchaInput}
                 sx={{ mb: 2, height: 48, fontWeight: 600 }}
               >
-                {localLoading ? '[ Logging In... ]' : 'Log In'}
+                {localLoading ? 'Signing In...' : 'Log In'}
               </Button>
             </form>
 
-            <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1.5, alignItems: 'center' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <Link to="/" style={{ color: '#9ca3af', textDecoration: 'none', fontSize: '0.85rem' }}>
-                  ← Back to Portals
-                </Link>
-                <Link to="/student/register" style={{ color: '#6366f1', textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem' }}>
-                  Register Account
-                </Link>
-              </Box>
-              <Link to="/forgot-password" style={{ color: '#6366f1', textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem' }}>
-                Forgot Password?
+            <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center' }}>
+              <Link to="/" style={{ color: '#9ca3af', textDecoration: 'none', fontSize: '0.85rem' }}>
+                ← Back to Portals
               </Link>
             </Box>
           </CardContent>
         </Card>
+
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="caption" color="text.secondary">
+            Don't have credentials? Contact your faculty member.
+          </Typography>
+        </Box>
       </Container>
     </Box>
   );

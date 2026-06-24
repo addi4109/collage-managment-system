@@ -12,13 +12,39 @@ const studentSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    enrollmentNumber: {
+      type: String,
+      default: '',
+    },
     department: {
       type: String,
+      default: '',
+    },
+    year: {
+      type: String,
+      enum: ['First Year', 'Second Year', 'Third Year', ''],
       default: '',
     },
     semester: {
       type: String,
       default: '',
+    },
+    phone: {
+      type: String,
+      default: '',
+    },
+    parentName: {
+      type: String,
+      default: '',
+    },
+    parentMobile: {
+      type: String,
+      default: '',
+    },
+    createdByFaculty: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
     },
     enrolledCourses: {
       type: [String],
