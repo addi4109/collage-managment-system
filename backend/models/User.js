@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: ['pending', 'approved', 'rejected', 'active', 'suspended'],
+      enum: ['pending', 'approved', 'rejected', 'active', 'suspended', 'inactive'],
       default: 'active',
     },
     department: {
@@ -66,12 +66,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['First Year', 'Second Year', 'Third Year', ''],
       default: '',
-    },
-    approvedByAdmin: {
-      type: Boolean,
-      default: function () {
-        return this.role !== 'faculty';
-      },
     },
     employeeId: {
       type: String,

@@ -16,6 +16,7 @@ import resultRoutes from './routes/resultRoutes.js';
 import studentManagementRoutes from './routes/studentManagementRoutes.js';
 import admissionRoutes from './routes/admissionRoutes.js';
 import erpRoutes from './routes/erpRoutes.js';
+import facultyRoutes from './routes/facultyRoutes.js';
 import { connectDB } from './config/database.js';
 
 dotenv.config();
@@ -82,6 +83,7 @@ app.use('/api/results', resultRoutes);
 app.use('/api/students', studentManagementRoutes);
 app.use('/api/admissions', admissionRoutes);
 app.use('/api/erp', erpRoutes);
+app.use('/api/faculty', facultyRoutes);
 
 // Health check endpoint displaying connection state and process uptime
 app.get('/', (req, res) => {

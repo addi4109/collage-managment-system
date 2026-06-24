@@ -7,13 +7,13 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
 import BlockIcon from '@mui/icons-material/Block';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import KeyIcon from '@mui/icons-material/Key';
 import { useToast } from '../context/ToastContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://collage-managment-system.onrender.com/api';
@@ -31,6 +31,7 @@ const SEMESTERS = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'];
 const emptyFacultyForm = {
   name: '', username: '', email: '', password: '', phone: '',
   employeeId: '', department: '', assignedSemesters: [] as string[], assignedSubjects: [] as string[],
+  status: 'active',
 };
 
 export const AdminFacultyAssignment: React.FC = () => {
@@ -47,6 +48,13 @@ export const AdminFacultyAssignment: React.FC = () => {
   const [facultyForm, setFacultyForm] = useState({ ...emptyFacultyForm });
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Password Reset dialog
+  const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
+  const [passwordTarget, setPasswordTarget] = useState<any | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   // Subject Assignment dialog
   const [openAssignDialog, setOpenAssignDialog] = useState(false);
@@ -66,7 +74,7 @@ export const AdminFacultyAssignment: React.FC = () => {
     try {
       const [deptRes, facRes] = await Promise.all([
         fetch(`${API_URL}/departments`, { headers: getHeaders() }),
-        fetch(`${API_URL}/auth/admin/faculty`, { headers: getHeaders() }),
+        fetch(`${API_URL}/faculty`, { headers: getHeaders() }),
       ]);
       const deptData = await deptRes.json();
       const facData = await facRes.json();
@@ -99,6 +107,7 @@ export const AdminFacultyAssignment: React.FC = () => {
       department: fac.department || '',
       assignedSemesters: fac.assignedSemesters || [],
       assignedSubjects: fac.assignedSubjects || [],
+      status: fac.status || 'active',
     });
     setShowPassword(false);
     setOpenFacultyDialog(true);
@@ -120,11 +129,11 @@ export const AdminFacultyAssignment: React.FC = () => {
 
       let res;
       if (editingFaculty) {
-        res = await fetch(`${API_URL}/auth/admin/faculty/${editingFaculty._id}`, {
+        res = await fetch(`${API_URL}/faculty/${editingFaculty._id}`, {
           method: 'PUT', headers: getHeaders(), body: JSON.stringify(payload),
         });
       } else {
-        res = await fetch(`${API_URL}/auth/admin/faculty`, {
+        res = await fetch(`${API_URL}/faculty`, {
           method: 'POST', headers: getHeaders(), body: JSON.stringify(payload),
         });
       }
@@ -148,7 +157,7 @@ export const AdminFacultyAssignment: React.FC = () => {
     if (!deleteTarget) return;
     setDeleteLoading(true);
     try {
-      const res = await fetch(`${API_URL}/auth/admin/faculty/${deleteTarget._id}`, {
+      const res = await fetch(`${API_URL}/faculty/${deleteTarget._id}`, {
         method: 'DELETE', headers: getHeaders(),
       });
       const data = await res.json();
@@ -169,14 +178,46 @@ export const AdminFacultyAssignment: React.FC = () => {
   // ── Status Update ─────────────────────────────────────────────────────────
   const handleUpdateStatus = async (facultyId: string, status: string) => {
     try {
-      const res = await fetch(`${API_URL}/auth/admin/faculty/${facultyId}/status`, {
+      const res = await fetch(`${API_URL}/faculty/${facultyId}/status`, {
         method: 'PUT', headers: getHeaders(), body: JSON.stringify({ status }),
       });
       const data = await res.json();
-      if (res.ok) { toast.success('Status updated.'); fetchData(); }
+      if (res.ok) { toast.success(`Faculty account ${status}.`); fetchData(); }
       else toast.error(data.message || 'Failed to update status.');
     } catch {
       toast.error('Error updating status.');
+    }
+  };
+
+  // ── Reset Password ────────────────────────────────────────────────────────
+  const handleOpenPasswordReset = (fac: any) => {
+    setPasswordTarget(fac);
+    setNewPassword('');
+    setShowResetPassword(false);
+    setOpenPasswordDialog(true);
+  };
+
+  const handlePasswordResetSubmit = async () => {
+    if (!newPassword) {
+      toast.warning('Please enter a new password.');
+      return;
+    }
+    setResettingPassword(true);
+    try {
+      const res = await fetch(`${API_URL}/faculty/${passwordTarget._id}/password`, {
+        method: 'PUT', headers: getHeaders(), body: JSON.stringify({ password: newPassword }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Password reset successfully.');
+        setOpenPasswordDialog(false);
+      } else {
+        toast.error(data.message || 'Failed to reset password.');
+      }
+    } catch {
+      toast.error('Connection error resetting password.');
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -206,7 +247,7 @@ export const AdminFacultyAssignment: React.FC = () => {
   const handleSaveAssignment = async () => {
     if (!assigningFaculty) return;
     try {
-      const res = await fetch(`${API_URL}/auth/admin/faculty/${assigningFaculty._id}/assign`, {
+      const res = await fetch(`${API_URL}/faculty/${assigningFaculty._id}`, {
         method: 'PUT', headers: getHeaders(),
         body: JSON.stringify({ department: assignedDept, assignedSubjects }),
       });
@@ -222,6 +263,18 @@ export const AdminFacultyAssignment: React.FC = () => {
     selectedDeptFilter === 'All' || f.department === selectedDeptFilter
   );
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'success';
+      case 'suspended':
+        return 'error';
+      case 'inactive':
+      default:
+        return 'default';
+    }
+  };
+
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress color="success" /></Box>;
   }
@@ -235,7 +288,7 @@ export const AdminFacultyAssignment: React.FC = () => {
             Faculty Management
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Create, edit, and manage all faculty accounts, semesters, and subject assignments.
+            Create, edit, and manage all faculty accounts, semesters, status, and subject assignments.
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -315,9 +368,10 @@ export const AdminFacultyAssignment: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={fac.status?.toUpperCase()}
-                          color={fac.status === 'active' || fac.status === 'approved' ? 'success' : fac.status === 'pending' ? 'warning' : 'error'}
+                          label={fac.status?.toUpperCase() || 'INACTIVE'}
+                          color={getStatusColor(fac.status)}
                           size="small"
+                          sx={{ fontWeight: 600 }}
                         />
                       </TableCell>
                       <TableCell align="right">
@@ -332,31 +386,21 @@ export const AdminFacultyAssignment: React.FC = () => {
                               <CheckCircleIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
+                          <Tooltip title="Reset Password">
+                            <IconButton size="small" color="warning" onClick={() => handleOpenPasswordReset(fac)}>
+                              <KeyIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
 
-                          {fac.status === 'pending' && (
-                            <>
-                              <Tooltip title="Approve">
-                                <IconButton size="small" color="success" onClick={() => handleUpdateStatus(fac._id, 'approved')}>
-                                  <CheckCircleIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Reject">
-                                <IconButton size="small" color="error" onClick={() => handleUpdateStatus(fac._id, 'rejected')}>
-                                  <CancelIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </>
-                          )}
-                          {(fac.status === 'active' || fac.status === 'approved') && (
-                            <Tooltip title="Suspend">
+                          {fac.status === 'active' ? (
+                            <Tooltip title="Suspend Faculty">
                               <IconButton size="small" color="error" onClick={() => handleUpdateStatus(fac._id, 'suspended')}>
                                 <BlockIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                          )}
-                          {(fac.status === 'suspended' || fac.status === 'rejected') && (
-                            <Tooltip title="Re-Activate">
-                              <IconButton size="small" color="success" onClick={() => handleUpdateStatus(fac._id, 'approved')}>
+                          ) : (
+                            <Tooltip title="Activate Faculty">
+                              <IconButton size="small" color="success" onClick={() => handleUpdateStatus(fac._id, 'active')}>
                                 <CheckCircleIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
@@ -396,20 +440,22 @@ export const AdminFacultyAssignment: React.FC = () => {
                 onChange={(e) => setFacultyForm(f => ({ ...f, username: e.target.value.toLowerCase() }))} size="small"
                 helperText="Faculty uses this to log in" />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField fullWidth label={editingFaculty ? 'New Password (leave blank to keep)' : 'Password *'}
-                type={showPassword ? 'text' : 'password'} value={facultyForm.password}
-                onChange={(e) => setFacultyForm(f => ({ ...f, password: e.target.value }))} size="small"
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setShowPassword(p => !p)}>
-                        {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }} />
-            </Grid>
+            {!editingFaculty && (
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="Password *"
+                  type={showPassword ? 'text' : 'password'} value={facultyForm.password}
+                  onChange={(e) => setFacultyForm(f => ({ ...f, password: e.target.value }))} size="small"
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => setShowPassword(p => !p)}>
+                          {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }} />
+              </Grid>
+            )}
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Email" value={facultyForm.email}
                 onChange={(e) => setFacultyForm(f => ({ ...f, email: e.target.value }))} size="small" type="email" />
@@ -430,6 +476,17 @@ export const AdminFacultyAssignment: React.FC = () => {
                   onChange={(e) => setFacultyForm(f => ({ ...f, department: e.target.value }))} label="Department *">
                   <MenuItem value="">— Select —</MenuItem>
                   {departments.map((d) => <MenuItem key={d._id} value={d.departmentName}>{d.departmentName}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Status *</InputLabel>
+                <Select value={facultyForm.status}
+                  onChange={(e) => setFacultyForm(f => ({ ...f, status: e.target.value }))} label="Status *">
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="suspended">Suspended</MenuItem>
+                  <MenuItem value="inactive">Inactive</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -470,6 +527,41 @@ export const AdminFacultyAssignment: React.FC = () => {
           <Button onClick={handleSaveFaculty} variant="contained" color="success" disabled={saving}
             startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <AddIcon />}>
             {saving ? 'Saving...' : editingFaculty ? 'Save Changes' : 'Create Faculty'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Password Reset Dialog ────────────────────────────── */}
+      <Dialog
+        open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)} fullWidth maxWidth="xs"
+        PaperProps={{ sx: { bgcolor: '#111827', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Reset Password: {passwordTarget?.name}</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Box sx={{ mt: 1 }}>
+            <TextField
+              fullWidth
+              label="New Password *"
+              type={showResetPassword ? 'text' : 'password'}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              size="small"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setShowResetPassword(p => !p)}>
+                      {showResetPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button onClick={() => setOpenPasswordDialog(false)} color="inherit">Cancel</Button>
+          <Button onClick={handlePasswordResetSubmit} variant="contained" color="warning" disabled={resettingPassword}>
+            {resettingPassword ? 'Resetting...' : 'Reset Password'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -556,3 +648,5 @@ export const AdminFacultyAssignment: React.FC = () => {
     </Box>
   );
 };
+
+export default AdminFacultyAssignment;

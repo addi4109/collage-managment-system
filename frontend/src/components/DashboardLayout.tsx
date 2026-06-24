@@ -540,7 +540,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <ListItemIcon sx={{ minWidth: 40 }}>
                   <AdminPanelSettingsIcon color="success" />
                 </ListItemIcon>
-                <ListItemText primary="Faculty & Subjects" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+                <ListItemText primary="Faculty Management" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
               </ListItemButton>
             </ListItem>
             <ListItem disablePadding>

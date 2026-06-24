@@ -12,7 +12,6 @@ import {
   InputAdornment,
   IconButton,
   Tooltip,
-  CircularProgress,
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import PersonIcon from '@mui/icons-material/Person';
@@ -31,6 +30,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { LoadingOverlay } from '../components/LoadingOverlay';
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://collage-managment-system.onrender.com/api';
+
 const DEPARTMENTS = [
   { name: 'Computer Engineering',    color: '#6366f1', icon: <ComputerIcon sx={{ fontSize: 40 }} /> },
   { name: 'Information Technology',  color: '#06b6d4', icon: <MemoryIcon sx={{ fontSize: 40 }} /> },
@@ -45,8 +46,14 @@ export const FacultyLogin: React.FC = () => {
   const toast = useToast();
   const { user, setUser } = useAuth();
 
-  const [step, setStep] = useState<'departments' | 'login'>('departments');
+  const [step, setStep] = useState<'departments' | 'dept-secret' | 'login'>('departments');
   const [selectedDept, setSelectedDept] = useState('');
+  
+  // Department Secret Code
+  const [deptSecretCode, setDeptSecretCode] = useState('');
+  const [deptSecretError, setDeptSecretError] = useState<string | null>(null);
+
+  // Login credentials
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe] = useState(true);
@@ -81,8 +88,41 @@ export const FacultyLogin: React.FC = () => {
 
   const handleSelectDept = (deptName: string) => {
     setSelectedDept(deptName);
-    setStep('login');
-    generateCaptcha();
+    setStep('dept-secret');
+    setDeptSecretCode('');
+    setDeptSecretError(null);
+  };
+
+  const handleVerifyDeptSecret = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deptSecretCode.trim()) {
+      setDeptSecretError('Department secret code is required.');
+      return;
+    }
+
+    setLoading(true);
+    setDeptSecretError(null);
+    try {
+      const res = await fetch(`${API_URL}/departments/verify-secret`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          departmentName: selectedDept,
+          secretCode: deptSecretCode.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setStep('login');
+        generateCaptcha();
+      } else {
+        setDeptSecretError(data.message || 'Invalid Secret Code for this department.');
+      }
+    } catch {
+      setDeptSecretError('Connection error verifying department secret.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -127,6 +167,13 @@ export const FacultyLogin: React.FC = () => {
 
   const handleBackToDepts = () => {
     setStep('departments');
+    setSelectedDept('');
+    setDeptSecretCode('');
+    setDeptSecretError(null);
+  };
+
+  const handleBackToSecret = () => {
+    setStep('dept-secret');
     setUsername('');
     setPassword('');
     setCaptchaInput('');
@@ -144,7 +191,7 @@ export const FacultyLogin: React.FC = () => {
       }}
     >
       <Container maxWidth={step === 'departments' ? 'lg' : 'sm'}>
-        {loading && <LoadingOverlay open={loading} message="Authenticating credentials..." />}
+        {loading && <LoadingOverlay open={loading} message="Processing..." />}
 
         {/* ── Title block ────────────────────────────────────── */}
         <Box sx={{ textAlign: 'center', mb: 6 }} className="animate-fade-in">
@@ -165,8 +212,10 @@ export const FacultyLogin: React.FC = () => {
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 1.5, fontWeight: 500 }}>
             {step === 'departments'
-              ? 'Select your department to continue to login'
-              : `Logged in department: ${selectedDept}`}
+              ? 'Select your department to continue'
+              : step === 'dept-secret'
+              ? `Department: ${selectedDept}`
+              : `Portal: ${selectedDept}`}
           </Typography>
         </Box>
 
@@ -234,7 +283,78 @@ export const FacultyLogin: React.FC = () => {
           </Grid>
         )}
 
-        {/* ── Step 2: Login Form ────────────────────────────── */}
+        {/* ── Step 2: Department Secret Code ─────────────────── */}
+        {step === 'dept-secret' && (
+          <Card
+            elevation={0}
+            className="glass-panel"
+            sx={{
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 4,
+              overflow: 'hidden',
+              maxWidth: 480,
+              mx: 'auto',
+            }}
+          >
+            <CardContent sx={{ p: 4 }}>
+              <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <IconButton onClick={handleBackToDepts} color="inherit" size="small">
+                  <ArrowBackIcon />
+                </IconButton>
+                <Box>
+                  <Typography variant="h5" fontWeight={800}>
+                    Department Verification
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Verification required for: {selectedDept}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <form onSubmit={handleVerifyDeptSecret}>
+                <Grid container spacing={2.5}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Department Secret Code"
+                      type="password"
+                      value={deptSecretCode}
+                      onChange={(e) => {
+                        setDeptSecretCode(e.target.value);
+                        setDeptSecretError(null);
+                      }}
+                      variant="outlined"
+                      autoFocus
+                      required
+                      error={!!deptSecretError}
+                      helperText={deptSecretError}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sx={{ mt: 1 }}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      color="success"
+                      type="submit"
+                      disabled={loading}
+                      sx={{
+                        py: 1.5,
+                        fontWeight: 700,
+                        fontSize: '1rem',
+                        boxShadow: '0 4px 20px -5px rgba(16,185,129,0.4)',
+                      }}
+                    >
+                      Verify Code
+                    </Button>
+                  </Grid>
+                </Grid>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── Step 3: Login Form ────────────────────────────── */}
         {step === 'login' && (
           <Card
             elevation={0}
@@ -243,11 +363,13 @@ export const FacultyLogin: React.FC = () => {
               border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: 4,
               overflow: 'hidden',
+              maxWidth: 480,
+              mx: 'auto',
             }}
           >
             <CardContent sx={{ p: 4 }}>
               <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <IconButton onClick={handleBackToDepts} color="inherit" size="small">
+                <IconButton onClick={handleBackToSecret} color="inherit" size="small">
                   <ArrowBackIcon />
                 </IconButton>
                 <Box>
@@ -364,7 +486,7 @@ export const FacultyLogin: React.FC = () => {
                         boxShadow: '0 4px 20px -5px rgba(16,185,129,0.4)',
                       }}
                     >
-                      {loading ? <CircularProgress size={24} color="inherit" /> : 'Log In to Dashboard'}
+                      Log In to Dashboard
                     </Button>
                   </Grid>
                 </Grid>
@@ -376,3 +498,5 @@ export const FacultyLogin: React.FC = () => {
     </Box>
   );
 };
+
+export default FacultyLogin;

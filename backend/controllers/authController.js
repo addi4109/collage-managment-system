@@ -339,17 +339,8 @@ export const loginFaculty = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
 
-    if (user.status === 'pending') {
-      return res.status(403).json({ message: 'Faculty account is awaiting administrator approval.' });
-    }
-    if (user.status === 'rejected') {
-      return res.status(403).json({ message: 'Your account request has been rejected.' });
-    }
-    if (user.status === 'suspended') {
-      return res.status(403).json({ message: 'Your account has been suspended. Contact administration.' });
-    }
-    if (user.status !== 'approved' && user.status !== 'active') {
-      return res.status(403).json({ message: 'Your account is not approved.' });
+    if (user.status !== 'active') {
+      return res.status(403).json({ message: 'Your faculty account is currently inactive. Please contact the administrator.' });
     }
 
     clearUserCache(user._id);

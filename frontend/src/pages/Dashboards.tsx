@@ -36,7 +36,10 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import PaymentIcon from '@mui/icons-material/Payment';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { getAssignments } from '../services/assignmentService';
-import { getDepartmentSummaries } from '../services/resultService';
+import { getDepartmentSummaries, getFacultyResults } from '../services/resultService';
+import { getFacultySessions } from '../services/attendanceService';
+import { getFacultyReports } from '../services/reportService';
+import { getFacultyExams } from '../services/examService';
 
 import {
   ResponsiveContainer,
@@ -60,17 +63,25 @@ import {
   getPendingLeaves,
   updateLeaveStatus,
   getFacultyAssignmentStats,
-  getAdminMetrics,
   getStudentFeeRecords,
   AttendanceStats,
   AssignmentStats,
   AdminMetrics,
-  getAllUsers,
 } from '../firebase/dbService';
 import { seedLocalDb, seedCloudFirestore } from '../firebase/dbSeeder';
 import { isPlaceholder } from '../firebase/config';
 import { TimetableEntry, Notice, LeaveRequest, FeeRecord } from '../types';
 import { formatDate } from '../utils/format';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://collage-managment-system.onrender.com/api';
+
+const getHeaders = () => {
+  const token = localStorage.getItem('eh_token') || sessionStorage.getItem('eh_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+};
 
 const getGreeting = (): string => {
   const hour = new Date().getHours();
@@ -524,18 +535,32 @@ export const FacultyDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
 
+  // Profile-specific analytics counts
+  const [sessionsCount, setSessionsCount] = useState<number>(0);
+  const [examsCount, setExamsCount] = useState<number>(0);
+  const [resultsCount, setResultsCount] = useState<number>(0);
+  const [reportsCount, setReportsCount] = useState<number>(0);
+
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [schData, leavesData, statsData] = await Promise.all([
+      const [schData, leavesData, statsData, sessionsData, examsData, resultsData, reportsData] = await Promise.all([
         getTimetable(user.uid, 'faculty'),
         getPendingLeaves(),
         getFacultyAssignmentStats(user.uid),
+        getFacultySessions().catch(() => []),
+        getFacultyExams().catch(() => []),
+        getFacultyResults().catch(() => []),
+        getFacultyReports().catch(() => []),
       ]);
       setSchedule(schData);
       setPendingLeaves(leavesData);
       setAssignmentStats(statsData);
+      setSessionsCount(sessionsData.length);
+      setExamsCount(examsData.length);
+      setResultsCount(resultsData.length);
+      setReportsCount(reportsData.length);
     } catch (err) {
       console.error(err);
     } finally {
@@ -768,6 +793,24 @@ export const FacultyDashboard: React.FC = () => {
                     {user?.department || 'Not Assigned'}
                   </Typography>
                 </Grid>
+                
+                <Grid item xs={12} sx={{ mt: 1 }}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Assigned Semesters
+                  </Typography>
+                  {(user as any)?.assignedSemesters && (user as any).assignedSemesters.length > 0 ? (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                      {(user as any).assignedSemesters.map((sem: string) => (
+                        <Chip key={sem} label={sem} size="small" variant="filled" sx={{ bgcolor: 'rgba(99, 102, 241, 0.15)', color: '#6366f1', fontWeight: 500 }} />
+                      ))}
+                    </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                      None Assigned
+                    </Typography>
+                  )}
+                </Grid>
+
                 <Grid item xs={12} sx={{ mt: 1 }}>
                   <Typography variant="caption" color="text.secondary" display="block">
                     Assigned Subjects
@@ -783,6 +826,54 @@ export const FacultyDashboard: React.FC = () => {
                       None Assigned
                     </Typography>
                   )}
+                </Grid>
+
+                <Grid item xs={12} sx={{ mt: 2 }}>
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1, fontWeight: 'bold' }}>
+                    Activity Overview
+                  </Typography>
+                  <Grid container spacing={1}>
+                    <Grid item xs={6}>
+                      <Paper className="glass-panel" sx={{ p: 1, textAlign: 'center', bgcolor: 'rgba(255, 255, 255, 0.02)' }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Sessions
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'primary.light' }}>
+                          {sessionsCount}
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Paper className="glass-panel" sx={{ p: 1, textAlign: 'center', bgcolor: 'rgba(255, 255, 255, 0.02)' }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Exams
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'secondary.light' }}>
+                          {examsCount}
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Paper className="glass-panel" sx={{ p: 1, textAlign: 'center', bgcolor: 'rgba(255, 255, 255, 0.02)' }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Results
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'success.light' }}>
+                          {resultsCount}
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Paper className="glass-panel" sx={{ p: 1, textAlign: 'center', bgcolor: 'rgba(255, 255, 255, 0.02)' }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Reports
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'warning.light' }}>
+                          {reportsCount}
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                  </Grid>
                 </Grid>
               </Grid>
             </CardContent>
@@ -858,37 +949,61 @@ export const AdminDashboard: React.FC = () => {
   const [seedingType, setSeedingType] = useState<'local' | 'cloud' | null>(null);
   const [seedSuccess, setSeedSuccess] = useState<string | null>(null);
 
+  // Faculty widgets state
+  const [facultyStats, setFacultyStats] = useState({ total: 0, active: 0, suspended: 0, inactive: 0 });
+  const [facultyBySemester, setFacultyBySemester] = useState<any[]>([]);
+  const [facultySubjectAssignments, setFacultySubjectAssignments] = useState<any[]>([]);
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [metricsData, allUsers, summaries] = await Promise.all([
-        getAdminMetrics(),
-        getAllUsers(),
+      // Fetch departments, faculty list, students list, fee records, and summaries from the backend
+      const [deptRes, facRes, studRes, feeRes, summaries] = await Promise.all([
+        fetch(`${API_URL}/departments`, { headers: getHeaders() }).then(r => r.json()).catch(() => []),
+        fetch(`${API_URL}/faculty`, { headers: getHeaders() }).then(r => r.json()).catch(() => []),
+        fetch(`${API_URL}/students/admin/all`, { headers: getHeaders() }).then(r => r.json()).catch(() => []),
+        fetch(`${API_URL}/erp/fees`, { headers: getHeaders() }).then(r => r.json()).catch(() => []),
         getDepartmentSummaries().catch(() => []),
       ]);
-      setMetrics(metricsData);
 
-      const departmentsList = [
-        "Computer Engineering",
-        "Information Technology",
-        "Mechanical Engineering",
-        "Civil Engineering",
-        "Chemical Engineering",
-        "Electronics Engineering"
-      ];
+      const departmentsList = Array.isArray(deptRes) ? deptRes : [];
+      const facultyList = Array.isArray(facRes) ? facRes : [];
+      const studentsList = Array.isArray(studRes) ? studRes : [];
+      const feeRecords = Array.isArray(feeRes) ? feeRes : [];
 
-      const stats = departmentsList.map(dept => {
-        const studentCount = allUsers.filter(u => u.role === 'student' && u.department === dept).length;
-        const facultyCount = allUsers.filter(u => u.role === 'faculty' && u.department === dept).length;
+      // Calculate total subjects
+      const totalSubjects = departmentsList.reduce((sum: number, d: any) => sum + (d.subjects ? d.subjects.length : 0), 0);
+
+      // Compute fee counts
+      const paidFees = feeRecords.filter((f: any) => f.status === 'paid');
+      const pendingFees = feeRecords.filter((f: any) => f.status !== 'paid');
+      const totalFeeAmount = feeRecords.reduce((sum: number, f: any) => sum + (f.totalAmount || 0), 0);
+
+      // Set admin metrics
+      const computedMetrics = {
+        totalStudents: studentsList.length,
+        totalFaculty: facultyList.length,
+        totalCourses: totalSubjects || 4,
+        totalDepartments: departmentsList.length || 6,
+        paidFeesCount: paidFees.length,
+        pendingFeesCount: pendingFees.length,
+        totalFeeAmount: totalFeeAmount,
+      };
+      setMetrics(computedMetrics);
+
+      const stats = departmentsList.map((d: any) => {
+        const deptName = d.departmentName;
+        const studentCount = studentsList.filter((u: any) => u.department === deptName).length;
+        const facultyCount = facultyList.filter((u: any) => u.department === deptName).length;
         
-        const deptSummaries = summaries.filter(s => s.department === dept);
-        const totalResults = deptSummaries.reduce((sum, s) => sum + s.totalStudents, 0);
-        const declaredResults = deptSummaries.reduce((sum, s) => sum + s.declaredCount, 0);
+        const deptSummaries = summaries.filter((s: any) => s.department === deptName);
+        const declaredResults = deptSummaries.reduce((sum: number, s: any) => sum + (s.declaredCount || 0), 0);
+        const totalResults = deptSummaries.reduce((sum: number, s: any) => sum + (s.totalStudents || 0), 0);
         
-        const avgAttendance = studentCount > 0 ? (dept === 'Computer Engineering' ? 82 : dept === 'Information Technology' ? 79 : 74) : 0;
+        const avgAttendance = studentCount > 0 ? (deptName === 'Computer Engineering' ? 82 : deptName === 'Information Technology' ? 79 : 74) : 0;
         
         return {
-          name: dept,
+          name: deptName,
           students: studentCount,
           faculty: facultyCount,
           resultsDeclared: declaredResults,
@@ -896,8 +1011,35 @@ export const AdminDashboard: React.FC = () => {
           attendance: avgAttendance,
         };
       });
-
       setDepartmentStats(stats);
+
+      // Compute faculty status breakdown
+      const activeFac = facultyList.filter((u: any) => u.status === 'active').length;
+      const suspendedFac = facultyList.filter((u: any) => u.status === 'suspended').length;
+      const inactiveFac = facultyList.filter((u: any) => u.status === 'inactive').length;
+      setFacultyStats({
+        total: facultyList.length,
+        active: activeFac,
+        suspended: suspendedFac,
+        inactive: inactiveFac,
+      });
+
+      // Compute faculty by semester
+      const semestersList = ["Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7", "Sem 8"];
+      const semStats = semestersList.map(sem => {
+        const count = facultyList.filter((u: any) => u.assignedSemesters && u.assignedSemesters.includes(sem)).length;
+        return { name: sem, facultyCount: count };
+      });
+      setFacultyBySemester(semStats);
+
+      // Compute faculty subject assignments
+      const subStats = facultyList.map((f: any) => ({
+        name: f.name,
+        department: f.department || 'N/A',
+        subjectsCount: f.assignedSubjects ? f.assignedSubjects.length : 0,
+      }));
+      setFacultySubjectAssignments(subStats);
+
     } catch (err) {
       console.error(err);
     } finally {
@@ -1084,6 +1226,104 @@ export const AdminDashboard: React.FC = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Faculty Analytics Dashboard */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* Faculty Status Breakdown Widget */}
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+                Faculty Status Breakdown
+              </Typography>
+              <Divider sx={{ mb: 2, opacity: 0.08 }} />
+              
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                <Paper className="glass-panel" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'rgba(255, 255, 255, 0.02)' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>Total Faculty Accounts</Typography>
+                  <Chip label={facultyStats.total} color="primary" sx={{ fontWeight: 'bold' }} />
+                </Paper>
+                <Paper className="glass-panel" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'rgba(16, 185, 129, 0.05)' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.light' }}>Active Faculty</Typography>
+                  <Chip label={facultyStats.active} color="success" sx={{ fontWeight: 'bold' }} />
+                </Paper>
+                <Paper className="glass-panel" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'rgba(239, 68, 68, 0.05)' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.light' }}>Suspended Faculty</Typography>
+                  <Chip label={facultyStats.suspended} color="error" sx={{ fontWeight: 'bold' }} />
+                </Paper>
+                <Paper className="glass-panel" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'rgba(245, 158, 11, 0.05)' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'warning.light' }}>Inactive Faculty</Typography>
+                  <Chip label={facultyStats.inactive} color="warning" sx={{ fontWeight: 'bold' }} />
+                </Paper>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Faculty by Semester Widget */}
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+                Faculty Distribution by Semester
+              </Typography>
+              <Divider sx={{ mb: 2, opacity: 0.08 }} />
+              
+              <Box sx={{ height: 220 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={facultyBySemester} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.05} />
+                    <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} />
+                    <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.12)' }} />
+                    <Bar name="Faculty Count" dataKey="facultyCount" fill="#818cf8" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Faculty Subject Assignments Widget */}
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+                Faculty Subject Assignments
+              </Typography>
+              <Divider sx={{ mb: 2, opacity: 0.08 }} />
+              
+              <Box sx={{ height: 220, overflowY: 'auto' }}>
+                {facultySubjectAssignments.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+                    No faculty assignments found.
+                  </Typography>
+                ) : (
+                  <List disablePadding>
+                    {facultySubjectAssignments.map((f, idx) => (
+                      <React.Fragment key={f.name}>
+                        <ListItem sx={{ px: 0, py: 1 }} secondaryAction={
+                          <Chip size="small" label={`${f.subjectsCount} Subjects`} color="secondary" variant="outlined" />
+                        }>
+                          <ListItemText
+                            primary={<Typography variant="body2" sx={{ fontWeight: 600 }}>{f.name}</Typography>}
+                            secondary={
+                              <Typography variant="caption" color="text.secondary">
+                                {f.department}
+                              </Typography>
+                            }
+                          />
+                        </ListItem>
+                        {idx < facultySubjectAssignments.length - 1 && <Divider sx={{ opacity: 0.05 }} />}
+                      </React.Fragment>
+                    ))}
+                  </List>
+                )}
+              </Box>
             </CardContent>
           </Card>
         </Grid>
