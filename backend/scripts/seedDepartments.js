@@ -12,11 +12,19 @@ const __dirname = path.dirname(__filename);
 // Load env variables
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
+// Generate 8 semester secret codes for a given department prefix
+const buildSemesters = (prefix) =>
+  Array.from({ length: 8 }, (_, i) => ({
+    semesterNumber: i + 1,
+    semesterSecretCode: `${prefix}_sem${i + 1}`,
+  }));
+
 const departmentsToSeed = [
   {
     departmentName: 'Computer Engineering',
     departmentCode: 'CO',
     departmentSecretCode: 'comp123',
+    semesters: buildSemesters('co'),
     subjects: [
       { subjectCode: 'CO301', subjectName: 'Computer Networks' },
       { subjectCode: 'CO302', subjectName: 'Database Management Systems' },
@@ -30,6 +38,7 @@ const departmentsToSeed = [
     departmentName: 'Information Technology',
     departmentCode: 'IT',
     departmentSecretCode: 'info123',
+    semesters: buildSemesters('it'),
     subjects: [
       { subjectCode: 'IT301', subjectName: 'Web Development' },
       { subjectCode: 'IT302', subjectName: 'Cloud Computing' },
@@ -43,6 +52,7 @@ const departmentsToSeed = [
     departmentName: 'Mechanical Engineering',
     departmentCode: 'ME',
     departmentSecretCode: 'mech123',
+    semesters: buildSemesters('me'),
     subjects: [
       { subjectCode: 'ME301', subjectName: 'Thermodynamics' },
       { subjectCode: 'ME302', subjectName: 'Fluid Mechanics' },
@@ -56,6 +66,7 @@ const departmentsToSeed = [
     departmentName: 'Civil Engineering',
     departmentCode: 'CE',
     departmentSecretCode: 'civil123',
+    semesters: buildSemesters('ce'),
     subjects: [
       { subjectCode: 'CE301', subjectName: 'Structural Analysis' },
       { subjectCode: 'CE302', subjectName: 'Surveying' },
@@ -69,6 +80,7 @@ const departmentsToSeed = [
     departmentName: 'Chemical Engineering',
     departmentCode: 'CH',
     departmentSecretCode: 'chem123',
+    semesters: buildSemesters('ch'),
     subjects: [
       { subjectCode: 'CH301', subjectName: 'Chemical Reaction Engineering' },
       { subjectCode: 'CH302', subjectName: 'Mass Transfer' },
@@ -82,6 +94,7 @@ const departmentsToSeed = [
     departmentName: 'Electronics Engineering',
     departmentCode: 'EL',
     departmentSecretCode: 'elec123',
+    semesters: buildSemesters('el'),
     subjects: [
       { subjectCode: 'EL301', subjectName: 'Microprocessors & Microcontrollers' },
       { subjectCode: 'EL302', subjectName: 'Digital Signal Processing' },
@@ -98,13 +111,22 @@ const seedDepartments = async () => {
     await connectDB();
     console.log('Clearing existing departments...');
     await Department.deleteMany({});
-    
-    console.log('Inserting departments...');
+
+    console.log('Inserting departments with semester codes...');
     const created = await Department.insertMany(departmentsToSeed);
     console.log(`Successfully seeded ${created.length} departments!`);
-    
+
+    // Print summary of semester codes
+    console.log('\n--- Semester Secret Codes Summary ---');
+    departmentsToSeed.forEach((d) => {
+      console.log(`\n${d.departmentName} (Secret: ${d.departmentSecretCode})`);
+      d.semesters.forEach((s) => {
+        console.log(`  Semester ${s.semesterNumber}: ${s.semesterSecretCode}`);
+      });
+    });
+
     mongoose.connection.close();
-    console.log('Database connection closed.');
+    console.log('\nDatabase connection closed.');
     process.exit(0);
   } catch (error) {
     console.error('Seeding failed:', error);

@@ -1,5 +1,21 @@
 import mongoose from 'mongoose';
 
+const semesterSchema = new mongoose.Schema(
+  {
+    semesterNumber: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 8,
+    },
+    semesterSecretCode: {
+      type: String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 const departmentSchema = new mongoose.Schema(
   {
     departmentName: {
@@ -17,6 +33,10 @@ const departmentSchema = new mongoose.Schema(
     departmentSecretCode: {
       type: String,
       required: true,
+    },
+    semesters: {
+      type: [semesterSchema],
+      default: [],
     },
     subjects: [
       {

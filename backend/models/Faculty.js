@@ -20,6 +20,12 @@ const facultySchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    assignedSemester: {
+      type: Number,
+      min: 1,
+      max: 8,
+      default: null,
+    },
     approvedByAdmin: {
       type: Boolean,
       default: false,

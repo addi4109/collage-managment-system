@@ -2,6 +2,7 @@ import express from 'express';
 import {
   verifyMasterCode,
   verifyDepartmentSecret,
+  verifySemesterSecret,
   getDepartments,
   createOrUpdateDepartment,
   deleteDepartment,
@@ -13,6 +14,7 @@ const router = express.Router();
 // Public routes for verification wizard
 router.post('/verify-master', verifyMasterCode);
 router.post('/verify-secret', verifyDepartmentSecret);
+router.post('/verify-semester', verifySemesterSecret);
 router.get('/', getDepartments);
 
 // Admin-only department CRUD

@@ -34,6 +34,32 @@ export const verifyDepartmentSecret = async (req, res) => {
   }
 };
 
+export const verifySemesterSecret = async (req, res) => {
+  const { departmentName, semesterNumber, secretCode } = req.body;
+  if (!departmentName || !semesterNumber || !secretCode) {
+    return res.status(400).json({ message: 'Department name, semester number, and secret code are required.' });
+  }
+  try {
+    const dept = await Department.findOne({ departmentName, status: 'active' });
+    if (!dept) {
+      return res.status(404).json({ success: false, message: 'Department not found or inactive.' });
+    }
+    const semNum = parseInt(semesterNumber, 10);
+    const semester = dept.semesters.find((s) => s.semesterNumber === semNum);
+    if (!semester) {
+      return res.status(404).json({ success: false, message: `Semester ${semNum} not configured for this department.` });
+    }
+    if (semester.semesterSecretCode === secretCode) {
+      return res.json({ success: true });
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid Semester Secret Code.' });
+    }
+  } catch (err) {
+    console.error('Verify semester secret error:', err);
+    return res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
 export const getDepartments = async (req, res) => {
   try {
     const depts = await Department.find({ status: 'active' }).select('departmentName departmentCode subjects status');
@@ -45,7 +71,7 @@ export const getDepartments = async (req, res) => {
 };
 
 export const createOrUpdateDepartment = async (req, res) => {
-  const { id, name, code, secretCode, subjects, status } = req.body;
+  const { id, name, code, secretCode, semesters, subjects, status } = req.body;
   if (!name || !code) {
     return res.status(400).json({ message: 'Department Name and Code are required.' });
   }
@@ -63,12 +89,14 @@ export const createOrUpdateDepartment = async (req, res) => {
     }
 
     const parsedSubjects = Array.isArray(subjects) ? subjects : [];
+    const parsedSemesters = Array.isArray(semesters) ? semesters : [];
 
     if (dept) {
       dept.departmentName = name;
       dept.departmentCode = code;
       if (secretCode) dept.departmentSecretCode = secretCode;
       dept.subjects = parsedSubjects;
+      if (parsedSemesters.length > 0) dept.semesters = parsedSemesters;
       dept.status = status || dept.status;
       await dept.save();
     } else {
@@ -79,6 +107,7 @@ export const createOrUpdateDepartment = async (req, res) => {
         departmentName: name,
         departmentCode: code,
         departmentSecretCode: secretCode,
+        semesters: parsedSemesters,
         subjects: parsedSubjects,
         status: status || 'active',
       });
