@@ -1,43 +1,24 @@
 import express from 'express';
-import {
-  getStudentList,
-  createResult,
-  updateResult,
-  submitResult,
-  getFacultyResults,
-  getResultById,
-  getDepartmentSummaries,
-  getDepartmentDetails,
-  verifyDepartment,
-  declareDepartment,
-  getAllResults,
-  getStudentResults,
-} from '../controllers/resultController.js';
+import { getStudents, getDraft, saveDraft, submit, listPending, approve, declare, declareAll, getMarksheet } from '../controllers/resultController.js';
 import { authenticateToken, requireRole } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// All routes require token authentication
 router.use(authenticateToken);
 
-// --- Faculty Endpoints ---
-router.get('/students', requireRole(['faculty', 'admin']), getStudentList);
-router.post('/create', requireRole(['faculty']), createResult);
-router.put('/:id', requireRole(['faculty']), updateResult);
-router.post('/:id/submit', requireRole(['faculty']), submitResult);
-router.get('/faculty', requireRole(['faculty']), getFacultyResults);
+// Faculty routes
+router.get('/students', requireRole(['faculty']), getStudents);
+router.get('/student/:studentId', requireRole(['faculty']), getDraft);
+router.post('/student/:studentId', requireRole(['faculty']), saveDraft);
+router.post('/student/:studentId/submit', requireRole(['faculty']), submit);
 
-// --- Admin Endpoints ---
-router.get('/department-summaries', requireRole(['admin']), getDepartmentSummaries);
-router.get('/department-details', requireRole(['admin']), getDepartmentDetails);
-router.post('/verify-department', requireRole(['admin']), verifyDepartment);
-router.post('/declare-department', requireRole(['admin']), declareDepartment);
-router.get('/all', requireRole(['admin']), getAllResults);
+// Admin routes
+router.get('/pending', requireRole(['admin']), listPending);
+router.post('/approve/:id', requireRole(['admin']), approve);
+router.post('/declare/:id', requireRole(['admin']), declare);
+router.post('/declare-all', requireRole(['admin']), declareAll);
 
-// --- Student Endpoints ---
-router.get('/student', requireRole(['student']), getStudentResults);
-
-// --- Shared ID Lookup ---
-router.get('/:id', requireRole(['student', 'faculty', 'admin']), getResultById);
+// Student routes
+router.get('/marksheet', requireRole(['student']), getMarksheet);
 
 export default router;

@@ -1,0 +1,72 @@
+import Subject from '../models/Subject.js';
+
+export const getSubjects = async (req, res) => {
+  try {
+    const query = { isDeleted: false };
+    if (req.query.departmentId) query.departmentId = req.query.departmentId;
+    if (req.query.year) query.year = req.query.year;
+    if (req.query.semester) query.semester = req.query.semester;
+
+    const subjects = await Subject.find(query)
+      .populate('departmentId', 'name code')
+      .sort({ code: 1 });
+    res.status(200).json(subjects);
+  } catch (err) {
+    res.status(500).json({ message: 'Error retrieving subjects.' });
+  }
+};
+
+export const createOrUpdateSubject = async (req, res) => {
+  const { id, name, code, departmentId, year, semester, status } = req.body;
+  if (!name || !code || !departmentId || !year || !semester) {
+    return res.status(400).json({ message: 'Missing required subject parameters.' });
+  }
+
+  try {
+    let subject;
+    if (id) {
+      subject = await Subject.findOne({ _id: id, isDeleted: false });
+    } else {
+      subject = await Subject.findOne({ code, isDeleted: false });
+    }
+
+    if (subject) {
+      subject.name = name;
+      subject.code = code;
+      subject.departmentId = departmentId;
+      subject.year = year;
+      subject.semester = semester;
+      if (status) subject.status = status;
+      await subject.save();
+    } else {
+      subject = new Subject({
+        name,
+        code,
+        departmentId,
+        year,
+        semester,
+        status: status || 'active',
+      });
+      await subject.save();
+    }
+    res.status(200).json({ success: true, subject });
+  } catch (err) {
+    res.status(500).json({ message: 'Error saving subject.' });
+  }
+};
+
+export const deleteSubject = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const subject = await Subject.findOne({ _id: id, isDeleted: false });
+    if (!subject) {
+      return res.status(404).json({ message: 'Subject not found.' });
+    }
+    subject.isDeleted = true;
+    subject.deletedAt = new Date();
+    await subject.save();
+    res.status(200).json({ success: true, message: 'Subject soft-deleted successfully.' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error deleting subject.' });
+  }
+};

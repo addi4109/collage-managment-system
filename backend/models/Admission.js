@@ -24,13 +24,14 @@ const admissionSchema = new mongoose.Schema(
     },
     enrollmentNumber: {
       type: String,
-      trim: true,
-      default: '',
-    },
-    department: {
-      type: String,
       required: true,
+      unique: true,
       trim: true,
+    },
+    departmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Department',
+      required: true,
     },
     year: {
       type: String,
@@ -44,6 +45,7 @@ const admissionSchema = new mongoose.Schema(
     },
     email: {
       type: String,
+      required: true,
       trim: true,
       lowercase: true,
     },
@@ -78,13 +80,21 @@ const admissionSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-admissionSchema.index({ username: 1 });
+admissionSchema.index({ enrollmentNumber: 1 });
 admissionSchema.index({ status: 1 });
 
 const Admission = mongoose.model('Admission', admissionSchema);

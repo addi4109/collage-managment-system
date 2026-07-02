@@ -36,6 +36,37 @@ export const connectDB = async () => {
       const conn = await mongoose.connect(mongoURI, mongooseOptions);
       console.log('MongoDB Atlas Connected Successfully');
       console.log(`Database Name: ${conn.connection.name}`);
+
+      // Cleanup stale indexes that may cause duplicate key errors
+      try {
+        const db = conn.connection.db;
+        const collections = await db.listCollections().toArray();
+        const collectionNames = collections.map(c => c.name);
+
+        // List of stale index keys to drop per collection
+        const staleIndexMap = {
+          faculties: ['user'],       // old field name, now 'userId'
+          attendancesessions: ['expiresAt'], // removed TTL index
+        };
+
+        for (const [colName, staleKeys] of Object.entries(staleIndexMap)) {
+          if (!collectionNames.includes(colName)) continue;
+          const col = db.collection(colName);
+          const indexes = await col.indexes();
+          for (const idx of indexes) {
+            if (idx.name === '_id_') continue;
+            const idxKeys = Object.keys(idx.key || {});
+            if (staleKeys.some(sk => idxKeys.includes(sk))) {
+              console.log(`Dropping stale index "${idx.name}" on ${colName}...`);
+              await col.dropIndex(idx.name);
+              console.log(`Dropped stale index: ${idx.name}`);
+            }
+          }
+        }
+      } catch (cleanupErr) {
+        console.warn('Index cleanup warning (non-fatal):', cleanupErr.message);
+      }
+
       return conn;
     } catch (err) {
       retryCount++;

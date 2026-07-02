@@ -6,68 +6,43 @@ const attendanceSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-    },
-    student: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    studentName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    facultyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    faculty: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+      index: true,
     },
     sessionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'AttendanceSession',
       required: true,
+      index: true,
     },
-    session: {
+    departmentId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'AttendanceSession',
+      ref: 'Department',
       required: true,
-    },
-    date: {
-      type: Date,
-      required: true,
-    },
-    department: {
-      type: String,
-      default: '',
-      trim: true,
     },
     year: {
       type: String,
-      default: '',
-      trim: true,
+      required: true,
+      enum: ['First Year', 'Second Year', 'Third Year'],
     },
     semester: {
       type: String,
-      default: '',
-      trim: true,
-    },
-    subject: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-    status: {
-      type: String,
-      enum: ['Present', 'Absent'],
       required: true,
-      default: 'Present',
+      enum: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'],
     },
-    checkInTime: {
+    subjectName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    ipAddress: {
+      type: String,
+      required: true,
+    },
+    deviceInfo: {
+      type: String,
+      required: true,
+    },
+    timestamp: {
       type: Date,
       default: Date.now,
     },
@@ -77,10 +52,7 @@ const attendanceSchema = new mongoose.Schema(
   }
 );
 
-// Prevent marking a student's attendance multiple times for the same session
 attendanceSchema.index({ studentId: 1, sessionId: 1 }, { unique: true });
-// Keep the old unique constraint index for date-based roll calls if still referenced
-attendanceSchema.index({ student: 1, date: 1, session: 1 }, { unique: true });
 
 const Attendance = mongoose.model('Attendance', attendanceSchema);
 export default Attendance;

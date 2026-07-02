@@ -1,21 +1,16 @@
 import express from 'express';
-import {
-  createLostFound,
-  updateLostFound,
-  deleteLostFound,
-  getAllLostFound,
-  addReply,
-  getReplies,
-} from '../controllers/lostFoundController.js';
-import { authenticateToken, requireRole } from '../middleware/authMiddleware.js';
+import { create, list, reply, resolve, remove } from '../controllers/lostFoundController.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
+import { upload } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
-router.post('/create', authenticateToken, requireRole(['faculty', 'admin']), createLostFound);
-router.get('/', authenticateToken, getAllLostFound);
-router.put('/:id', authenticateToken, requireRole(['faculty', 'admin']), updateLostFound);
-router.delete('/:id', authenticateToken, requireRole(['faculty', 'admin']), deleteLostFound);
-router.post('/reply/:id', authenticateToken, requireRole(['student']), addReply);
-router.get('/replies/:id', authenticateToken, requireRole(['faculty', 'admin']), getReplies);
+router.use(authenticateToken);
+
+router.get('/', list);
+router.post('/', upload.array('attachments'), create);
+router.post('/:id/reply', reply);
+router.post('/:id/resolve', resolve);
+router.delete('/:id', remove);
 
 export default router;

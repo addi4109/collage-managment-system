@@ -1,86 +1,83 @@
-import Notice from '../models/Notice.js';
+import * as noticeService from '../services/noticeService.js';
 
-// Create a new notice
 export const createNotice = async (req, res) => {
-  const { title, message, priority, department, year, semester } = req.body;
-
-  if (!title || !message) {
-    return res.status(400).json({ message: 'Title and message are required.' });
-  }
-
-  // Ensure role is either faculty or admin
-  if (!['faculty', 'admin'].includes(req.user.role)) {
-    return res.status(403).json({ message: 'Forbidden. Only faculty and admins can publish notices.' });
-  }
-
   try {
-    const newNotice = new Notice({
-      title: title.trim(),
-      message: message.trim(),
-      createdBy: req.user.id,
-      createdByName: req.user.name,
-      role: req.user.role,
-      department: req.user.role === 'faculty' ? req.user.department : (department || ''),
-      year: year || '',
-      semester: semester || '',
-      priority: priority || 'low',
-    });
+    const attachments = [];
+    if (req.files) {
+      req.files.forEach((f) => {
+        attachments.push({ filename: f.originalname, fileUrl: `/uploads/${f.filename}` });
+      });
+    } else if (req.file) {
+      attachments.push({ filename: req.file.originalname, fileUrl: `/uploads/${req.file.filename}` });
+    }
 
-    const savedNotice = await newNotice.save();
-    res.status(201).json(savedNotice);
-  } catch (error) {
-    console.error('Create notice error:', error);
-    res.status(500).json({ message: 'Internal server error creating notice.' });
+    const noticeData = {
+      ...req.body,
+      attachments,
+    };
+
+    const notice = await noticeService.createNotice(noticeData, req.user.id, req.user);
+    res.status(201).json({ message: 'Notice posted successfully.', notice });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
 
-// Get all notices, sorted by newest first
-export const getAllNotices = async (req, res) => {
+export const getNotices = async (req, res) => {
   try {
-    const filter = {};
-    if (req.user.role === 'student') {
-      filter.$and = [
-        { $or: [{ department: req.user.department }, { department: '' }] },
-        { $or: [{ year: req.user.year }, { year: '' }] },
-        { $or: [{ semester: req.user.semester }, { semester: '' }] }
-      ];
-    } else if (req.user.role === 'faculty') {
-      filter.$and = [
-        { department: req.user.department },
-        { $or: [{ semester: { $in: req.user.assignedSemesters } }, { semester: '' }] }
-      ];
-    }
-    const notices = await Notice.find(filter).sort({ createdAt: -1 });
-    res.json(notices);
-  } catch (error) {
-    console.error('Fetch notices error:', error);
-    res.status(500).json({ message: 'Internal server error fetching notices.' });
+    const filters = {
+      departmentId: req.query.departmentId,
+      year: req.query.year,
+      semester: req.query.semester,
+      category: req.query.category,
+      priority: req.query.priority,
+    };
+    const notices = await noticeService.getNotices(filters, req.user);
+    res.status(200).json(notices);
+  } catch (err) {
+    res.status(500).json({ message: 'Error retrieving notices.' });
   }
 };
 
-// Delete a notice
-export const deleteNotice = async (req, res) => {
-  const { id } = req.params;
-
+export const editNotice = async (req, res) => {
   try {
-    const notice = await Notice.findById(id);
-
-    if (!notice) {
-      return res.status(404).json({ message: 'Notice not found.' });
+    const attachments = [];
+    if (req.files) {
+      req.files.forEach((f) => {
+        attachments.push({ filename: f.originalname, fileUrl: `/uploads/${f.filename}` });
+      });
+    } else if (req.file) {
+      attachments.push({ filename: req.file.originalname, fileUrl: `/uploads/${req.file.filename}` });
     }
 
-    // Only owner of the notice or an admin can delete
-    const isOwner = notice.createdBy.toString() === req.user.id;
-    const isAdmin = req.user.role === 'admin';
-
-    if (!isOwner && !isAdmin) {
-      return res.status(403).json({ message: 'Forbidden. You can only delete your own notices.' });
+    const noticeData = {
+      ...req.body,
+    };
+    if (attachments.length > 0) {
+      noticeData.attachments = attachments;
     }
 
-    await Notice.findByIdAndDelete(id);
-    res.json({ message: 'Notice deleted successfully.' });
-  } catch (error) {
-    console.error('Delete notice error:', error);
-    res.status(500).json({ message: 'Internal server error deleting notice.' });
+    const notice = await noticeService.updateNotice(req.params.id, noticeData, req.user);
+    res.status(200).json({ message: 'Notice updated successfully.', notice });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+export const removeNotice = async (req, res) => {
+  try {
+    await noticeService.deleteNotice(req.params.id, req.user);
+    res.status(200).json({ message: 'Notice deleted successfully.' });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+export const markRead = async (req, res) => {
+  try {
+    const noticeRead = await noticeService.markAsRead(req.params.id, req.user.id);
+    res.status(200).json({ message: 'Notice marked as read.', noticeRead });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };

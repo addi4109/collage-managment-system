@@ -1,9 +1,11 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Faculty from '../models/Faculty.js';
+import Student from '../models/Student.js';
 
-// In-memory cache for authenticated users to reduce MongoDB lookups on repeated requests
+// In-memory cache for user auth context to optimize DB queries
 const userCache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache TTL
+const CACHE_TTL = 30 * 1000; // 30 seconds cache (short cache to reflect status changes quickly)
 
 export const clearUserCache = (userId) => {
   if (userId) {
@@ -22,39 +24,65 @@ export const authenticateToken = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'edutech_hub_jwt_secret_token_key_987654321');
     const now = Date.now();
-    
-    // Check if the user is cached and the cache entry is still valid
+
+    // Check cache
     const cachedEntry = userCache.get(decoded.id);
     if (cachedEntry && (now - cachedEntry.timestamp < CACHE_TTL)) {
       req.user = cachedEntry.user;
       return next();
     }
 
-    // Optimize DB lookup: Select only required fields
-    const user = await User.findById(decoded.id).select('_id email name role status department departments activeDepartment');
-
+    // Fetch user from DB
+    const user = await User.findOne({ _id: decoded.id, isDeleted: false });
     if (!user) {
-      return res.status(401).json({ message: 'User not found.' });
+      return res.status(401).json({ message: 'User not found or deleted.' });
     }
 
     if (user.status !== 'active') {
-      return res.status(403).json({ message: 'User account is inactive.' });
+      return res.status(403).json({ message: 'User account is suspended/inactive.' });
     }
 
     const requestUser = {
       id: user._id.toString(),
       email: user.email,
       name: user.name,
+      username: user.username,
       role: user.role,
       status: user.status,
-      department: user.department,
-      departments: user.departments,
-      activeDepartment: user.activeDepartment,
     };
 
-    // Store in cache
+    // Load dynamic scopes based on Role
+    if (user.role === 'faculty') {
+      const facultyProfile = await Faculty.findOne({ userId: user._id, isDeleted: false });
+      if (facultyProfile) {
+        requestUser.employeeId = facultyProfile.employeeId;
+        requestUser.assignedDepartments = facultyProfile.assignedDepartments.map(id => id.toString());
+        requestUser.assignedYears = facultyProfile.assignedYears;
+        requestUser.phone = facultyProfile.phone;
+      } else {
+        requestUser.employeeId = '';
+        requestUser.assignedDepartments = [];
+        requestUser.assignedYears = [];
+        requestUser.phone = '';
+      }
+    } else if (user.role === 'student') {
+      const studentProfile = await Student.findOne({ userId: user._id, isDeleted: false });
+      if (studentProfile) {
+        requestUser.rollNumber = studentProfile.rollNumber;
+        requestUser.enrollmentNumber = studentProfile.enrollmentNumber;
+        requestUser.departmentId = studentProfile.departmentId.toString();
+        requestUser.year = studentProfile.year;
+        requestUser.semester = studentProfile.semester;
+        requestUser.phone = studentProfile.phone;
+        requestUser.parentName = studentProfile.parentName;
+        requestUser.parentMobile = studentProfile.parentMobile;
+        requestUser.address = studentProfile.address;
+      }
+    }
+
+    // Cache user context
     userCache.set(user._id.toString(), {
       user: requestUser,
       timestamp: now,
@@ -64,7 +92,7 @@ export const authenticateToken = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('JWT verification error:', error);
-    return res.status(403).json({ message: 'Invalid or expired token.' });
+    return res.status(403).json({ message: 'Invalid or expired access token.' });
   }
 };
 

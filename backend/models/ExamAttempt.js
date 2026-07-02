@@ -1,51 +1,59 @@
 import mongoose from 'mongoose';
 
+const proctorLogSchema = new mongoose.Schema(
+  {
+    eventType: {
+      type: String,
+      required: true,
+      enum: ['CAMERA_OFF', 'TAB_SWITCH', 'FULLSCREEN_EXIT', 'FOCUS_LOST', 'RIGHT_CLICK_ATTEMPT', 'COPY_PASTE_ATTEMPT'],
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    },
+    details: {
+      type: String,
+      default: '',
+    },
+  },
+  { _id: false }
+);
+
 const examAttemptSchema = new mongoose.Schema(
   {
-    examId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Exam',
-      required: true,
-    },
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      index: true,
     },
-    answers: [
-      {
-        questionId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Question',
-          required: true,
-        },
-        selectedAnswer: {
-          type: String,
-          required: true,
-        },
-      },
-    ],
+    examId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Exam',
+      required: true,
+      index: true,
+    },
     score: {
       type: Number,
       default: 0,
     },
-    status: {
-      type: String,
-      enum: ['active', 'submitted', 'blocked'],
-      default: 'active',
-      required: true,
+    answers: {
+      type: [Number], // array of selected option indexes (or -1 for skipped)
+      default: [],
     },
-    warnings: {
+    completed: {
+      type: Boolean,
+      default: false,
+    },
+    proctorWarnings: {
       type: Number,
       default: 0,
+      min: 0,
+      max: 3,
     },
-    startTime: {
-      type: Date,
-      default: Date.now,
-      required: true,
-    },
-    endTime: {
-      type: Date,
+    integrityLogs: {
+      type: [proctorLogSchema],
+      default: [],
     },
   },
   {
@@ -53,8 +61,8 @@ const examAttemptSchema = new mongoose.Schema(
   }
 );
 
-// Prevent multiple exam attempts per student on the same exam paper
-examAttemptSchema.index({ examId: 1, studentId: 1 }, { unique: true });
+// Prevent duplicate attempts for the same exam by the same student
+examAttemptSchema.index({ studentId: 1, examId: 1 }, { unique: true });
 
 const ExamAttempt = mongoose.model('ExamAttempt', examAttemptSchema);
 export default ExamAttempt;

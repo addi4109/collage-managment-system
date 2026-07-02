@@ -22,42 +22,36 @@ const bookSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    status: {
+    bookCode: {
       type: String,
-      enum: ['available', 'issued'],
-      default: 'available',
       required: true,
+      unique: true,
+      trim: true,
     },
-    issuedTo: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: null,
-    },
-    issuedStudentName: {
-      type: String,
-      default: '',
-    },
-    issuedRollNumber: {
-      type: String,
-      default: '',
-    },
-    issuedDate: {
-      type: Date,
-      default: null,
-    },
-    dueDate: {
-      type: Date,
-      default: null,
-    },
-    fineAmount: {
+    totalCopies: {
       type: Number,
-      default: 0,
+      required: true,
+      default: 1,
+      min: 1,
+    },
+    availableCopies: {
+      type: Number,
+      required: true,
+      default: 1,
+      min: 0,
+    },
+    finePerDay: {
+      type: Number,
+      default: 2, // fine in currency units per day overdue
     },
   },
   {
     timestamps: true,
   }
 );
+
+bookSchema.index({ bookCode: 1 });
+bookSchema.index({ title: 1 });
 
 const Book = mongoose.model('Book', bookSchema);
 export default Book;

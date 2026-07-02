@@ -2,45 +2,43 @@ import mongoose from 'mongoose';
 
 const facultySchema = new mongoose.Schema(
   {
-    user: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
       unique: true,
+      index: true,
     },
     employeeId: {
       type: String,
-      default: '',
+      required: true,
+      unique: true,
+      trim: true,
     },
-    department: {
+    assignedDepartments: {
+      type: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Department',
+      }],
+      default: [],
+    },
+    assignedYears: {
+      type: [String],
+      enum: ['First Year', 'Second Year', 'Third Year'],
+      default: [],
+    },
+    phone: {
       type: String,
+      trim: true,
       default: '',
     },
-    assignedSubjects: {
-      type: [String],
-      default: [],
-    },
-    assignedSemester: {
-      type: Number,
-      min: 1,
-      max: 8,
-      default: null,
-    },
-    assignedSemesters: {
-      type: [String],
-      default: [],
-    },
-    departments: {
-      type: [String],
-      default: [],
-    },
-    activeDepartment: {
-      type: String,
-      default: '',
-    },
-    isHOD: {
+    isDeleted: {
       type: Boolean,
       default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
     },
   },
   {

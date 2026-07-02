@@ -9,19 +9,17 @@ const userSchema = new mongoose.Schema(
     },
     username: {
       type: String,
+      required: true,
       unique: true,
-      sparse: true, // allows null/undefined without unique conflict for old records
       trim: true,
       lowercase: true,
-      index: true,
     },
     email: {
       type: String,
+      required: true,
       unique: true,
-      sparse: true,
       trim: true,
       lowercase: true,
-      index: true,
     },
     passwordHash: {
       type: String,
@@ -30,98 +28,30 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       required: true,
-      enum: ['student', 'faculty', 'admin'],
-      index: true,
+      enum: ['admin', 'faculty', 'student'],
     },
     status: {
       type: String,
       required: true,
-      enum: ['pending', 'approved', 'rejected', 'active', 'suspended', 'inactive'],
+      enum: ['active', 'suspended'],
       default: 'active',
     },
-    department: {
-      type: String,
-      trim: true,
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
-    semester: {
-      type: String,
-      trim: true,
-    },
-    // Faculty-specific
-    assignedSubjects: {
-      type: [String],
-      default: [],
-    },
-    assignedSemester: {
-      type: Number,
-      min: 1,
-      max: 8,
+    deletedAt: {
+      type: Date,
       default: null,
-    },
-    assignedSemesters: {
-      type: [String],
-      default: [],
-    },
-    assignedYear: {
-      type: String,
-      enum: ['First Year', 'Second Year', 'Third Year', ''],
-      default: '',
-    },
-    employeeId: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    phone: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    // Student-specific
-    rollNumber: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    enrollmentNumber: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    year: {
-      type: String,
-      enum: ['First Year', 'Second Year', 'Third Year', ''],
-      default: '',
-    },
-    parentName: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    parentMobile: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    createdByFaculty: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: null,
-    },
-    // Legacy fields (kept for backward compatibility)
-    departments: {
-      type: [String],
-      default: [],
-    },
-    activeDepartment: {
-      type: String,
-      trim: true,
     },
   },
   {
     timestamps: true,
   }
 );
+
+userSchema.index({ username: 1 });
+userSchema.index({ email: 1 });
 
 const User = mongoose.model('User', userSchema);
 export default User;

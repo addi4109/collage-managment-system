@@ -1,30 +1,30 @@
 import mongoose from 'mongoose';
 
-const replySchema = new mongoose.Schema({
-  studentId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+const lostFoundReplySchema = new mongoose.Schema(
+  {
+    replierId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    replierName: {
+      type: String,
+      required: true,
+    },
+    replierRole: {
+      type: String,
+      required: true,
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true,
+    },
   },
-  studentName: {
-    type: String,
-    required: true,
-  },
-  message: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  contactInfo: {
-    type: String,
-    trim: true,
-    default: '',
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
 
 const lostFoundSchema = new mongoose.Schema(
   {
@@ -43,55 +43,59 @@ const lostFoundSchema = new mongoose.Schema(
       enum: ['lost', 'found'],
       required: true,
     },
-    location: {
+    contactInfo: {
       type: String,
+      required: true,
       trim: true,
-      default: '',
     },
-    date: {
-      type: Date,
+    departmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Department',
       required: true,
     },
-    imageUrl: {
+    year: {
       type: String,
-      default: '',
+      required: true,
+      enum: ['First Year', 'Second Year', 'Third Year'],
     },
+    semester: {
+      type: String,
+      required: true,
+      enum: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'],
+    },
+    attachments: [
+      {
+        filename: { type: String, required: true },
+        fileUrl: { type: String, required: true },
+      },
+    ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    department: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-    year: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-    semester: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-    createdByName: {
-      type: String,
-      required: true,
-    },
-    replies: [replySchema],
+    replies: [lostFoundReplySchema],
     status: {
       type: String,
       enum: ['active', 'resolved'],
       default: 'active',
       required: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+lostFoundSchema.index({ departmentId: 1, year: 1, semester: 1 });
 
 const LostFound = mongoose.model('LostFound', lostFoundSchema);
 export default LostFound;

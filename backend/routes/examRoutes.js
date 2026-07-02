@@ -1,19 +1,18 @@
 import express from 'express';
 import {
   createExam,
-  updateExam,
-  scheduleExam,
-  startExam,
-  getFacultyExams,
-  getExamResultSummary,
-  publishExamResults,
-  getPendingExams,
-  approveExam,
-  rejectExam,
-  getAvailableExams,
+  submitForApproval,
+  listPending,
+  review,
+  schedule,
+  start,
+  end,
+  listStudentExams,
   startExamAttempt,
-  submitExamAttempt,
-  getStudentResult,
+  logViolation,
+  submitAttempt,
+  getResults,
+  getFacultyExamsList,
 } from '../controllers/examController.js';
 import { authenticateToken, requireRole } from '../middleware/authMiddleware.js';
 
@@ -21,24 +20,23 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
-// --- Faculty Endpoints ---
-router.post('/create', requireRole(['faculty', 'admin']), createExam);
-router.put('/:id', requireRole(['faculty', 'admin']), updateExam);
-router.post('/:id/schedule', requireRole(['faculty', 'admin']), scheduleExam);
-router.post('/:id/start', requireRole(['faculty', 'admin']), startExam);
-router.get('/faculty', requireRole(['faculty', 'admin']), getFacultyExams);
-router.get('/result/summary/:id', requireRole(['faculty', 'admin']), getExamResultSummary);
-router.post('/:id/publish', requireRole(['faculty', 'admin']), publishExamResults);
+// Faculty Exam CRUD & Actions
+router.get('/faculty', requireRole(['faculty']), getFacultyExamsList);
+router.post('/', requireRole(['faculty']), createExam);
+router.post('/:id/submit', requireRole(['faculty']), submitForApproval);
+router.post('/:id/schedule', requireRole(['faculty']), schedule);
+router.post('/:id/start', requireRole(['faculty']), start);
+router.post('/:id/end', requireRole(['faculty']), end);
+router.get('/:id/results', requireRole(['faculty', 'admin']), getResults);
 
-// --- Admin Endpoints ---
-router.get('/pending', requireRole(['admin']), getPendingExams);
-router.post('/:id/approve', requireRole(['admin']), approveExam);
-router.post('/:id/reject', requireRole(['admin']), rejectExam);
+// Admin Review
+router.get('/pending', requireRole(['admin']), listPending);
+router.post('/:id/review', requireRole(['admin']), review);
 
-// --- Student Endpoints ---
-router.get('/available', requireRole(['student']), getAvailableExams);
-router.post('/:id/start-attempt', requireRole(['student']), startExamAttempt);
-router.post('/:id/submit', requireRole(['student']), submitExamAttempt);
-router.get('/result/:id', requireRole(['student']), getStudentResult);
+// Student Exam taking
+router.get('/student', requireRole(['student']), listStudentExams);
+router.post('/:id/attempt', requireRole(['student']), startExamAttempt);
+router.post('/:id/violation', requireRole(['student']), logViolation);
+router.post('/:id/submit-attempt', requireRole(['student']), submitAttempt);
 
 export default router;

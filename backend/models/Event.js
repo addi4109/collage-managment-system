@@ -12,9 +12,9 @@ const eventSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
-    type: {
+    eventType: {
       type: String,
-      enum: ['holiday', 'event', 'exam'],
+      enum: ['holiday', 'event', 'exam', 'seminar', 'cultural'],
       default: 'event',
       required: true,
     },
@@ -26,23 +26,41 @@ const eventSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    department: {
-      type: String, // e.g. "Computer Engineering" or "All"
-      default: 'All',
+    departmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Department',
+      default: null, // null means all / college-level visibility
     },
-    year: {
-      type: String, // e.g. "First Year" or "All"
-      default: 'All',
+    visibility: {
+      type: String,
+      enum: ['college', 'department'],
+      default: 'college',
     },
-    semester: {
-      type: String, // e.g. "Sem 1" or "All"
-      default: 'All',
+    color: {
+      type: String,
+      default: '#1976d2',
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
     },
   },
   {
     timestamps: true,
   }
 );
+
+eventSchema.index({ startDate: 1, endDate: 1 });
+eventSchema.index({ departmentId: 1, visibility: 1 });
 
 const Event = mongoose.model('Event', eventSchema);
 export default Event;

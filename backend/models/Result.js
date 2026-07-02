@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 
 const SubjectResultSchema = new mongoose.Schema({
+  subjectId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Subject',
+    required: true,
+  },
   subjectCode: {
     type: String,
     required: true,
@@ -21,9 +26,41 @@ const SubjectResultSchema = new mongoose.Schema({
     required: true,
     min: 0,
   },
+  internalMarks: {
+    type: Number,
+    required: true,
+    min: 0,
+    max: 20,
+    default: 0
+  },
+  practicalMarks: {
+    type: Number,
+    required: true,
+    min: 0,
+    max: 30,
+    default: 0
+  },
+  theoryMarks: {
+    type: Number,
+    required: true,
+    min: 0,
+    max: 80,
+    default: 0
+  },
+  attendancePercentage: {
+    type: Number,
+    required: true,
+    min: 0,
+    max: 100,
+    default: 0
+  },
   grade: {
     type: String,
     trim: true,
+  },
+  gp: {
+    type: Number,
+    default: 0
   },
   status: {
     type: String,
@@ -46,10 +83,10 @@ const ResultSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    department: {
-      type: String,
+    departmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Department',
       required: true,
-      trim: true,
       index: true,
     },
     courseName: {
@@ -159,7 +196,7 @@ const ResultSchema = new mongoose.Schema(
 ResultSchema.index({ studentId: 1 });
 ResultSchema.index({ facultyId: 1 });
 ResultSchema.index({ status: 1 });
-ResultSchema.index({ department: 1, semester: 1, academicYear: 1 });
+ResultSchema.index({ departmentId: 1, semester: 1, year: 1 });
 
 const Result = mongoose.model('Result', ResultSchema);
 export default Result;

@@ -1,0 +1,346 @@
+import ResultBatch from '../models/ResultBatch.js';
+import StudentSemesterResult from '../models/StudentSemesterResult.js';
+import Student from '../models/Student.js';
+import User from '../models/User.js';
+import Subject from '../models/Subject.js';
+import { logActivity } from './auditService.js';
+import { createBatchNotifications } from './notificationService.js';
+
+// Grade point and grade calculator
+const calculateGradeDetails = (internal, practical, theory) => {
+  const totalMarks = Number(internal) + Number(practical) + Number(theory);
+  const maxMarks = 130;
+  const percentage = Math.round((totalMarks / maxMarks) * 100 * 100) / 100;
+  
+  // Pass criteria: Total >= 52 (40%) and theory >= 32 (40% of 80)
+  const pass = totalMarks >= 52 && theory >= 32;
+
+  let grade = 'F';
+  let gp = 0;
+
+  if (pass) {
+    if (percentage >= 90) {
+      grade = 'O';
+      gp = 10;
+    } else if (percentage >= 80) {
+      grade = 'A+';
+      gp = 9;
+    } else if (percentage >= 70) {
+      grade = 'A';
+      gp = 8;
+    } else if (percentage >= 60) {
+      grade = 'B+';
+      gp = 7;
+    } else if (percentage >= 50) {
+      grade = 'B';
+      gp = 6;
+    } else {
+      grade = 'C';
+      gp = 5;
+    }
+  }
+
+  return {
+    totalMarks,
+    percentage,
+    grade,
+    gp,
+    pass,
+  };
+};
+
+export const saveBatchDraft = async (batchData, facultyId) => {
+  const { departmentId, year, semester, results } = batchData;
+
+  // Process and compute grades for each student
+  const computedResults = results.map(r => {
+    const grades = calculateGradeDetails(r.internalMarks, r.practicalMarks, r.theoryMarks);
+    return {
+      studentId: r.studentId,
+      subjectId: r.subjectId,
+      internalMarks: r.internalMarks,
+      practicalMarks: r.practicalMarks,
+      theoryMarks: r.theoryMarks,
+      attendancePercentage: r.attendancePercentage,
+      remarks: r.remarks || '',
+      ...grades,
+    };
+  });
+
+  let batch = await ResultBatch.findOne({ departmentId, year, semester });
+  if (batch) {
+    if (batch.status === 'declared') {
+      throw new Error('This result batch has already been declared and cannot be edited.');
+    }
+    batch.results = computedResults;
+    batch.facultyId = facultyId;
+  } else {
+    batch = new ResultBatch({
+      departmentId,
+      year,
+      semester,
+      facultyId,
+      results: computedResults,
+      status: 'draft',
+    });
+  }
+
+  return await batch.save();
+};
+
+export const submitBatch = async (batchId, facultyId) => {
+  const batch = await ResultBatch.findOne({ _id: batchId, facultyId });
+  if (!batch) throw new Error('Result batch not found.');
+  if (batch.status === 'declared') {
+    throw new Error('This result batch is already declared.');
+  }
+
+  batch.status = 'submitted';
+  batch.submittedAt = new Date();
+  batch.version += 1;
+  return await batch.save();
+};
+
+export const getPendingBatches = async () => {
+  return await ResultBatch.find({ status: 'submitted' })
+    .populate('departmentId', 'name code')
+    .populate('facultyId', 'name email')
+    .sort({ updatedAt: -1 });
+};
+
+export const approveBatch = async (batchId, adminId, ipAddress) => {
+  const batch = await ResultBatch.findOne({ _id: batchId, status: 'submitted' });
+  if (!batch) throw new Error('Submitted result batch not found.');
+
+  batch.status = 'approved';
+  batch.approvedAt = new Date();
+  await batch.save();
+
+  await logActivity({
+    action: 'RESULT_BATCH_APPROVED',
+    performedBy: adminId,
+    details: `Approved result batch for Department ID: ${batch.departmentId}, Year: ${batch.year}, Sem: ${batch.semester}`,
+    ipAddress,
+  });
+
+  return batch;
+};
+
+// Declares the batch and calculates SGPA/CGPA history records
+export const declareBatch = async (batchId, adminId, ipAddress) => {
+  const batch = await ResultBatch.findOne({ _id: batchId, status: 'approved' });
+  if (!batch) {
+    throw new Error('Approved result batch not found.');
+  }
+
+  batch.status = 'declared';
+  await batch.save();
+
+  // For each student in the batch, calculate SGPA & CGPA
+  const studentIds = [...new Set(batch.results.map(r => r.studentId.toString()))];
+
+  for (const sId of studentIds) {
+    const studentResults = batch.results.filter(r => r.studentId.toString() === sId);
+    
+    // Calculate SGPA (average of GP for this semester's subjects)
+    const totalGPs = studentResults.reduce((acc, curr) => acc + curr.gp, 0);
+    const sgpa = studentResults.length > 0 ? Math.round((totalGPs / studentResults.length) * 100) / 100 : 0;
+
+    // Calculate Semester Average Percentage
+    const totalPercentages = studentResults.reduce((acc, curr) => acc + curr.percentage, 0);
+    const semesterPercentage = studentResults.length > 0 ? Math.round((totalPercentages / studentResults.length) * 100) / 100 : 0;
+
+    // Fetch prior semesters declared results to calculate CGPA
+    const priorSemesterResults = await StudentSemesterResult.find({
+      studentId: sId,
+      semester: { $ne: batch.semester },
+    });
+
+    const allSGPAs = priorSemesterResults.map(psr => psr.sgpa);
+    allSGPAs.push(sgpa);
+    const cgpa = allSGPAs.length > 0 ? Math.round((allSGPAs.reduce((a, b) => a + b, 0) / allSGPAs.length) * 100) / 100 : 0;
+
+    // Update or insert StudentSemesterResult
+    await StudentSemesterResult.findOneAndUpdate(
+      { studentId: sId, semester: batch.semester },
+      {
+        sgpa,
+        cgpa,
+        percentage: semesterPercentage,
+        declaredDate: new Date(),
+      },
+      { upsert: true, new: true }
+    );
+  }
+
+  await createBatchNotifications(
+    batch.departmentId,
+    batch.year,
+    batch.semester,
+    'Results Declared',
+    `Semester examination results for ${batch.semester} have been declared. You can now view your marksheet.`,
+    'RESULT'
+  );
+
+  await logActivity({
+    action: 'RESULT_BATCH_DECLARED',
+    performedBy: adminId,
+    details: `Declared result batch for Department ID: ${batch.departmentId}, Year: ${batch.year}, Sem: ${batch.semester}`,
+    ipAddress,
+  });
+
+  return batch;
+};
+
+export const declareAllApproved = async (adminId, ipAddress) => {
+  const approvedBatches = await ResultBatch.find({ status: 'approved' });
+  const declaredList = [];
+
+  for (const batch of approvedBatches) {
+    const declared = await declareBatch(batch._id, adminId, ipAddress);
+    declaredList.push(declared);
+  }
+
+  return declaredList;
+};
+
+export const getStudentMarksheetData = async (studentId, semester) => {
+  const student = await Student.findOne({ userId: studentId, isDeleted: false })
+    .populate('departmentId', 'name code');
+  if (!student) throw new Error('Student profile not found.');
+
+  // Find the declared ResultBatch for student's department, year, and specified semester
+  const batch = await ResultBatch.findOne({
+    departmentId: student.departmentId._id,
+    year: student.year,
+    semester: semester,
+    status: 'declared',
+  }).populate('results.subjectId', 'name code');
+
+  if (!batch) {
+    throw new Error(`Results for semester ${semester} have not been declared yet.`);
+  }
+
+  // Filter student's marks
+  const subjectMarks = batch.results
+    .filter(r => r.studentId.toString() === studentId.toString())
+    .map(r => ({
+      subjectName: r.subjectId.name,
+      subjectCode: r.subjectId.code,
+      internalMarks: r.internalMarks,
+      practicalMarks: r.practicalMarks,
+      theoryMarks: r.theoryMarks,
+      attendancePercentage: r.attendancePercentage,
+      totalMarks: r.totalMarks,
+      percentage: r.percentage,
+      grade: r.grade,
+      gp: r.gp,
+      pass: r.pass,
+      remarks: r.remarks,
+    }));
+
+  if (subjectMarks.length === 0) {
+    throw new Error('No marks record found for your account in this batch.');
+  }
+
+  // Retrieve CGPA/SGPA details
+  const semSummary = await StudentSemesterResult.findOne({ studentId, semester });
+
+  return {
+    student: {
+      name: (await User.findById(studentId))?.name || 'Student',
+      rollNumber: student.rollNumber,
+      enrollmentNumber: student.enrollmentNumber,
+      department: student.departmentId.name,
+      year: student.year,
+      semester,
+    },
+    results: subjectMarks,
+    summary: semSummary ? {
+      sgpa: semSummary.sgpa,
+      cgpa: semSummary.cgpa,
+      percentage: semSummary.percentage,
+      declaredDate: semSummary.declaredDate,
+    } : null,
+  };
+};
+
+export const getFacultyBatchDraft = async (departmentId, year, semester, facultyId) => {
+  // Returns existing batch or a blank template containing enrolled students
+  let batch = await ResultBatch.findOne({ departmentId, year, semester })
+    .populate('results.studentId', 'name')
+    .populate('results.subjectId', 'name code');
+
+  if (!batch) {
+    // Generate empty list based on students profile
+    const students = await Student.find({ departmentId, year, semester, isDeleted: false })
+      .populate('userId', 'name');
+
+    const subjects = await Subject.find({ departmentId, year, semester, isDeleted: false });
+
+    // Generate Cartesian list of student results (students x subjects)
+    const resultsTemplate = [];
+    for (const s of students) {
+      if (!s.userId) continue;
+      for (const sub of subjects) {
+        resultsTemplate.push({
+          studentId: s.userId._id,
+          studentName: s.userId.name,
+          rollNumber: s.rollNumber,
+          subjectId: sub._id,
+          subjectName: sub.name,
+          subjectCode: sub.code,
+          internalMarks: 0,
+          practicalMarks: 0,
+          theoryMarks: 0,
+          attendancePercentage: 100,
+          remarks: '',
+        });
+      }
+    }
+
+    return {
+      departmentId,
+      year,
+      semester,
+      status: 'new',
+      results: resultsTemplate,
+    };
+  }
+
+  // If batch exists, map names
+  const resultsMapped = [];
+  for (const r of batch.results) {
+    const studentUser = await User.findById(r.studentId);
+    const studentProfile = await Student.findOne({ userId: r.studentId });
+    const subject = await Subject.findById(r.subjectId);
+
+    resultsMapped.push({
+      studentId: r.studentId,
+      studentName: studentUser ? studentUser.name : 'Unknown',
+      rollNumber: studentProfile ? studentProfile.rollNumber : 'N/A',
+      subjectId: r.subjectId,
+      subjectName: subject ? subject.name : 'Unknown',
+      subjectCode: subject ? subject.code : 'N/A',
+      internalMarks: r.internalMarks,
+      practicalMarks: r.practicalMarks,
+      theoryMarks: r.theoryMarks,
+      attendancePercentage: r.attendancePercentage,
+      totalMarks: r.totalMarks,
+      percentage: r.percentage,
+      grade: r.grade,
+      gp: r.gp,
+      pass: r.pass,
+      remarks: r.remarks,
+    });
+  }
+
+  return {
+    _id: batch._id,
+    departmentId: batch.departmentId,
+    year: batch.year,
+    semester: batch.semester,
+    status: batch.status,
+    results: resultsMapped,
+  };
+};

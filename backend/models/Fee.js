@@ -6,57 +6,29 @@ const feeSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      unique: true,
+      index: true,
     },
-    studentName: {
+    title: {
       type: String,
       required: true,
+      trim: true,
     },
-    rollNumber: {
-      type: String,
-      required: true,
-    },
-    department: {
-      type: String,
-      required: true,
-    },
-    year: {
-      type: String,
-      required: true,
-    },
-    semester: {
-      type: String,
-      required: true,
-    },
-    totalAmount: {
+    amount: {
       type: Number,
       required: true,
+      min: 0,
     },
-    paidAmount: {
-      type: Number,
-      default: 0,
-    },
-    dueAmount: {
-      type: Number,
+    dueDate: {
+      type: Date,
       required: true,
     },
     status: {
       type: String,
-      enum: ['paid', 'partial', 'unpaid'],
+      enum: ['unpaid', 'paid'],
       default: 'unpaid',
       required: true,
+      index: true,
     },
-    paymentHistory: [
-      {
-        amountPaid: Number,
-        transactionId: String,
-        paymentMode: String, // e.g. "UPI", "Card", "Cash"
-        paymentDate: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
   },
   {
     timestamps: true,

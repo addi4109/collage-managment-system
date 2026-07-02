@@ -1,15 +1,14 @@
 import mongoose from 'mongoose';
 
-const semesterSchema = new mongoose.Schema(
+const yearSchema = new mongoose.Schema(
   {
-    semesterNumber: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 8,
-    },
-    semesterSecretCode: {
+    name: {
       type: String,
+      required: true,
+      enum: ['First Year', 'Second Year', 'Third Year'],
+    },
+    semesters: {
+      type: [String],
       required: true,
     },
   },
@@ -18,36 +17,38 @@ const semesterSchema = new mongoose.Schema(
 
 const departmentSchema = new mongoose.Schema(
   {
-    departmentName: {
+    name: {
       type: String,
       required: true,
       unique: true,
       trim: true,
     },
-    departmentCode: {
+    code: {
       type: String,
       required: true,
       unique: true,
       trim: true,
     },
-    departmentSecretCode: {
-      type: String,
-      required: true,
+    years: {
+      type: [yearSchema],
+      default: [
+        { name: 'First Year', semesters: ['Sem 1', 'Sem 2'] },
+        { name: 'Second Year', semesters: ['Sem 3', 'Sem 4'] },
+        { name: 'Third Year', semesters: ['Sem 5', 'Sem 6'] },
+      ],
     },
-    semesters: {
-      type: [semesterSchema],
-      default: [],
-    },
-    subjects: [
-      {
-        subjectCode: { type: String, required: true },
-        subjectName: { type: String, required: true },
-      },
-    ],
     status: {
       type: String,
       enum: ['active', 'inactive'],
       default: 'active',
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
     },
   },
   {

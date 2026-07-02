@@ -2,6 +2,8 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes.js';
 import departmentRoutes from './routes/departmentRoutes.js';
 import assignmentRoutes from './routes/assignmentRoutes.js';
@@ -10,6 +12,11 @@ import sessionRoutes from './routes/sessionRoutes.js';
 import noticeRoutes from './routes/noticeRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import lostFoundRoutes from './routes/lostFoundRoutes.js';
+import applicationRoutes from './routes/applicationRoutes.js';
+import timetableRoutes from './routes/timetableRoutes.js';
+import feeRoutes from './routes/feeRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import auditRoutes from './routes/auditRoutes.js';
 import examRoutes from './routes/examRoutes.js';
 import proctorRoutes from './routes/proctorRoutes.js';
 import resultRoutes from './routes/resultRoutes.js';
@@ -17,6 +24,13 @@ import studentManagementRoutes from './routes/studentManagementRoutes.js';
 import admissionRoutes from './routes/admissionRoutes.js';
 import erpRoutes from './routes/erpRoutes.js';
 import facultyRoutes from './routes/facultyRoutes.js';
+import subjectRoutes from './routes/subjectRoutes.js';
+import calendarRoutes from './routes/calendarRoutes.js';
+import monthlyReportRoutes from './routes/monthlyReportRoutes.js';
+import placementRoutes from './routes/placementRoutes.js';
+import complaintRoutes from './routes/complaintRoutes.js';
+import libraryRoutes from './routes/libraryRoutes.js';
+import scholarshipRoutes from './routes/scholarshipRoutes.js';
 import { connectDB } from './config/database.js';
 
 dotenv.config();
@@ -35,6 +49,11 @@ if (!process.env.JWT_SECRET) {
 const app = express();
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
+
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+}));
+app.use(cookieParser());
 
 const allowedOrigins = [
   'http://localhost:3000',
@@ -64,6 +83,7 @@ app.use(
 );
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use('/uploads', express.static('uploads'));
 
 // Initialize MongoDB Atlas connection
 connectDB();
@@ -77,6 +97,11 @@ app.use('/api/session', sessionRoutes);
 app.use('/api/notices', noticeRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/lostfound', lostFoundRoutes);
+app.use('/api/applications', applicationRoutes);
+app.use('/api/timetable', timetableRoutes);
+app.use('/api/fees', feeRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/audit', auditRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/proctor', proctorRoutes);
 app.use('/api/results', resultRoutes);
@@ -84,6 +109,13 @@ app.use('/api/students', studentManagementRoutes);
 app.use('/api/admissions', admissionRoutes);
 app.use('/api/erp', erpRoutes);
 app.use('/api/faculty', facultyRoutes);
+app.use('/api/subjects', subjectRoutes);
+app.use('/api/calendar', calendarRoutes);
+app.use('/api/monthly-reports', monthlyReportRoutes);
+app.use('/api/placements', placementRoutes);
+app.use('/api/complaints', complaintRoutes);
+app.use('/api/library', libraryRoutes);
+app.use('/api/scholarships', scholarshipRoutes);
 
 // Health check endpoint displaying connection state and process uptime
 app.get('/', (req, res) => {
@@ -108,4 +140,4 @@ app.listen(PORT, () => {
     : `http://localhost:${PORT}`;
   console.log(`Server listening on ${serverUrl}`);
 });
-
+// Trigger reload 4

@@ -7,40 +7,25 @@ const attendanceSessionSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    facultyName: {
+    subjectName: {
       type: String,
       required: true,
       trim: true,
     },
-    courseName: {
-      type: String,
+    departmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Department',
       required: true,
-      trim: true,
-    },
-    sessionTitle: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    department: {
-      type: String,
-      default: '',
-      trim: true,
     },
     year: {
       type: String,
-      default: '',
-      trim: true,
+      required: true,
+      enum: ['First Year', 'Second Year', 'Third Year'],
     },
     semester: {
       type: String,
-      default: '',
-      trim: true,
-    },
-    subject: {
-      type: String,
-      default: '',
-      trim: true,
+      required: true,
+      enum: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'],
     },
     date: {
       type: Date,
@@ -51,34 +36,31 @@ const attendanceSessionSchema = new mongoose.Schema(
       required: true,
     },
     duration: {
-      type: Number,
-      default: 5,
+      type: Number, // in minutes
       required: true,
-    },
-    description: {
-      type: String,
-      default: '',
-      trim: true,
+      default: 50,
     },
     sessionToken: {
       type: String,
       unique: true,
-      sparse: true,
+      required: true,
     },
     status: {
       type: String,
-      enum: ['created', 'active', 'ended'],
-      default: 'created',
+      enum: ['active', 'ended'],
+      default: 'active',
       required: true,
     },
     expiresAt: {
       type: Date,
+      required: true,
     },
   },
   {
     timestamps: true,
   }
 );
+
 
 const AttendanceSession = mongoose.model('AttendanceSession', attendanceSessionSchema);
 export default AttendanceSession;

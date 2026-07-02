@@ -1,19 +1,12 @@
 import express from 'express';
+import { createRequest, getPending, approve, reject } from '../controllers/admissionController.js';
 import { authenticateToken, requireRole } from '../middleware/authMiddleware.js';
-import {
-  createAdmissionRequest,
-  getAdmissionRequests,
-  approveAdmissionRequest,
-  rejectAdmissionRequest,
-  deleteAdmissionRequest,
-} from '../controllers/admissionController.js';
 
 const router = express.Router();
 
-router.post('/', authenticateToken, requireRole(['faculty']), createAdmissionRequest);
-router.get('/', authenticateToken, requireRole(['faculty', 'admin']), getAdmissionRequests);
-router.post('/:id/approve', authenticateToken, requireRole(['admin']), approveAdmissionRequest);
-router.post('/:id/reject', authenticateToken, requireRole(['admin']), rejectAdmissionRequest);
-router.delete('/:id', authenticateToken, requireRole(['faculty', 'admin']), deleteAdmissionRequest);
+router.post('/request', authenticateToken, requireRole(['faculty']), createRequest);
+router.get('/pending', authenticateToken, requireRole(['admin']), getPending);
+router.post('/approve/:id', authenticateToken, requireRole(['admin']), approve);
+router.post('/reject/:id', authenticateToken, requireRole(['admin']), reject);
 
 export default router;
