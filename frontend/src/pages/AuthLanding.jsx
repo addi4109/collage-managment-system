@@ -89,14 +89,14 @@ export default function AuthLanding({ mode, toggleTheme }) {
           />
         </>
       )}
-
       {/* Dark Mode Toggle Button - Top Right */}
       <IconButton
         onClick={toggleTheme}
         sx={{
-          position: 'absolute',
+          position: 'fixed',
           top: 24,
           right: 24,
+          zIndex: 1000,
           bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
           backdropFilter: 'blur(12px)',
           border: '1px solid',

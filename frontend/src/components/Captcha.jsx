@@ -29,60 +29,66 @@ export default function Captcha({ onCaptchaLoaded, value, onChange }) {
   useEffect(() => {
     if (!captchaText || !canvasRef.current) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
+    const timer = setTimeout(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      const width = canvas.width;
+      const height = canvas.height;
 
-    // Clear
-    ctx.clearRect(0, 0, width, height);
+      // Clear
+      ctx.clearRect(0, 0, width, height);
 
-    // Background with subtle noise
-    ctx.fillStyle = '#0d1225';
-    ctx.fillRect(0, 0, width, height);
+      // Background with subtle noise
+      ctx.fillStyle = '#0d1225';
+      ctx.fillRect(0, 0, width, height);
 
-    // Draw noise dots
-    for (let i = 0; i < 60; i++) {
-      ctx.fillStyle = `rgba(${Math.random() * 100 + 50}, ${Math.random() * 100 + 50}, ${Math.random() * 150 + 100}, ${Math.random() * 0.3 + 0.1})`;
-      ctx.beginPath();
-      ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
+      // Draw noise dots
+      for (let i = 0; i < 60; i++) {
+        ctx.fillStyle = `rgba(${Math.random() * 100 + 50}, ${Math.random() * 100 + 50}, ${Math.random() * 150 + 100}, ${Math.random() * 0.3 + 0.1})`;
+        ctx.beginPath();
+        ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
-    // Draw interference lines
-    for (let i = 0; i < 4; i++) {
-      ctx.strokeStyle = `rgba(${Math.random() * 100 + 80}, ${Math.random() * 100 + 80}, ${Math.random() * 150 + 100}, ${Math.random() * 0.25 + 0.1})`;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(Math.random() * width, Math.random() * height);
-      ctx.bezierCurveTo(
-        Math.random() * width, Math.random() * height,
-        Math.random() * width, Math.random() * height,
-        Math.random() * width, Math.random() * height
-      );
-      ctx.stroke();
-    }
+      // Draw interference lines
+      for (let i = 0; i < 4; i++) {
+        ctx.strokeStyle = `rgba(${Math.random() * 100 + 80}, ${Math.random() * 100 + 80}, ${Math.random() * 150 + 100}, ${Math.random() * 0.25 + 0.1})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * width, Math.random() * height);
+        ctx.bezierCurveTo(
+          Math.random() * width, Math.random() * height,
+          Math.random() * width, Math.random() * height,
+          Math.random() * width, Math.random() * height
+        );
+        ctx.stroke();
+      }
 
-    // Draw each character with slight rotation and varied positioning
-    const colors = ['#818CF8', '#22D3EE', '#34D399', '#FBBF24', '#F87171', '#A78BFA'];
-    const charWidth = width / (captchaText.length + 1.5);
-    const fonts = ['bold 28px Outfit', 'bold 26px Inter', 'italic bold 27px Courier New', 'bold 29px Arial'];
+      // Draw each character with slight rotation and varied positioning
+      const colors = ['#818CF8', '#22D3EE', '#34D399', '#FBBF24', '#F87171', '#A78BFA'];
+      const charWidth = width / (captchaText.length + 1.5);
+      const fonts = ['bold 28px Outfit', 'bold 26px Inter', 'italic bold 27px Courier New', 'bold 29px Arial'];
 
-    for (let i = 0; i < captchaText.length; i++) {
-      ctx.save();
-      const x = charWidth * (i + 0.8);
-      const y = height / 2 + (Math.random() * 8 - 4);
-      const angle = (Math.random() - 0.5) * 0.4; // ±0.2 radians
+      for (let i = 0; i < captchaText.length; i++) {
+        ctx.save();
+        const x = charWidth * (i + 0.8);
+        const y = height / 2 + (Math.random() * 8 - 4);
+        const angle = (Math.random() - 0.5) * 0.4; // ±0.2 radians
 
-      ctx.translate(x, y);
-      ctx.rotate(angle);
-      ctx.font = fonts[Math.floor(Math.random() * fonts.length)];
-      ctx.fillStyle = colors[i % colors.length];
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(captchaText[i], 0, 0);
-      ctx.restore();
-    }
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.font = fonts[Math.floor(Math.random() * fonts.length)];
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(captchaText[i], 0, 0);
+        ctx.restore();
+      }
+    }, 50);
+
+    return () => clearTimeout(timer);
   }, [captchaText]);
 
   useEffect(() => {
@@ -119,8 +125,8 @@ export default function Captcha({ onCaptchaLoaded, value, onChange }) {
             height={50}
             style={{
               borderRadius: '8px',
-              flex: 1,
-              maxWidth: '220px',
+              width: '220px',
+              height: '50px',
             }}
           />
         )}
