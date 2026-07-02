@@ -93,9 +93,9 @@ export default function AuthLanding({ mode, toggleTheme }) {
       <IconButton
         onClick={toggleTheme}
         sx={{
-          position: 'fixed',
-          top: 24,
-          right: 24,
+          position: 'absolute',
+          top: { xs: 16, sm: 24 },
+          right: { xs: 16, sm: 24 },
           zIndex: 1000,
           bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
           backdropFilter: 'blur(12px)',
@@ -114,7 +114,7 @@ export default function AuthLanding({ mode, toggleTheme }) {
         {isDark ? <LightModeIcon /> : <DarkModeIcon />}
       </IconButton>
 
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 6, sm: 0 } }}>
         {/* Title Section */}
         <Box sx={{ textAlign: 'center', mb: 8 }}>
           <Typography
