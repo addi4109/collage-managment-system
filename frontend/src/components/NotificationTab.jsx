@@ -81,8 +81,9 @@ export default function NotificationTab({ role }) {
   const loadDepartments = async () => {
     try {
       const res = await api.get('/departments');
-      if (role === 'faculty' && user?.assignedDepartments) {
-        const filtered = res.data.filter(d => user.assignedDepartments.includes(d._id));
+      if (role === 'faculty') {
+        const assigned = user?.assignedDepartments || [];
+        const filtered = res.data.filter(d => assigned.includes(d._id));
         setDepartments(filtered);
       } else {
         setDepartments(res.data);

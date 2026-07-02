@@ -114,11 +114,14 @@ export default function FacultyDashboard() {
     try {
       const res = await api.get('/departments');
       // Filter only departments assigned to this faculty
-      const filtered = res.data.filter(d => user.assignedDepartments.includes(d._id));
+      const assignedDeps = user?.assignedDepartments || [];
+      const assignedYears = user?.assignedYears || [];
+      
+      const filtered = res.data.filter(d => assignedDeps.includes(d._id));
       setDepts(filtered);
       
       const defaultDept = filtered.length > 0 ? filtered[0]._id : '';
-      const defaultYear = user.assignedYears.length > 0 ? user.assignedYears[0] : '';
+      const defaultYear = assignedYears.length > 0 ? assignedYears[0] : '';
       
       if (defaultDept) setSelectedDept(defaultDept);
       if (defaultYear) setSelectedYear(defaultYear);

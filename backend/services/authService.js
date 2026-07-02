@@ -86,6 +86,34 @@ export const login = async ({ credential, password, role, captchaToken, captchaV
     role: user.role,
   };
 
+  if (user.role === 'faculty') {
+    const facultyProfile = await Faculty.findOne({ userId: user._id, isDeleted: false });
+    if (facultyProfile) {
+      userData.employeeId = facultyProfile.employeeId;
+      userData.assignedDepartments = facultyProfile.assignedDepartments.map(id => id.toString());
+      userData.assignedYears = facultyProfile.assignedYears;
+      userData.phone = facultyProfile.phone;
+    } else {
+      userData.employeeId = '';
+      userData.assignedDepartments = [];
+      userData.assignedYears = [];
+      userData.phone = '';
+    }
+  } else if (user.role === 'student') {
+    const studentProfile = await Student.findOne({ userId: user._id, isDeleted: false });
+    if (studentProfile) {
+      userData.rollNumber = studentProfile.rollNumber;
+      userData.enrollmentNumber = studentProfile.enrollmentNumber;
+      userData.departmentId = studentProfile.departmentId.toString();
+      userData.year = studentProfile.year;
+      userData.semester = studentProfile.semester;
+      userData.phone = studentProfile.phone;
+      userData.parentName = studentProfile.parentName;
+      userData.parentMobile = studentProfile.parentMobile;
+      userData.address = studentProfile.address;
+    }
+  }
+
   return {
     user: userData,
     accessToken,
