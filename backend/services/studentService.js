@@ -134,7 +134,19 @@ export const updateStudent = async (studentId, studentData, requestUser, ipAddre
     }
   }
 
-  const { name, rollNumber, email, phone, parentName, parentMobile, address, semester, year } = studentData;
+  const {
+    name,
+    rollNumber,
+    enrollmentNumber,
+    departmentId,
+    email,
+    phone,
+    parentName,
+    parentMobile,
+    address,
+    semester,
+    year
+  } = studentData;
 
   // Update User Account
   const user = await User.findById(student.userId);
@@ -146,22 +158,26 @@ export const updateStudent = async (studentId, studentData, requestUser, ipAddre
 
   // Update Profile
   if (rollNumber) student.rollNumber = rollNumber;
+  if (enrollmentNumber) student.enrollmentNumber = enrollmentNumber;
+  if (departmentId) student.departmentId = departmentId;
   if (phone !== undefined) student.phone = phone;
   if (parentName !== undefined) student.parentName = parentName;
   if (parentMobile !== undefined) student.parentMobile = parentMobile;
   if (address !== undefined) student.address = address;
 
-  // Handle Semester or Year changes
+  // Handle Semester, Year, or Department changes
   const semChanged = semester && student.semester !== semester;
   const yearChanged = year && student.year !== year;
+  const deptChanged = departmentId && student.departmentId.toString() !== departmentId.toString();
 
   if (semester) student.semester = semester;
   if (year) student.year = year;
+  if (departmentId) student.departmentId = departmentId;
 
   await student.save();
 
-  // If year/semester changes, re-enroll student in matching subjects
-  if (semChanged || yearChanged) {
+  // If year/semester/department changes, re-enroll student in matching subjects
+  if (semChanged || yearChanged || deptChanged) {
     const subjects = await Subject.find({
       departmentId: student.departmentId,
       year: student.year,
