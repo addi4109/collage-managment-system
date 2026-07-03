@@ -102,6 +102,26 @@ export default function FacultyDashboard() {
   const [examForm, setExamForm] = useState({ title: '', subjectId: '', departmentId: '', year: '', semester: '', duration: 30, questions: [] });
   const [newQuestion, setNewQuestion] = useState({ questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0 });
   const [showPassword, setShowPassword] = useState(false);
+  const [examSubjects, setExamSubjects] = useState([]);
+
+  // Fetch subjects for Exam creation dynamically based on selected dept/year/sem in the exam dialog
+  useEffect(() => {
+    if (!examForm.departmentId || !examForm.year || !examForm.semester) return;
+    const fetchExamSubjects = async () => {
+      try {
+        const res = await api.get(`/subjects?departmentId=${examForm.departmentId}&year=${examForm.year}&semester=${examForm.semester}`);
+        setExamSubjects(res.data);
+        if (res.data.length > 0) {
+          setExamForm(prev => ({ ...prev, subjectId: res.data[0]._id }));
+        } else {
+          setExamForm(prev => ({ ...prev, subjectId: '' }));
+        }
+      } catch (err) {
+        console.error('Error loading exam subjects:', err);
+      }
+    };
+    fetchExamSubjects();
+  }, [examForm.departmentId, examForm.year, examForm.semester]);
 
   // Results Entry States
   const [resultsSheet, setResultsSheet] = useState(null);
@@ -336,21 +356,18 @@ export default function FacultyDashboard() {
     if (examForm.questions.length === 0) {
       return showToast('Please add at least one question.', 'warning');
     }
+    if (!examForm.subjectId) {
+      return showToast('Please select a subject for the exam.', 'warning');
+    }
     try {
-      const res = await api.post('/exams', {
-        ...examForm,
-        departmentId: selectedDept,
-        year: selectedYear,
-        semester: selectedSem,
-        subjectId: selectedSubject,
-      });
+      const res = await api.post('/exams', examForm);
       // Immediately submit for approval
       await api.post(`/exams/${res.data.exam._id}/submit`);
       showToast('Exam created and submitted for Admin approval.', 'success');
       setOpenExamDialog(false);
       loadData();
     } catch (err) {
-      showToast('Failed to create exam.', 'error');
+      showToast(err.response?.data?.message || 'Failed to create exam.', 'error');
     }
   };
 
@@ -680,7 +697,15 @@ export default function FacultyDashboard() {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                 <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Exam Papers Directory</Typography>
                 <Button variant="contained" onClick={() => {
-                  setExamForm({ title: '', questions: [], duration: 30 });
+                  setExamForm({
+                    title: '',
+                    questions: [],
+                    duration: 30,
+                    departmentId: depts.length > 0 ? depts[0]._id : '',
+                    year: user?.assignedYears?.length > 0 ? user.assignedYears[0] : '',
+                    semester: 'Sem 1',
+                    subjectId: '',
+                  });
                   setOpenExamDialog(true);
                 }}>
                   Create MCQ Exam
@@ -1056,6 +1081,57 @@ export default function FacultyDashboard() {
             onChange={(e) => setExamForm({ ...examForm, duration: parseInt(e.target.value, 10) })}
             sx={{ mb: 3 }}
           />
+
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                fullWidth
+                required
+                label="Department"
+                value={examForm.departmentId || ''}
+                onChange={(e) => setExamForm({ ...examForm, departmentId: e.target.value })}
+              >
+                {depts.map(d => <MenuItem key={d._id} value={d._id}>{d.name}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                fullWidth
+                required
+                label="Year"
+                value={examForm.year || ''}
+                onChange={(e) => setExamForm({ ...examForm, year: e.target.value })}
+              >
+                {user?.assignedYears?.map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                fullWidth
+                required
+                label="Semester"
+                value={examForm.semester || 'Sem 1'}
+                onChange={(e) => setExamForm({ ...examForm, semester: e.target.value })}
+              >
+                {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                fullWidth
+                required
+                label="Subject"
+                value={examForm.subjectId || ''}
+                onChange={(e) => setExamForm({ ...examForm, subjectId: e.target.value })}
+              >
+                {examSubjects.map(s => <MenuItem key={s._id} value={s._id}>{s.name} ({s.code})</MenuItem>)}
+              </TextField>
+            </Grid>
+          </Grid>
 
           <Divider sx={{ my: 2 }} />
           <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>Build Questions ({examForm.questions.length} added)</Typography>
