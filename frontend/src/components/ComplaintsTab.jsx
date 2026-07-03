@@ -58,7 +58,7 @@ export default function ComplaintsTab({ role }) {
         setFaculties(facRes.data);
       }
     } catch (err) {
-      showToast('Error loading grievances.', 'error');
+      showToast(err.response?.data?.message || 'Error loading grievances.', 'error');
     } finally {
       setLoading(false);
     }

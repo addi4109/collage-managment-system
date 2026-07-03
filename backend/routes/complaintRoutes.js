@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
-router.post('/', requireRole(['student']), upload.array('attachments'), createComplaint);
+router.post('/', requireRole(['student']), upload.array('file'), createComplaint);
 router.get('/', listComplaints);
 router.put('/:complaintId', requireRole(['admin', 'faculty']), updateComplaint);
 

@@ -13,14 +13,16 @@ import {
 const router = express.Router();
 
 router.use(authenticateToken);
-router.use(requireRole(['admin']));
 
-router.post('/', createFaculty);
+// Read routes accessible by any authenticated role (including student for grievances)
 router.get('/', getFacultyList);
 router.get('/:id', getFacultyDetails);
-router.put('/:id', updateFaculty);
-router.put('/:id/password', resetPassword);
-router.put('/:id/status', updateFacultyStatus);
-router.delete('/:id', deleteFaculty);
+
+// Write/management routes restricted to Admin
+router.post('/', requireRole(['admin']), createFaculty);
+router.put('/:id', requireRole(['admin']), updateFaculty);
+router.put('/:id/password', requireRole(['admin']), resetPassword);
+router.put('/:id/status', requireRole(['admin']), updateFacultyStatus);
+router.delete('/:id', requireRole(['admin']), deleteFaculty);
 
 export default router;
