@@ -63,6 +63,9 @@ export default function AdminDashboard() {
   const [resultBatches, setResultBatches] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [pendingExams, setPendingExams] = useState([]);
+  const [openExamQuestionsDialog, setOpenExamQuestionsDialog] = useState(false);
+  const [selectedExam, setSelectedExam] = useState(null);
   
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -94,6 +97,9 @@ export default function AdminDashboard() {
       } else if (tab === 'results') {
         const res = await api.get('/results/pending');
         setResultBatches(res.data);
+      } else if (tab === 'exams') {
+        const res = await api.get('/exams/pending');
+        setPendingExams(res.data);
       } else if (tab === 'audit') {
         const res = await api.get('/audit');
         setAuditLogs(res.data.logs || []);
@@ -139,6 +145,17 @@ export default function AdminDashboard() {
       loadData();
     } catch (err) {
       showToast('Failed to declare results.', 'error');
+    }
+  };
+
+  // MCQ Exam Approvals
+  const handleReviewExam = async (examId, approve) => {
+    try {
+      await api.post(`/exams/${examId}/review`, { approve });
+      showToast(`Exam ${approve ? 'approved' : 'rejected and returned to draft'}.`, 'success');
+      loadData();
+    } catch (err) {
+      showToast('Failed to review exam.', 'error');
     }
   };
 
@@ -447,6 +464,77 @@ export default function AdminDashboard() {
             </Box>
           )}
 
+          {/* EXAM APPROVALS */}
+          {tab === 'exams' && (
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 3 }}>Pending Exam Approvals</Typography>
+              {pendingExams.length === 0 ? (
+                <Typography color="text.secondary">No exams are pending approval right now.</Typography>
+              ) : (
+                <TableContainer component={Paper} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Exam Title</TableCell>
+                        <TableCell>Subject</TableCell>
+                        <TableCell>Department</TableCell>
+                        <TableCell>Class</TableCell>
+                        <TableCell>Duration</TableCell>
+                        <TableCell>Created By</TableCell>
+                        <TableCell align="center">Questions</TableCell>
+                        <TableCell align="right">Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {pendingExams.map((e) => (
+                        <TableRow key={e._id}>
+                          <TableCell sx={{ fontWeight: 'bold' }}>{e.title}</TableCell>
+                          <TableCell>{e.subjectId?.name || 'N/A'}</TableCell>
+                          <TableCell>{e.departmentId?.name || 'N/A'}</TableCell>
+                          <TableCell>{e.year} - {e.semester}</TableCell>
+                          <TableCell>{e.duration} mins</TableCell>
+                          <TableCell>{e.facultyId?.name || 'N/A'}</TableCell>
+                          <TableCell align="center">
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => {
+                                setSelectedExam(e);
+                                setOpenExamQuestionsDialog(true);
+                              }}
+                            >
+                              View ({e.questions?.length || 0})
+                            </Button>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="success"
+                                onClick={() => handleReviewExam(e._id, true)}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                onClick={() => handleReviewExam(e._id, false)}
+                              >
+                                Reject
+                              </Button>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </Box>
+          )}
+
           {/* SYSTEM AUDIT LOGS */}
           {tab === 'audit' && (
             <Box>
@@ -607,6 +695,44 @@ export default function AdminDashboard() {
             </Button>
           </DialogActions>
         </form>
+      </Dialog>
+
+      {/* EXAM QUESTIONS VIEW DIALOG */}
+      <Dialog open={openExamQuestionsDialog} onClose={() => setOpenExamQuestionsDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>
+          Exam Questions: {selectedExam?.title}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 1 }}>
+            {selectedExam?.questions?.map((q, idx) => (
+              <Card key={idx} sx={{ p: 2.5, mb: 2, bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1.5 }}>
+                  Q{idx + 1}. {q.questionText}
+                </Typography>
+                <Grid container spacing={1.5}>
+                  {q.options?.map((opt, optIdx) => (
+                    <Grid item xs={12} sm={6} key={optIdx}>
+                      <Box sx={{
+                        p: 1.5,
+                        borderRadius: '8px',
+                        border: '1px solid',
+                        borderColor: optIdx === q.correctAnswerIndex ? 'success.main' : 'divider',
+                        bgcolor: optIdx === q.correctAnswerIndex ? 'success.light' : 'background.paper',
+                        color: optIdx === q.correctAnswerIndex ? 'success.contrastText' : 'text.primary',
+                        fontWeight: optIdx === q.correctAnswerIndex ? 'bold' : 'normal',
+                      }}>
+                        Option {optIdx + 1}: {opt}
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Card>
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenExamQuestionsDialog(false)}>Close</Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

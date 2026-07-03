@@ -148,6 +148,7 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Faculty Management', icon: <PeopleIcon />, path: `/dashboard/admin?tab=faculty` },
       { text: 'Admission Approvals', icon: <ReceiptIcon />, path: `/dashboard/admin?tab=admissions` },
       { text: 'Result Declaration', icon: <QueryStatsIcon />, path: `/dashboard/admin?tab=results` },
+      { text: 'Exam Approvals', icon: <AssignmentIcon />, path: `/dashboard/admin?tab=exams` },
       { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/admin?tab=notices` },
       { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/admin?tab=calendar` },
       { text: 'Fee Structures & Invoices', icon: <ReceiptIcon />, path: `/dashboard/admin?tab=fees` },
