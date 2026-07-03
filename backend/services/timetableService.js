@@ -47,7 +47,8 @@ export const getFacultySchedule = async (facultyName) => {
 export const getStudentTimetable = async (studentId) => {
   const student = await Student.findOne({ userId: studentId, isDeleted: false });
   if (!student) {
-    throw new Error('Student profile not found.');
+    // Student profile not yet created — return empty array gracefully
+    return [];
   }
 
   return await getClassTimetable(student.departmentId, student.year, student.semester);

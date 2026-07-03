@@ -22,17 +22,7 @@ export const createEntry = async (entryData, creatorId, requestUser) => {
 export const getEntries = async (filters = {}, requestUser) => {
   const query = { isDeleted: false };
 
-  // Filter based on user profile scopes
-  if (requestUser.role === 'student') {
-    query.departmentId = requestUser.departmentId;
-    query.year = requestUser.year;
-    query.semester = requestUser.semester;
-  } else if (requestUser.role === 'faculty') {
-    query.departmentId = { $in: requestUser.assignedDepartments };
-    query.year = { $in: requestUser.assignedYears };
-  }
-
-  // Allow filter overrides
+  // Apply optional query-string filters (type, status, departmentId)
   if (filters.type) query.type = filters.type;
   if (filters.status) query.status = filters.status;
   if (filters.departmentId) query.departmentId = filters.departmentId;

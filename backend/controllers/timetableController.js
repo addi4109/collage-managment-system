@@ -24,18 +24,20 @@ export const getClassSchedule = async (req, res) => {
 
 export const getMySchedule = async (req, res) => {
   try {
-    let schedule;
+    let schedule = [];
     if (req.user.role === 'student') {
       schedule = await timetableService.getStudentTimetable(req.user.id);
     } else if (req.user.role === 'faculty') {
       // Use case-insensitive search by faculty name string
       schedule = await timetableService.getFacultySchedule(req.user.name);
     } else {
-      return res.status(400).json({ message: 'Admins do not have a standard course schedule.' });
+      // Admins use the class-filtered endpoint instead
+      return res.status(200).json([]);
     }
     res.status(200).json(schedule);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error('getMySchedule error:', err.message);
+    res.status(200).json([]); // Return empty array so frontend shows "no entries" state
   }
 };
 
