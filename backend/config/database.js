@@ -47,6 +47,7 @@ export const connectDB = async () => {
         const staleIndexMap = {
           faculties: ['user'],       // old field name, now 'userId'
           students: ['user'],        // old field name, now 'userId'
+          attendances: ['student', 'date'], // old field names, now 'studentId', 'sessionId'
           attendancesessions: ['expiresAt'], // removed TTL index
         };
 
