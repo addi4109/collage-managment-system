@@ -213,12 +213,66 @@ export const getSessionAttendance = async (sessionId, facultyId) => {
 };
 
 export const getStudentAttendanceDetails = async (studentId) => {
-  // Find all attendance records marked for the student
-  const records = await Attendance.find({ studentId })
-    .populate('sessionId')
-    .sort({ timestamp: -1 });
+  // 1. Find the student profile to check their department, year, and semester
+  const student = await Student.findOne({ userId: studentId, isDeleted: false });
+  if (!student) {
+    return [];
+  }
 
-  return records;
+  // 2. Find all AttendanceSession documents matching the student's scope
+  const sessions = await AttendanceSession.find({
+    departmentId: student.departmentId,
+    year: student.year,
+    semester: student.semester,
+  });
+
+  // 3. Find all Attendance records marked for the student
+  const checkins = await Attendance.find({ studentId });
+
+  // 4. Group sessions and checkins by subjectName
+  const subjectStats = {};
+
+  for (const session of sessions) {
+    const subName = session.subjectName;
+    if (!subjectStats[subName]) {
+      subjectStats[subName] = {
+        subjectName: subName,
+        totalSessions: 0,
+        present: 0,
+        percentage: 100,
+      };
+    }
+    subjectStats[subName].totalSessions += 1;
+  }
+
+  for (const checkin of checkins) {
+    const subName = checkin.subjectName;
+    if (!subjectStats[subName]) {
+      subjectStats[subName] = {
+        subjectName: subName,
+        totalSessions: 0,
+        present: 0,
+        percentage: 100,
+      };
+    }
+    subjectStats[subName].present += 1;
+  }
+
+  // 5. Calculate percentage for each subject
+  for (const subName in subjectStats) {
+    const stats = subjectStats[subName];
+    // In case student checked in but session wasn't found in active sessions list
+    if (stats.present > stats.totalSessions) {
+      stats.totalSessions = stats.present;
+    }
+    if (stats.totalSessions > 0) {
+      stats.percentage = Math.round((stats.present / stats.totalSessions) * 100);
+    } else {
+      stats.percentage = 100;
+    }
+  }
+
+  return Object.values(subjectStats);
 };
 
 export const getFacultySessions = async (facultyId) => {

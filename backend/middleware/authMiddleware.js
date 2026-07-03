@@ -58,8 +58,10 @@ export const authenticateToken = async (req, res, next) => {
       const facultyProfile = await Faculty.findOne({ userId: user._id, isDeleted: false });
       if (facultyProfile) {
         requestUser.employeeId = facultyProfile.employeeId;
-        requestUser.assignedDepartments = facultyProfile.assignedDepartments.map(id => id.toString());
-        requestUser.assignedYears = facultyProfile.assignedYears;
+        requestUser.assignedDepartments = (facultyProfile.assignedDepartments || [])
+          .filter(Boolean)
+          .map(id => id.toString());
+        requestUser.assignedYears = facultyProfile.assignedYears || [];
         requestUser.phone = facultyProfile.phone;
       } else {
         requestUser.employeeId = '';
