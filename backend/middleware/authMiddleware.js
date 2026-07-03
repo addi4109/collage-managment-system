@@ -55,26 +55,33 @@ export const authenticateToken = async (req, res, next) => {
 
     // Load dynamic scopes based on Role
     if (user.role === 'faculty') {
-      const facultyProfile = await Faculty.findOne({ userId: user._id, isDeleted: false });
+      const facultyProfile = await Faculty.findOne({ userId: user._id, isDeleted: false })
+        .populate('assignedDepartments', 'name code');
       if (facultyProfile) {
         requestUser.employeeId = facultyProfile.employeeId;
         requestUser.assignedDepartments = (facultyProfile.assignedDepartments || [])
           .filter(Boolean)
-          .map(id => id.toString());
+          .map(d => d._id.toString());
+        requestUser.assignedDepartmentDetails = (facultyProfile.assignedDepartments || [])
+          .filter(Boolean)
+          .map(d => ({ id: d._id.toString(), name: d.name, code: d.code }));
         requestUser.assignedYears = facultyProfile.assignedYears || [];
         requestUser.phone = facultyProfile.phone;
       } else {
         requestUser.employeeId = '';
         requestUser.assignedDepartments = [];
+        requestUser.assignedDepartmentDetails = [];
         requestUser.assignedYears = [];
         requestUser.phone = '';
       }
     } else if (user.role === 'student') {
-      const studentProfile = await Student.findOne({ userId: user._id, isDeleted: false });
+      const studentProfile = await Student.findOne({ userId: user._id, isDeleted: false })
+        .populate('departmentId', 'name code');
       if (studentProfile) {
         requestUser.rollNumber = studentProfile.rollNumber;
         requestUser.enrollmentNumber = studentProfile.enrollmentNumber;
-        requestUser.departmentId = studentProfile.departmentId.toString();
+        requestUser.departmentId = studentProfile.departmentId?._id?.toString() || '';
+        requestUser.departmentName = studentProfile.departmentId?.name || '';
         requestUser.year = studentProfile.year;
         requestUser.semester = studentProfile.semester;
         requestUser.phone = studentProfile.phone;

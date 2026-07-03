@@ -87,24 +87,33 @@ export const login = async ({ credential, password, role, captchaToken, captchaV
   };
 
   if (user.role === 'faculty') {
-    const facultyProfile = await Faculty.findOne({ userId: user._id, isDeleted: false });
+    const facultyProfile = await Faculty.findOne({ userId: user._id, isDeleted: false })
+      .populate('assignedDepartments', 'name code');
     if (facultyProfile) {
       userData.employeeId = facultyProfile.employeeId;
-      userData.assignedDepartments = facultyProfile.assignedDepartments.map(id => id.toString());
+      userData.assignedDepartments = (facultyProfile.assignedDepartments || [])
+        .filter(Boolean)
+        .map(d => d._id.toString());
+      userData.assignedDepartmentDetails = (facultyProfile.assignedDepartments || [])
+        .filter(Boolean)
+        .map(d => ({ id: d._id.toString(), name: d.name, code: d.code }));
       userData.assignedYears = facultyProfile.assignedYears;
       userData.phone = facultyProfile.phone;
     } else {
       userData.employeeId = '';
       userData.assignedDepartments = [];
+      userData.assignedDepartmentDetails = [];
       userData.assignedYears = [];
       userData.phone = '';
     }
   } else if (user.role === 'student') {
-    const studentProfile = await Student.findOne({ userId: user._id, isDeleted: false });
+    const studentProfile = await Student.findOne({ userId: user._id, isDeleted: false })
+      .populate('departmentId', 'name code');
     if (studentProfile) {
       userData.rollNumber = studentProfile.rollNumber;
       userData.enrollmentNumber = studentProfile.enrollmentNumber;
-      userData.departmentId = studentProfile.departmentId.toString();
+      userData.departmentId = studentProfile.departmentId?._id?.toString() || '';
+      userData.departmentName = studentProfile.departmentId?.name || '';
       userData.year = studentProfile.year;
       userData.semester = studentProfile.semester;
       userData.phone = studentProfile.phone;

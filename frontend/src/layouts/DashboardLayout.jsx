@@ -19,6 +19,8 @@ import {
   Badge,
   Popover,
   Card,
+  Chip,
+  Button,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -355,18 +357,180 @@ export default function DashboardLayout({ mode, toggleTheme }) {
               </Avatar>
             </IconButton>
 
-            <Menu
+            <Popover
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
               onClose={handleProfileMenuClose}
               anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
               transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              PaperProps={{
+                sx: {
+                  width: 320,
+                  borderRadius: '24px',
+                  boxShadow: '0px 10px 40px rgba(0,0,0,0.12)',
+                  overflow: 'hidden',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  mt: 1.5,
+                }
+              }}
             >
-              <MenuItem onClick={handleLogout}>
-                <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>
-                Logout
-              </MenuItem>
-            </Menu>
+              {/* Header Gradient */}
+              <Box sx={{
+                height: 80,
+                background: 'linear-gradient(135deg, #1a237e 0%, #3f51b5 100%)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                color: '#fff',
+              }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, letterSpacing: 1.5 }}>
+                  EDUTECH HUB
+                </Typography>
+                <Typography variant="caption" sx={{ opacity: 0.8, fontSize: '0.65rem', letterSpacing: 1 }}>
+                  OFFICIAL IDENTITY CARD
+                </Typography>
+              </Box>
+
+              {/* Avatar section */}
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: '-40px', mb: 1 }}>
+                <Avatar sx={{
+                  width: 80,
+                  height: 80,
+                  fontSize: '2rem',
+                  fontWeight: 'bold',
+                  bgcolor: 'secondary.main',
+                  border: '4px solid',
+                  borderColor: 'background.paper',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                }}>
+                  {user?.name?.[0]}
+                </Avatar>
+              </Box>
+
+              {/* Identity details */}
+              <Box sx={{ px: 3, pb: 2, textAlign: 'center' }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', mb: 0.5 }}>
+                  {user?.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                  {user?.username}
+                </Typography>
+                <Chip
+                  label={user?.role?.toUpperCase()}
+                  size="small"
+                  color={user?.role === 'admin' ? 'secondary' : user?.role === 'faculty' ? 'success' : 'primary'}
+                  sx={{ fontWeight: 'bold', mb: 2, px: 1 }}
+                />
+
+                <Divider sx={{ my: 1.5 }} />
+
+                {/* Role specific ID details */}
+                <Box sx={{
+                  bgcolor: 'action.hover',
+                  borderRadius: '16px',
+                  p: 2,
+                  textAlign: 'left',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}>
+                  {user?.role === 'student' && (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="caption" color="text.secondary">Roll Number</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{user?.rollNumber || 'N/A'}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="caption" color="text.secondary">Enrollment</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{user?.enrollmentNumber || 'N/A'}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Typography variant="caption" color="text.secondary">Department</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {user?.departmentName || 'N/A'}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="caption" color="text.secondary">Semester / Year</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                          {user?.semester || 'N/A'} ({user?.year || 'N/A'})
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+
+                  {user?.role === 'faculty' && (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="caption" color="text.secondary">Employee ID</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{user?.employeeId || 'N/A'}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Typography variant="caption" color="text.secondary">Departments</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {(user?.assignedDepartmentDetails || []).map(d => d.name).join(', ') || 'N/A'}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="caption" color="text.secondary">Assigned Years</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                          {user?.assignedYears?.join(', ') || 'N/A'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+
+                  {user?.role === 'admin' && (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="caption" color="text.secondary">Designation</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold' }}>System Administrator</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="caption" color="text.secondary">Access Scope</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold' }}>Full Access Control</Typography>
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Barcode Simulator */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 2 }}>
+                  <Box sx={{ display: 'flex', gap: '2px', height: 30, alignItems: 'stretch', mb: 0.5, opacity: 0.85 }}>
+                    {[1, 3, 1, 2, 4, 1, 2, 3, 1, 4, 2, 1, 3, 1, 2, 4, 1, 3, 2, 1, 4, 1, 2, 3].map((width, idx) => (
+                      <Box
+                        key={idx}
+                        sx={{
+                          width: `${width}px`,
+                          bgcolor: 'text.primary',
+                          borderRadius: '0.5px',
+                        }}
+                      />
+                    ))}
+                  </Box>
+                  <Typography variant="caption" sx={{ fontFamily: 'monospace', letterSpacing: 2, fontSize: '0.65rem' }}>
+                    {user?.id ? `UID-${user.id.substring(0, 8).toUpperCase()}` : 'UID-MEMBER'}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Divider />
+
+              {/* Logout Action at the bottom */}
+              <Box sx={{ p: 2, bgcolor: 'action.hover' }}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="error"
+                  startIcon={<LogoutIcon />}
+                  onClick={handleLogout}
+                  sx={{ borderRadius: '12px', py: 1, fontWeight: 'bold' }}
+                >
+                  Logout from Session
+                </Button>
+              </Box>
+            </Popover>
           </Box>
         </Toolbar>
       </AppBar>
