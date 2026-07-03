@@ -17,7 +17,7 @@ export const getSubjects = async (req, res) => {
 };
 
 export const createOrUpdateSubject = async (req, res) => {
-  const { id, name, code, departmentId, year, semester, status } = req.body;
+  const { id, name, code, departmentId, year, semester, status, maxInternal, maxPractical, maxTheory } = req.body;
   if (!name || !code || !departmentId || !year || !semester) {
     return res.status(400).json({ message: 'Missing required subject parameters.' });
   }
@@ -37,6 +37,9 @@ export const createOrUpdateSubject = async (req, res) => {
       subject.year = year;
       subject.semester = semester;
       if (status) subject.status = status;
+      if (maxInternal !== undefined) subject.maxInternal = maxInternal;
+      if (maxPractical !== undefined) subject.maxPractical = maxPractical;
+      if (maxTheory !== undefined) subject.maxTheory = maxTheory;
       await subject.save();
     } else {
       subject = new Subject({
@@ -46,6 +49,9 @@ export const createOrUpdateSubject = async (req, res) => {
         year,
         semester,
         status: status || 'active',
+        maxInternal: maxInternal !== undefined ? maxInternal : 20,
+        maxPractical: maxPractical !== undefined ? maxPractical : 30,
+        maxTheory: maxTheory !== undefined ? maxTheory : 80,
       });
       await subject.save();
     }

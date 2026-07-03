@@ -6,13 +6,16 @@ import { logActivity } from './auditService.js';
 import { createNotification } from './notificationService.js';
 
 // Grade point and grade calculator
-const calculateGradeDetails = (internal, practical, theory) => {
+const calculateGradeDetails = (internal, practical, theory, maxI = 20, maxP = 30, maxT = 80) => {
   const totalMarks = Number(internal) + Number(practical) + Number(theory);
-  const maxMarks = 130;
-  const percentage = Math.round((totalMarks / maxMarks) * 100 * 100) / 100;
+  const maxMarks = Number(maxI) + Number(maxP) + Number(maxT);
+  const percentage = maxMarks > 0 ? Math.round((totalMarks / maxMarks) * 100 * 100) / 100 : 0;
   
-  // Pass criteria: Total >= 52 (40%) and theory >= 32 (40% of 80)
-  const pass = totalMarks >= 52 && theory >= 32;
+  // Pass criteria: 40% of total and 40% of theory marks
+  const passThreshold = maxMarks * 0.40;
+  const theoryThreshold = Number(maxT) * 0.40;
+  
+  const pass = totalMarks >= passThreshold && theory >= theoryThreshold;
 
   let grade = 'F';
   let gp = 0;
@@ -51,13 +54,42 @@ export const getStudentDraft = async (studentId, departmentId, year, semester) =
   const student = await Student.findOne({ userId: studentId }).populate('userId', 'name');
   if (!student) throw new Error('Student not found');
 
-  let result = await Result.findOne({ studentId, departmentId, year, semester }).populate('subjects.subjectId', 'name code');
+  let result = await Result.findOne({ studentId, departmentId, year, semester }).populate('subjects.subjectId', 'name code maxInternal maxPractical maxTheory');
   
-  if (!result) {
+  if (result) {
+    // Map existing draft subjects to load dynamic max marks in case they were updated
+    const mappedSubjects = result.subjects.map(sub => {
+      const s = sub.subjectId;
+      const mI = s?.maxInternal !== undefined ? s.maxInternal : 20;
+      const mP = s?.maxPractical !== undefined ? s.maxPractical : 30;
+      const mT = s?.maxTheory !== undefined ? s.maxTheory : 80;
+      return {
+        subjectId: sub.subjectId?._id || sub.subjectId,
+        subjectCode: sub.subjectCode,
+        subjectName: sub.subjectName,
+        maxInternal: mI,
+        maxPractical: mP,
+        maxTheory: mT,
+        maxMarks: mI + mP + mT,
+        obtainedMarks: sub.obtainedMarks,
+        internalMarks: sub.internalMarks,
+        practicalMarks: sub.practicalMarks,
+        theoryMarks: sub.theoryMarks,
+        attendancePercentage: sub.attendancePercentage,
+        grade: sub.grade,
+        gp: sub.gp,
+        status: sub.status,
+      };
+    });
+    return {
+      ...result.toObject(),
+      subjects: mappedSubjects
+    };
+  } else {
     // Scaffold new result
     const subjects = await Subject.find({ departmentId, year, semester, isDeleted: false });
     
-    result = {
+    return {
       studentId,
       studentName: student.userId.name,
       rollNumber: student.rollNumber,
@@ -65,17 +97,28 @@ export const getStudentDraft = async (studentId, departmentId, year, semester) =
       year,
       semester,
       status: 'draft',
-      subjects: subjects.map(s => ({
-        subjectId: s._id,
-        subjectCode: s.code,
-        subjectName: s.name,
-        maxMarks: 130, // 20+30+80
-        obtainedMarks: 0,
-        internalMarks: 0,
-        practicalMarks: 0,
-        theoryMarks: 0,
-        attendancePercentage: 0,
-      }))
+      subjects: subjects.map(s => {
+        const mI = s.maxInternal !== undefined ? s.maxInternal : 20;
+        const mP = s.maxPractical !== undefined ? s.maxPractical : 30;
+        const mT = s.maxTheory !== undefined ? s.maxTheory : 80;
+        return {
+          subjectId: s._id,
+          subjectCode: s.code,
+          subjectName: s.name,
+          maxInternal: mI,
+          maxPractical: mP,
+          maxTheory: mT,
+          maxMarks: mI + mP + mT,
+          obtainedMarks: 0,
+          internalMarks: 0,
+          practicalMarks: 0,
+          theoryMarks: 0,
+          attendancePercentage: 0,
+          grade: 'F',
+          gp: 0,
+          status: 'Fail',
+        };
+      })
     };
   }
 
@@ -89,8 +132,16 @@ export const saveStudentDraft = async (studentId, data, facultyId) => {
   let totalPercentages = 0;
   let allPassed = true;
 
+  const subjectIds = subjects.map(s => s.subjectId);
+  const dbSubjects = await Subject.find({ _id: { $in: subjectIds } });
+
   const computedSubjects = subjects.map(s => {
-    const grades = calculateGradeDetails(s.internalMarks, s.practicalMarks, s.theoryMarks);
+    const dbSub = dbSubjects.find(ds => ds._id.toString() === s.subjectId.toString());
+    const maxI = dbSub?.maxInternal !== undefined ? dbSub.maxInternal : 20;
+    const maxP = dbSub?.maxPractical !== undefined ? dbSub.maxPractical : 30;
+    const maxT = dbSub?.maxTheory !== undefined ? dbSub.maxTheory : 80;
+
+    const grades = calculateGradeDetails(s.internalMarks, s.practicalMarks, s.theoryMarks, maxI, maxP, maxT);
     if (!grades.pass) allPassed = false;
     totalGPs += grades.gp;
     totalPercentages += grades.percentage;
@@ -99,7 +150,7 @@ export const saveStudentDraft = async (studentId, data, facultyId) => {
       subjectId: s.subjectId,
       subjectCode: s.subjectCode,
       subjectName: s.subjectName,
-      maxMarks: 130,
+      maxMarks: maxI + maxP + maxT,
       obtainedMarks: grades.totalMarks,
       internalMarks: s.internalMarks,
       practicalMarks: s.practicalMarks,

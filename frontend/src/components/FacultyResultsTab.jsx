@@ -86,6 +86,26 @@ export default function FacultyResultsTab() {
   };
 
   const handleSaveDraft = async () => {
+    // Validate mark limits
+    for (const sub of draftResult.subjects) {
+      const maxI = sub.maxInternal !== undefined ? sub.maxInternal : 20;
+      const maxP = sub.maxPractical !== undefined ? sub.maxPractical : 30;
+      const maxT = sub.maxTheory !== undefined ? sub.maxTheory : 80;
+
+      if (sub.internalMarks > maxI) {
+        return showToast(`Internal marks for ${sub.subjectName} cannot exceed ${maxI}.`, 'warning');
+      }
+      if (sub.practicalMarks > maxP) {
+        return showToast(`Practical marks for ${sub.subjectName} cannot exceed ${maxP}.`, 'warning');
+      }
+      if (sub.theoryMarks > maxT) {
+        return showToast(`Theory marks for ${sub.subjectName} cannot exceed ${maxT}.`, 'warning');
+      }
+      if (sub.attendancePercentage > 100) {
+        return showToast(`Attendance percentage for ${sub.subjectName} cannot exceed 100.`, 'warning');
+      }
+    }
+
     setSubmitLoading(true);
     try {
       await api.post(`/results/student/${selectedStudent.studentId}`, draftResult);
@@ -227,54 +247,77 @@ export default function FacultyResultsTab() {
                 <TableHead>
                   <TableRow>
                     <TableCell>Subject</TableCell>
-                    <TableCell>Internals (20)</TableCell>
-                    <TableCell>Practicals (30)</TableCell>
-                    <TableCell>Theory (80)</TableCell>
+                    <TableCell>Internals</TableCell>
+                    <TableCell>Practicals</TableCell>
+                    <TableCell>Theory</TableCell>
                     <TableCell>Attendance %</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {draftResult.subjects.map((sub) => (
-                    <TableRow key={sub.subjectId}>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{sub.subjectName}</TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          size="small"
-                          inputProps={{ min: 0, max: 20 }}
-                          value={sub.internalMarks}
-                          onChange={(e) => handleMarkChange(sub.subjectId, 'internalMarks', parseInt(e.target.value || 0, 10))}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          size="small"
-                          inputProps={{ min: 0, max: 30 }}
-                          value={sub.practicalMarks}
-                          onChange={(e) => handleMarkChange(sub.subjectId, 'practicalMarks', parseInt(e.target.value || 0, 10))}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          size="small"
-                          inputProps={{ min: 0, max: 80 }}
-                          value={sub.theoryMarks}
-                          onChange={(e) => handleMarkChange(sub.subjectId, 'theoryMarks', parseInt(e.target.value || 0, 10))}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          size="small"
-                          inputProps={{ min: 0, max: 100 }}
-                          value={sub.attendancePercentage}
-                          onChange={(e) => handleMarkChange(sub.subjectId, 'attendancePercentage', parseInt(e.target.value || 0, 10))}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {draftResult.subjects.map((sub) => {
+                    const maxI = sub.maxInternal !== undefined ? sub.maxInternal : 20;
+                    const maxP = sub.maxPractical !== undefined ? sub.maxPractical : 30;
+                    const maxT = sub.maxTheory !== undefined ? sub.maxTheory : 80;
+                    return (
+                      <TableRow key={sub.subjectId}>
+                        <TableCell sx={{ fontWeight: 'bold' }}>{sub.subjectName}</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <TextField
+                              type="number"
+                              size="small"
+                              inputProps={{ min: 0, max: maxI }}
+                              value={sub.internalMarks}
+                              onChange={(e) => handleMarkChange(sub.subjectId, 'internalMarks', parseInt(e.target.value || 0, 10))}
+                              sx={{ width: 80 }}
+                            />
+                            <Typography variant="body2" color="text.secondary">
+                              / {maxI}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <TextField
+                              type="number"
+                              size="small"
+                              inputProps={{ min: 0, max: maxP }}
+                              value={sub.practicalMarks}
+                              onChange={(e) => handleMarkChange(sub.subjectId, 'practicalMarks', parseInt(e.target.value || 0, 10))}
+                              sx={{ width: 80 }}
+                            />
+                            <Typography variant="body2" color="text.secondary">
+                              / {maxP}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <TextField
+                              type="number"
+                              size="small"
+                              inputProps={{ min: 0, max: maxT }}
+                              value={sub.theoryMarks}
+                              onChange={(e) => handleMarkChange(sub.subjectId, 'theoryMarks', parseInt(e.target.value || 0, 10))}
+                              sx={{ width: 80 }}
+                            />
+                            <Typography variant="body2" color="text.secondary">
+                              / {maxT}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            type="number"
+                            size="small"
+                            inputProps={{ min: 0, max: 100 }}
+                            value={sub.attendancePercentage}
+                            onChange={(e) => handleMarkChange(sub.subjectId, 'attendancePercentage', parseInt(e.target.value || 0, 10))}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>

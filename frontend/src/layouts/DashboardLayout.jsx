@@ -40,6 +40,7 @@ import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 import { useAuth, api } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -149,6 +150,7 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Admission Approvals', icon: <ReceiptIcon />, path: `/dashboard/admin?tab=admissions` },
       { text: 'Result Declaration', icon: <QueryStatsIcon />, path: `/dashboard/admin?tab=results` },
       { text: 'Exam Approvals', icon: <AssignmentIcon />, path: `/dashboard/admin?tab=exams` },
+      { text: 'Subject Directory', icon: <MenuBookIcon />, path: `/dashboard/admin?tab=subjects` },
       { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/admin?tab=notices` },
       { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/admin?tab=calendar` },
       { text: 'Fee Structures & Invoices', icon: <ReceiptIcon />, path: `/dashboard/admin?tab=fees` },

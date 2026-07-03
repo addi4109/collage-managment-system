@@ -56,6 +56,19 @@ export default function AdminDashboard() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editFacultyId, setEditFacultyId] = useState(null);
   
+  const [openSubjectDialog, setOpenSubjectDialog] = useState(false);
+  const [editSubjectId, setEditSubjectId] = useState(null);
+  const [subjectForm, setSubjectForm] = useState({
+    name: '',
+    code: '',
+    departmentId: '',
+    year: 'First Year',
+    semester: 'Sem 1',
+    maxInternal: 20,
+    maxPractical: 30,
+    maxTheory: 80,
+  });
+  
   // Data States
   const [stats, setStats] = useState(null);
   const [faculties, setFaculties] = useState([]);
@@ -66,6 +79,7 @@ export default function AdminDashboard() {
   const [pendingExams, setPendingExams] = useState([]);
   const [openExamQuestionsDialog, setOpenExamQuestionsDialog] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
+  const [subjects, setSubjects] = useState([]);
   
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -100,6 +114,10 @@ export default function AdminDashboard() {
       } else if (tab === 'exams') {
         const res = await api.get('/exams/pending');
         setPendingExams(res.data);
+      } else if (tab === 'subjects') {
+        const res = await api.get('/subjects');
+        setSubjects(res.data);
+        await loadDepartments();
       } else if (tab === 'audit') {
         const res = await api.get('/audit');
         setAuditLogs(res.data.logs || []);
@@ -156,6 +174,68 @@ export default function AdminDashboard() {
       loadData();
     } catch (err) {
       showToast('Failed to review exam.', 'error');
+    }
+  };
+
+  // Subject CRUD Operations
+  const handleOpenSubjectForm = (subject = null) => {
+    if (subject) {
+      setIsEditMode(true);
+      setEditSubjectId(subject._id);
+      setSubjectForm({
+        name: subject.name,
+        code: subject.code,
+        departmentId: subject.departmentId?._id || subject.departmentId,
+        year: subject.year,
+        semester: subject.semester,
+        maxInternal: subject.maxInternal !== undefined ? subject.maxInternal : 20,
+        maxPractical: subject.maxPractical !== undefined ? subject.maxPractical : 30,
+        maxTheory: subject.maxTheory !== undefined ? subject.maxTheory : 80,
+      });
+    } else {
+      setIsEditMode(false);
+      setSubjectForm({
+        name: '',
+        code: '',
+        departmentId: departments.length > 0 ? departments[0]._id : '',
+        year: 'First Year',
+        semester: 'Sem 1',
+        maxInternal: 20,
+        maxPractical: 30,
+        maxTheory: 80,
+      });
+    }
+    setOpenSubjectDialog(true);
+  };
+
+  const handleSubjectSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitLoading(true);
+    try {
+      if (isEditMode) {
+        await api.post('/subjects', { ...subjectForm, id: editSubjectId });
+        showToast('Subject updated successfully.', 'success');
+      } else {
+        await api.post('/subjects', subjectForm);
+        showToast('Subject created successfully.', 'success');
+      }
+      setOpenSubjectDialog(false);
+      loadData();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to submit subject form.', 'error');
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  const handleDeleteSubject = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this subject?')) return;
+    try {
+      await api.delete(`/subjects/${id}`);
+      showToast('Subject deleted successfully.', 'success');
+      loadData();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to delete subject.', 'error');
     }
   };
 
@@ -535,6 +615,68 @@ export default function AdminDashboard() {
             </Box>
           )}
 
+          {/* SUBJECTS DIRECTORY */}
+          {tab === 'subjects' && (
+            <Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+                <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Subjects Directory</Typography>
+                <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenSubjectForm()}>
+                  Create Subject
+                </Button>
+              </Box>
+              {subjects.length === 0 ? (
+                <Typography color="text.secondary">No subjects are defined yet.</Typography>
+              ) : (
+                <TableContainer component={Paper} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Subject Name</TableCell>
+                        <TableCell>Subject Code</TableCell>
+                        <TableCell>Department</TableCell>
+                        <TableCell>Class</TableCell>
+                        <TableCell align="center">Internals Max</TableCell>
+                        <TableCell align="center">Practicals Max</TableCell>
+                        <TableCell align="center">Theory Max</TableCell>
+                        <TableCell align="center">Total Max</TableCell>
+                        <TableCell align="right">Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {subjects.map((sub) => {
+                        const mI = sub.maxInternal !== undefined ? sub.maxInternal : 20;
+                        const mP = sub.maxPractical !== undefined ? sub.maxPractical : 30;
+                        const mT = sub.maxTheory !== undefined ? sub.maxTheory : 80;
+                        return (
+                          <TableRow key={sub._id}>
+                            <TableCell sx={{ fontWeight: 'bold' }}>{sub.name}</TableCell>
+                            <TableCell>{sub.code}</TableCell>
+                            <TableCell>{sub.departmentId?.name || 'N/A'}</TableCell>
+                            <TableCell>{sub.year} - {sub.semester}</TableCell>
+                            <TableCell align="center">{mI}</TableCell>
+                            <TableCell align="center">{mP}</TableCell>
+                            <TableCell align="center">{mT}</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 'bold' }}>{mI + mP + mT}</TableCell>
+                            <TableCell align="right">
+                              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                                <IconButton size="small" color="primary" onClick={() => handleOpenSubjectForm(sub)}>
+                                  <EditIcon />
+                                </IconButton>
+                                <IconButton size="small" color="error" onClick={() => handleDeleteSubject(sub._id)}>
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </Box>
+          )}
+
           {/* SYSTEM AUDIT LOGS */}
           {tab === 'audit' && (
             <Box>
@@ -733,6 +875,121 @@ export default function AdminDashboard() {
         <DialogActions>
           <Button onClick={() => setOpenExamQuestionsDialog(false)}>Close</Button>
         </DialogActions>
+      </Dialog>
+
+      {/* SUBJECT CREATE/EDIT DIALOG */}
+      <Dialog open={openSubjectDialog} onClose={() => setOpenSubjectDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>
+          {isEditMode ? 'Edit Subject Details' : 'Create New Subject'}
+        </DialogTitle>
+        <form onSubmit={handleSubjectSubmit}>
+          <DialogContent sx={{ pt: 1 }}>
+            <TextField
+              margin="dense"
+              fullWidth
+              required
+              label="Subject Name"
+              value={subjectForm.name}
+              onChange={(e) => setSubjectForm({ ...subjectForm, name: e.target.value })}
+              sx={{ mb: 2, mt: 1 }}
+            />
+            <TextField
+              margin="dense"
+              fullWidth
+              required
+              label="Subject Code"
+              value={subjectForm.code}
+              onChange={(e) => setSubjectForm({ ...subjectForm, code: e.target.value })}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              select
+              margin="dense"
+              fullWidth
+              required
+              label="Department"
+              value={subjectForm.departmentId}
+              onChange={(e) => setSubjectForm({ ...subjectForm, departmentId: e.target.value })}
+              sx={{ mb: 2 }}
+            >
+              {departments.map((d) => (
+                <MenuItem key={d._id} value={d._id}>{d.name}</MenuItem>
+              ))}
+            </TextField>
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={6}>
+                <TextField
+                  select
+                  fullWidth
+                  required
+                  label="Year"
+                  value={subjectForm.year}
+                  onChange={(e) => setSubjectForm({ ...subjectForm, year: e.target.value })}
+                >
+                  {['First Year', 'Second Year', 'Third Year'].map((y) => (
+                    <MenuItem key={y} value={y}>{y}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  select
+                  fullWidth
+                  required
+                  label="Semester"
+                  value={subjectForm.semester}
+                  onChange={(e) => setSubjectForm({ ...subjectForm, semester: e.target.value })}
+                >
+                  {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map((s) => (
+                    <MenuItem key={s} value={s}>{s}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            </Grid>
+            
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'text.secondary' }}>
+              Form Format (Max Marks Configuration)
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={4}>
+                <TextField
+                  fullWidth
+                  required
+                  type="number"
+                  label="Internals Max"
+                  value={subjectForm.maxInternal}
+                  onChange={(e) => setSubjectForm({ ...subjectForm, maxInternal: parseInt(e.target.value, 10) || 0 })}
+                />
+              </Grid>
+              <Grid item xs={4}>
+                <TextField
+                  fullWidth
+                  required
+                  type="number"
+                  label="Practicals Max"
+                  value={subjectForm.maxPractical}
+                  onChange={(e) => setSubjectForm({ ...subjectForm, maxPractical: parseInt(e.target.value, 10) || 0 })}
+                />
+              </Grid>
+              <Grid item xs={4}>
+                <TextField
+                  fullWidth
+                  required
+                  type="number"
+                  label="Theory Max"
+                  value={subjectForm.maxTheory}
+                  onChange={(e) => setSubjectForm({ ...subjectForm, maxTheory: parseInt(e.target.value, 10) || 0 })}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenSubjectDialog(false)}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={submitLoading}>
+              {submitLoading ? <CircularProgress size={24} /> : 'Save Subject'}
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
     </Box>
   );

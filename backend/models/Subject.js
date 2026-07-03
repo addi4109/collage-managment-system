@@ -33,6 +33,18 @@ const subjectSchema = new mongoose.Schema(
       enum: ['active', 'inactive'],
       default: 'active',
     },
+    maxInternal: {
+      type: Number,
+      default: 20,
+    },
+    maxPractical: {
+      type: Number,
+      default: 30,
+    },
+    maxTheory: {
+      type: Number,
+      default: 80,
+    },
     isDeleted: {
       type: Boolean,
       default: false,
