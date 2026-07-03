@@ -46,6 +46,7 @@ export const connectDB = async () => {
         // List of stale index keys to drop per collection
         const staleIndexMap = {
           faculties: ['user'],       // old field name, now 'userId'
+          students: ['user'],        // old field name, now 'userId'
           attendancesessions: ['expiresAt'], // removed TTL index
         };
 
