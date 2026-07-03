@@ -177,7 +177,7 @@ export default function FacultyDashboard() {
         await loadFilterOptions();
       }
     } catch (err) {
-      showToast('Failed to load dashboard data.', 'error');
+      showToast(err.response?.data?.message || 'Failed to load dashboard data.', 'error');
     } finally {
       setLoading(false);
     }
