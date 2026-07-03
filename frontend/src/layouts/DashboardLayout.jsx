@@ -41,7 +41,7 @@ import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 
-import { useAuth } from '../context/AuthContext';
+import { useAuth, api } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 const drawerWidth = 260;
