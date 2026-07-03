@@ -126,6 +126,15 @@ export default function FacultyDashboard() {
   // Results Entry States
   const [resultsSheet, setResultsSheet] = useState(null);
 
+  // Exam Scheduling States
+  const [openScheduleDialog, setOpenScheduleDialog] = useState(false);
+  const [schedulingExamId, setSchedulingExamId] = useState(null);
+  const [scheduleForm, setScheduleForm] = useState({
+    scheduleDate: new Date().toISOString().split('T')[0],
+    startTime: '10:00 AM',
+    endTime: '11:00 AM',
+  });
+
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
 
@@ -368,6 +377,51 @@ export default function FacultyDashboard() {
       loadData();
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to create exam.', 'error');
+    }
+  };
+
+  // MCQ Exam Scheduling & Lifecycle Handlers
+  const handleOpenScheduleDialog = (exam) => {
+    setSchedulingExamId(exam._id);
+    setScheduleForm({
+      scheduleDate: exam.scheduleDate ? new Date(exam.scheduleDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      startTime: exam.startTime || '10:00 AM',
+      endTime: exam.endTime || '11:00 AM',
+    });
+    setOpenScheduleDialog(true);
+  };
+
+  const handleScheduleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post(`/exams/${schedulingExamId}/schedule`, scheduleForm);
+      showToast('Exam scheduled successfully.', 'success');
+      setOpenScheduleDialog(false);
+      loadData();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to schedule exam.', 'error');
+    }
+  };
+
+  const handleStartExam = async (examId) => {
+    if (!window.confirm('Are you sure you want to start this exam now? Students will be notified.')) return;
+    try {
+      await api.post(`/exams/${examId}/start`);
+      showToast('Exam is now active!', 'success');
+      loadData();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to start exam.', 'error');
+    }
+  };
+
+  const handleEndExam = async (examId) => {
+    if (!window.confirm('Are you sure you want to end this exam now? Students will no longer be able to submit.')) return;
+    try {
+      await api.post(`/exams/${examId}/end`);
+      showToast('Exam ended.', 'success');
+      loadData();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to end exam.', 'error');
     }
   };
 
@@ -713,13 +767,14 @@ export default function FacultyDashboard() {
               </Box>
               <TableContainer component={Paper} sx={{ borderRadius: '16px' }}>
                 <Table>
-                  <TableHead>
+                   <TableHead>
                     <TableRow>
                       <TableCell>Title</TableCell>
                       <TableCell>Subject</TableCell>
                       <TableCell>Class</TableCell>
                       <TableCell>Duration</TableCell>
                       <TableCell>Status</TableCell>
+                      <TableCell align="right">Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -730,7 +785,59 @@ export default function FacultyDashboard() {
                         <TableCell>{e.year} - {e.semester}</TableCell>
                         <TableCell>{e.duration} mins</TableCell>
                         <TableCell>
-                          <Chip label={e.status} color={e.status === 'active' ? 'success' : e.status === 'pending_approval' ? 'warning' : 'default'} size="small" />
+                          <Chip label={e.status} color={e.status === 'active' ? 'success' : e.status === 'pending_approval' ? 'warning' : e.status === 'scheduled' ? 'info' : 'default'} size="small" />
+                        </TableCell>
+                        <TableCell align="right">
+                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                            {e.status === 'approved' && (
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="primary"
+                                onClick={() => handleOpenScheduleDialog(e)}
+                              >
+                                Schedule
+                              </Button>
+                            )}
+                            {e.status === 'scheduled' && (
+                              <>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  color="success"
+                                  onClick={() => handleStartExam(e._id)}
+                                >
+                                  Start
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  onClick={() => handleOpenScheduleDialog(e)}
+                                >
+                                  Reschedule
+                                </Button>
+                              </>
+                            )}
+                            {e.status === 'active' && (
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="error"
+                                onClick={() => handleEndExam(e._id)}
+                              >
+                                End Exam
+                              </Button>
+                            )}
+                            {e.status === 'draft' && (
+                              <Typography variant="body2" color="text.secondary">Draft</Typography>
+                            )}
+                            {e.status === 'pending_approval' && (
+                              <Typography variant="body2" color="text.secondary">Awaiting Review</Typography>
+                            )}
+                            {e.status === 'ended' && (
+                              <Typography variant="body2" color="text.secondary">Ended</Typography>
+                            )}
+                          </Box>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1225,6 +1332,47 @@ export default function FacultyDashboard() {
         <DialogActions>
           <Button onClick={() => setOpenAttendanceDialog(false)}>Close</Button>
         </DialogActions>
+      </Dialog>
+
+      {/* EXAM SCHEDULING DIALOG */}
+      <Dialog open={openScheduleDialog} onClose={() => setOpenScheduleDialog(false)}>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Schedule MCQ Exam</DialogTitle>
+        <form onSubmit={handleScheduleSubmit}>
+          <DialogContent sx={{ pt: 1 }}>
+            <TextField
+              fullWidth
+              required
+              type="date"
+              label="Schedule Date"
+              InputLabelProps={{ shrink: true }}
+              value={scheduleForm.scheduleDate}
+              onChange={(e) => setScheduleForm({ ...scheduleForm, scheduleDate: e.target.value })}
+              sx={{ mb: 2, mt: 1 }}
+            />
+            <TextField
+              fullWidth
+              required
+              label="Start Time"
+              placeholder="e.g. 10:00 AM"
+              value={scheduleForm.startTime}
+              onChange={(e) => setScheduleForm({ ...scheduleForm, startTime: e.target.value })}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              required
+              label="End Time"
+              placeholder="e.g. 11:00 AM"
+              value={scheduleForm.endTime}
+              onChange={(e) => setScheduleForm({ ...scheduleForm, endTime: e.target.value })}
+              sx={{ mb: 1 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenScheduleDialog(false)}>Cancel</Button>
+            <Button type="submit" variant="contained">Save Schedule</Button>
+          </DialogActions>
+        </form>
       </Dialog>
     </Box>
   );
