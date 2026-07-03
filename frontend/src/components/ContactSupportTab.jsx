@@ -84,7 +84,7 @@ export default function ContactSupportTab() {
                 </Avatar>
                 <Box>
                   <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                    Aditya Prasad
+                    Aditya Sawant
                   </Typography>
                   <Typography variant="caption" color="text.secondary" display="block">
                     Lead Full Stack Developer & System Manager
@@ -100,7 +100,7 @@ export default function ContactSupportTab() {
                   <EmailIcon color="primary" sx={{ mt: 0.2 }} />
                   <Box>
                     <Typography variant="caption" color="text.secondary" display="block">Email Address</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>aditya@edutechhub.com</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>adityasawant4109@gmail.com</Typography>
                   </Box>
                 </Box>
 
@@ -108,7 +108,7 @@ export default function ContactSupportTab() {
                   <PhoneIcon color="primary" sx={{ mt: 0.2 }} />
                   <Box>
                     <Typography variant="caption" color="text.secondary" display="block">Helpline</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>+91 98765 43210</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>+91 95523 65738</Typography>
                   </Box>
                 </Box>
 
@@ -116,7 +116,7 @@ export default function ContactSupportTab() {
                   <LocationOnIcon color="primary" sx={{ mt: 0.2 }} />
                   <Box>
                     <Typography variant="caption" color="text.secondary" display="block">Office Desk</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Admin Block, 3rd Floor, IT Room 304</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Vikasnagar, Satara, Maharashtra</Typography>
                   </Box>
                 </Box>
 
@@ -133,7 +133,7 @@ export default function ContactSupportTab() {
               <Paper sx={{ mt: 4, p: 2, bgcolor: 'action.hover', borderRadius: '12px', border: '1px solid', borderColor: 'divider', display: 'flex', gap: 1.5 }}>
                 <InfoIcon color="info" size="small" />
                 <Typography variant="caption" color="text.secondary">
-                  For severe portal access issues or database errors, please contact Aditya Prasad directly via phone or email for immediate escalation.
+                  For severe portal access issues or database errors, please contact Aditya Sawant directly via phone or email for immediate escalation.
                 </Typography>
               </Paper>
             </CardContent>
