@@ -47,6 +47,7 @@ import ComplaintsTab from '../components/ComplaintsTab';
 import LibraryTab from '../components/LibraryTab';
 import FacultyResultsTab from '../components/FacultyResultsTab';
 import NotificationTab from '../components/NotificationTab';
+import ContactSupportTab from '../components/ContactSupportTab';
 
 export default function FacultyDashboard() {
   const [searchParams] = useSearchParams();
@@ -896,10 +897,14 @@ export default function FacultyDashboard() {
           {tab === 'library' && (
             <LibraryTab role="faculty" />
           )}
-
           {/* SEND NOTIFICATIONS TAB */}
           {tab === 'notifications' && (
             <NotificationTab role="faculty" />
+          )}
+
+          {/* CONTACT SUPPORT TAB */}
+          {tab === 'contact' && (
+            <ContactSupportTab />
           )}
         </>
       )}

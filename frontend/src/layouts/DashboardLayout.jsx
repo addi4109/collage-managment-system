@@ -43,6 +43,7 @@ import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import ContactSupportIcon from '@mui/icons-material/ContactSupport';
 
 import { useAuth, api } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -200,7 +201,8 @@ export default function DashboardLayout({ mode, toggleTheme }) {
   // Common menus
   menuItems.push(
     { text: 'Weekly Timetables', icon: <CalendarMonthIcon />, path: `/dashboard/${user?.role}?tab=timetable` },
-    { text: 'Lost & Found Board', icon: <HelpIcon />, path: `/dashboard/${user?.role}?tab=lostfound` }
+    { text: 'Lost & Found Board', icon: <HelpIcon />, path: `/dashboard/${user?.role}?tab=lostfound` },
+    { text: 'Contact Us', icon: <ContactSupportIcon />, path: `/dashboard/${user?.role}?tab=contact` }
   );
 
   const drawerContent = (

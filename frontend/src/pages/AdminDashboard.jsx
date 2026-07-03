@@ -43,6 +43,7 @@ import PlacementTab from '../components/PlacementTab';
 import ComplaintsTab from '../components/ComplaintsTab';
 import LibraryTab from '../components/LibraryTab';
 import ScholarshipTab from '../components/ScholarshipTab';
+import ContactSupportTab from '../components/ContactSupportTab';
 import NotificationTab from '../components/NotificationTab';
 
 export default function AdminDashboard() {
@@ -758,6 +759,11 @@ export default function AdminDashboard() {
           {/* NOTIFICATIONS TAB */}
           {tab === 'notifications' && (
             <NotificationTab role="admin" />
+          )}
+
+          {/* CONTACT SUPPORT TAB */}
+          {tab === 'contact' && (
+            <ContactSupportTab />
           )}
         </>
       )}

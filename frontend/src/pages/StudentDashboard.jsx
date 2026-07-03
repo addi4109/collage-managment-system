@@ -46,6 +46,7 @@ import PlacementTab from '../components/PlacementTab';
 import ComplaintsTab from '../components/ComplaintsTab';
 import LibraryTab from '../components/LibraryTab';
 import ScholarshipTab from '../components/ScholarshipTab';
+import ContactSupportTab from '../components/ContactSupportTab';
 
 export default function StudentDashboard() {
   const [searchParams] = useSearchParams();
@@ -882,6 +883,10 @@ export default function StudentDashboard() {
           {/* SCHOLARSHIP TAB */}
           {tab === 'scholarships' && (
             <ScholarshipTab role="student" />
+          )}
+
+          {tab === 'contact' && (
+            <ContactSupportTab />
           )}
         </>
       )}
