@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Faculty from '../models/Faculty.js';
 import Student from '../models/Student.js';
+import HOD from '../models/HOD.js';
+import Principal from '../models/Principal.js';
 import { verifyCaptcha } from '../utils/captcha.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'edutech_hub_jwt_secret_token_key_987654321';
@@ -53,6 +55,18 @@ export const login = async ({ credential, password, role, captchaToken, captchaV
     user = await User.findOne({
       $or: [{ email: credential.toLowerCase() }, { username: credential.toLowerCase() }],
       role: 'admin',
+      isDeleted: false,
+    });
+  } else if (role === 'hod') {
+    user = await User.findOne({
+      $or: [{ email: credential.toLowerCase() }, { username: credential.toLowerCase() }],
+      role: 'hod',
+      isDeleted: false,
+    });
+  } else if (role === 'principal') {
+    user = await User.findOne({
+      $or: [{ email: credential.toLowerCase() }, { username: credential.toLowerCase() }],
+      role: 'principal',
       isDeleted: false,
     });
   } else {
@@ -120,6 +134,31 @@ export const login = async ({ credential, password, role, captchaToken, captchaV
       userData.parentName = studentProfile.parentName;
       userData.parentMobile = studentProfile.parentMobile;
       userData.address = studentProfile.address;
+    }
+  } else if (user.role === 'hod') {
+    const hodProfile = await HOD.findOne({ userId: user._id, isDeleted: false })
+      .populate('departmentId', 'name code');
+    if (hodProfile) {
+      userData.employeeId = hodProfile.employeeId;
+      userData.departmentId = hodProfile.departmentId?._id?.toString() || '';
+      userData.departmentName = hodProfile.departmentId?.name || '';
+      userData.departmentCode = hodProfile.departmentId?.code || '';
+      userData.phone = hodProfile.phone;
+    } else {
+      userData.employeeId = '';
+      userData.departmentId = '';
+      userData.departmentName = '';
+      userData.departmentCode = '';
+      userData.phone = '';
+    }
+  } else if (user.role === 'principal') {
+    const principalProfile = await Principal.findOne({ userId: user._id, isDeleted: false });
+    if (principalProfile) {
+      userData.employeeId = principalProfile.employeeId;
+      userData.phone = principalProfile.phone;
+    } else {
+      userData.employeeId = '';
+      userData.phone = '';
     }
   }
 

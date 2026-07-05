@@ -197,6 +197,26 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'My Library Lends', icon: <LibraryBooksIcon />, path: `/dashboard/student?tab=library` },
       { text: 'My Scholarships', icon: <CardGiftcardIcon />, path: `/dashboard/student?tab=scholarships` }
     );
+  } else if (user?.role === 'hod') {
+    menuItems.push(
+      { text: 'My Faculty', icon: <PeopleIcon />, path: `/dashboard/hod?tab=faculty` },
+      { text: 'My Students', icon: <PeopleIcon />, path: `/dashboard/hod?tab=students` },
+      { text: 'Application Approvals', icon: <AssignmentIcon />, path: `/dashboard/hod?tab=applications` },
+      { text: 'Exam Approvals', icon: <AssignmentIcon />, path: `/dashboard/hod?tab=exams` },
+      { text: 'Department Results', icon: <QueryStatsIcon />, path: `/dashboard/hod?tab=results` },
+      { text: 'Reports', icon: <AssessmentIcon />, path: `/dashboard/hod?tab=reports` },
+      { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/hod?tab=notices` }
+    );
+  } else if (user?.role === 'principal') {
+    menuItems.push(
+      { text: 'College Overview', icon: <DashboardIcon />, path: `/dashboard/principal?tab=overview` },
+      { text: 'HOD Management', icon: <PeopleIcon />, path: `/dashboard/principal?tab=hods` },
+      { text: 'All Departments', icon: <MenuBookIcon />, path: `/dashboard/principal?tab=departments` },
+      { text: 'All Faculty', icon: <PeopleIcon />, path: `/dashboard/principal?tab=faculty` },
+      { text: 'All Students', icon: <PeopleIcon />, path: `/dashboard/principal?tab=students` },
+      { text: 'Applications', icon: <AssignmentIcon />, path: `/dashboard/principal?tab=applications` },
+      { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/principal?tab=notices` }
+    );
   }
 
   // Common menus

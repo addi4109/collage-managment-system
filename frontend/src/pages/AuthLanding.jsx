@@ -32,6 +32,15 @@ export default function AuthLanding({ mode, toggleTheme }) {
       btnColor: '#10b981',
     },
     {
+      role: 'hod',
+      title: 'HOD Portal',
+      description: 'Oversee department faculty, manage students, view reports, approve applications, and handle academic processes.',
+      icon: <PersonIcon sx={{ fontSize: 48 }} />, // can be updated later
+      gradient: 'linear-gradient(135deg, #8b5cf6, #d946ef)',
+      glowColor: 'rgba(139, 92, 246, 0.5)',
+      btnColor: '#8b5cf6',
+    },
+    {
       role: 'admin',
       title: 'Admin Portal',
       description: 'Administer system resources, create timetables, adjust notice boards, manage user role configurations, and audit departments.',
@@ -39,6 +48,15 @@ export default function AuthLanding({ mode, toggleTheme }) {
       gradient: 'linear-gradient(135deg, #f59e0b, #ef4444)',
       glowColor: 'rgba(245, 158, 11, 0.5)',
       btnColor: '#f59e0b',
+    },
+    {
+      role: 'principal',
+      title: 'Principal Portal',
+      description: 'Super admin access to all departments, oversee college analytics, create and manage HODs, and monitor all activities.',
+      icon: <AdminPanelSettingsIcon sx={{ fontSize: 48 }} />, // can be updated later
+      gradient: 'linear-gradient(135deg, #ec4899, #f43f5e)',
+      glowColor: 'rgba(236, 72, 153, 0.5)',
+      btnColor: '#ec4899',
     },
   ];
 

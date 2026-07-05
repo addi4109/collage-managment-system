@@ -2,6 +2,8 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Faculty from '../models/Faculty.js';
 import Student from '../models/Student.js';
+import HOD from '../models/HOD.js';
+import Principal from '../models/Principal.js';
 
 // In-memory cache for user auth context to optimize DB queries
 const userCache = new Map();
@@ -88,6 +90,22 @@ export const authenticateToken = async (req, res, next) => {
         requestUser.parentName = studentProfile.parentName;
         requestUser.parentMobile = studentProfile.parentMobile;
         requestUser.address = studentProfile.address;
+      }
+    } else if (user.role === 'hod') {
+      const hodProfile = await HOD.findOne({ userId: user._id, isDeleted: false })
+        .populate('departmentId', 'name code');
+      if (hodProfile) {
+        requestUser.employeeId = hodProfile.employeeId;
+        requestUser.departmentId = hodProfile.departmentId?._id?.toString() || '';
+        requestUser.departmentName = hodProfile.departmentId?.name || '';
+        requestUser.departmentCode = hodProfile.departmentId?.code || '';
+        requestUser.phone = hodProfile.phone;
+      }
+    } else if (user.role === 'principal') {
+      const principalProfile = await Principal.findOne({ userId: user._id, isDeleted: false });
+      if (principalProfile) {
+        requestUser.employeeId = principalProfile.employeeId;
+        requestUser.phone = principalProfile.phone;
       }
     }
 

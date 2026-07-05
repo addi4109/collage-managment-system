@@ -31,6 +31,8 @@ import placementRoutes from './routes/placementRoutes.js';
 import complaintRoutes from './routes/complaintRoutes.js';
 import libraryRoutes from './routes/libraryRoutes.js';
 import scholarshipRoutes from './routes/scholarshipRoutes.js';
+import hodRoutes from './routes/hodRoutes.js';
+import principalRoutes from './routes/principalRoutes.js';
 import { connectDB } from './config/database.js';
 
 dotenv.config();
@@ -116,6 +118,8 @@ app.use('/api/placements', placementRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/library', libraryRoutes);
 app.use('/api/scholarships', scholarshipRoutes);
+app.use('/api/hod', hodRoutes);
+app.use('/api/principal', principalRoutes);
 
 // Health check endpoint displaying connection state and process uptime
 app.get('/', (req, res) => {

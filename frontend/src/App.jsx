@@ -13,6 +13,8 @@ import DashboardLayout from './layouts/DashboardLayout';
 import AdminDashboard from './pages/AdminDashboard';
 import FacultyDashboard from './pages/FacultyDashboard';
 import StudentDashboard from './pages/StudentDashboard';
+import HodDashboard from './pages/HodDashboard';
+import PrincipalDashboard from './pages/PrincipalDashboard';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,6 +93,22 @@ function MainApp() {
               element={
                 <ProtectedRoute allowedRoles={['student']}>
                   <StudentDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="hod"
+              element={
+                <ProtectedRoute allowedRoles={['hod']}>
+                  <HodDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="principal"
+              element={
+                <ProtectedRoute allowedRoles={['principal']}>
+                  <PrincipalDashboard />
                 </ProtectedRoute>
               }
             />

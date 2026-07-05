@@ -28,7 +28,9 @@ export default function Login({ mode, toggleTheme }) {
   const roleColors = {
     student: { gradient: 'linear-gradient(135deg, #6366f1, #06b6d4)', glow: 'rgba(99, 102, 241, 0.3)' },
     faculty: { gradient: 'linear-gradient(135deg, #10b981, #06b6d4)', glow: 'rgba(16, 185, 129, 0.3)' },
+    hod: { gradient: 'linear-gradient(135deg, #8b5cf6, #d946ef)', glow: 'rgba(139, 92, 246, 0.3)' },
     admin: { gradient: 'linear-gradient(135deg, #f59e0b, #ef4444)', glow: 'rgba(245, 158, 11, 0.3)' },
+    principal: { gradient: 'linear-gradient(135deg, #ec4899, #f43f5e)', glow: 'rgba(236, 72, 153, 0.3)' },
   };
 
   const colors = roleColors[role] || roleColors.student;
