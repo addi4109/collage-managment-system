@@ -124,7 +124,7 @@ export default function AuthLanding({ mode, toggleTheme }) {
         {isDark ? <LightModeIcon /> : <DarkModeIcon />}
       </IconButton>
 
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 6, sm: 0 } }}>
+      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1, pt: { xs: 6, sm: 0 }, px: { md: 4 } }}>
         {/* Title Section */}
         <Box sx={{ textAlign: 'center', mb: 8 }}>
           <Typography
@@ -160,7 +160,7 @@ export default function AuthLanding({ mode, toggleTheme }) {
         </Box>
 
         {/* Portal Cards */}
-        <Grid container spacing={4} justifyContent="center">
+        <Grid container spacing={3} justifyContent="center" sx={{ maxWidth: '1400px', mx: 'auto' }}>
           {portals.map((portal, idx) => (
             <Grid item xs={12} sm={6} md={3} key={portal.role}>
               <Card
