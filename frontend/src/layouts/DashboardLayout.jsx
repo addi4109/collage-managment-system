@@ -149,50 +149,50 @@ export default function DashboardLayout({ mode, toggleTheme }) {
 
   if (user?.role === 'faculty') {
     menuItems.push(
-      { text: 'Student CRUD', icon: <PeopleIcon />, path: `/dashboard/faculty?tab=students` },
-      { text: 'Mark Attendance', icon: <QrCodeIcon />, path: `/dashboard/faculty?tab=attendance` },
-      { text: 'Create MCQ Exams', icon: <AssignmentIcon />, path: `/dashboard/faculty?tab=exams` },
-      { text: 'Enter Grade Sheets', icon: <ReceiptIcon />, path: `/dashboard/faculty?tab=results` },
-      { text: 'Admissions Intake', icon: <PeopleIcon />, path: `/dashboard/faculty?tab=admissions` },
+      { text: 'Student Management', icon: <PeopleIcon />, path: `/dashboard/faculty?tab=students` },
+      { text: 'Attendance Logging', icon: <QrCodeIcon />, path: `/dashboard/faculty?tab=attendance` },
+      { text: 'Exam Administration', icon: <AssignmentIcon />, path: `/dashboard/faculty?tab=exams` },
+      { text: 'Result Processing', icon: <ReceiptIcon />, path: `/dashboard/faculty?tab=results` },
+      { text: 'Admission Processing', icon: <PeopleIcon />, path: `/dashboard/faculty?tab=admissions` },
       { text: 'Assignments', icon: <AssignmentIcon />, path: `/dashboard/faculty?tab=assignments` },
       { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/faculty?tab=notices` },
       { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/faculty?tab=calendar` },
-      { text: 'Monthly Reports Entry', icon: <AssessmentIcon />, path: `/dashboard/faculty?tab=monthly-reports` },
+      { text: 'Monthly Reporting', icon: <AssessmentIcon />, path: `/dashboard/faculty?tab=monthly-reports` },
       { text: 'Placement Drives', icon: <BusinessCenterIcon />, path: `/dashboard/faculty?tab=placements` },
       { text: 'Library Catalog', icon: <LibraryBooksIcon />, path: `/dashboard/faculty?tab=library` },
       { text: 'Send Notifications', icon: <NotificationsIcon />, path: `/dashboard/faculty?tab=notifications` }
     );
   } else if (user?.role === 'student') {
     menuItems.push(
-      { text: 'Scan Attendance', icon: <QrCodeIcon />, path: `/dashboard/student?tab=attendance` },
-      { text: 'MCQ Test Client', icon: <AssignmentIcon />, path: `/dashboard/student?tab=exams` },
-      { text: 'My Sem Marksheet', icon: <ReceiptIcon />, path: `/dashboard/student?tab=results` },
-      { text: 'Submit Request', icon: <CampaignIcon />, path: `/dashboard/student?tab=applications` },
-      { text: 'My Assignments', icon: <AssignmentIcon />, path: `/dashboard/student?tab=assignments` },
+      { text: 'Attendance Records', icon: <QrCodeIcon />, path: `/dashboard/student?tab=attendance` },
+      { text: 'Online Examinations', icon: <AssignmentIcon />, path: `/dashboard/student?tab=exams` },
+      { text: 'Academic Results', icon: <ReceiptIcon />, path: `/dashboard/student?tab=results` },
+      { text: 'Service Requests', icon: <CampaignIcon />, path: `/dashboard/student?tab=applications` },
+      { text: 'Academic Assignments', icon: <AssignmentIcon />, path: `/dashboard/student?tab=assignments` },
       { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/student?tab=notices` },
       { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/student?tab=calendar` },
       { text: 'Performance Reports', icon: <AssessmentIcon />, path: `/dashboard/student?tab=monthly-reports` },
-      { text: 'Fees & Receipts', icon: <ReceiptIcon />, path: `/dashboard/student?tab=fees` },
+      { text: 'Financial Records', icon: <ReceiptIcon />, path: `/dashboard/student?tab=fees` },
       { text: 'Career Placements', icon: <BusinessCenterIcon />, path: `/dashboard/student?tab=placements` },
-      { text: 'My Library Lends', icon: <LibraryBooksIcon />, path: `/dashboard/student?tab=library` }
+      { text: 'Library Borrowings', icon: <LibraryBooksIcon />, path: `/dashboard/student?tab=library` }
     );
   } else if (user?.role === 'hod') {
     menuItems.push(
-      { text: 'My Faculty', icon: <PeopleIcon />, path: `/dashboard/hod?tab=faculty` },
-      { text: 'My Students', icon: <PeopleIcon />, path: `/dashboard/hod?tab=students` },
+      { text: 'Faculty Directory', icon: <PeopleIcon />, path: `/dashboard/hod?tab=faculty` },
+      { text: 'Student Directory', icon: <PeopleIcon />, path: `/dashboard/hod?tab=students` },
       { text: 'Application Approvals', icon: <AssignmentIcon />, path: `/dashboard/hod?tab=applications` },
       { text: 'Exam Approvals', icon: <AssignmentIcon />, path: `/dashboard/hod?tab=exams` },
-      { text: 'Department Results', icon: <QueryStatsIcon />, path: `/dashboard/hod?tab=results` },
-      { text: 'Reports', icon: <AssessmentIcon />, path: `/dashboard/hod?tab=reports` },
+      { text: 'Academic Performance', icon: <QueryStatsIcon />, path: `/dashboard/hod?tab=results` },
+      { text: 'Departmental Reports', icon: <AssessmentIcon />, path: `/dashboard/hod?tab=reports` },
       { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/hod?tab=notices` }
     );
   } else if (user?.role === 'principal') {
     menuItems.push(
       { text: 'College Overview', icon: <DashboardIcon />, path: `/dashboard/principal?tab=overview` },
       { text: 'HOD Management', icon: <PeopleIcon />, path: `/dashboard/principal?tab=hods` },
-      { text: 'All Departments', icon: <MenuBookIcon />, path: `/dashboard/principal?tab=departments` },
-      { text: 'All Faculty', icon: <PeopleIcon />, path: `/dashboard/principal?tab=faculty` },
-      { text: 'All Students', icon: <PeopleIcon />, path: `/dashboard/principal?tab=students` },
+      { text: 'Department Directory', icon: <MenuBookIcon />, path: `/dashboard/principal?tab=departments` },
+      { text: 'Faculty Directory', icon: <PeopleIcon />, path: `/dashboard/principal?tab=faculty` },
+      { text: 'Student Directory', icon: <PeopleIcon />, path: `/dashboard/principal?tab=students` },
       { text: 'Admission Approvals', icon: <ReceiptIcon />, path: `/dashboard/principal?tab=admissions` },
       { text: 'Subject Directory', icon: <MenuBookIcon />, path: `/dashboard/principal?tab=subjects` },
       { text: 'System Notice Board', icon: <CampaignIcon />, path: `/dashboard/principal?tab=notices` },
@@ -206,8 +206,8 @@ export default function DashboardLayout({ mode, toggleTheme }) {
 
   // Common menus
   menuItems.push(
-    { text: 'Weekly Timetables', icon: <CalendarMonthIcon />, path: `/dashboard/${user?.role}?tab=timetable` },
-    { text: 'Lost & Found Board', icon: <HelpIcon />, path: `/dashboard/${user?.role}?tab=lostfound` }
+    { text: 'Class Schedules', icon: <CalendarMonthIcon />, path: `/dashboard/${user?.role}?tab=timetable` },
+    { text: 'Lost & Found', icon: <HelpIcon />, path: `/dashboard/${user?.role}?tab=lostfound` }
   );
 
   const drawerContent = (
