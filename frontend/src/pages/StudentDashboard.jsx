@@ -40,7 +40,6 @@ import LostFoundTab from '../components/LostFoundTab';
 import AssignmentTab from '../components/AssignmentTab';
 import NoticeTab from '../components/NoticeTab';
 import AcademicCalendarTab from '../components/AcademicCalendarTab';
-import MonthlyReportTab from '../components/MonthlyReportTab';
 import FeeInvoiceTab from '../components/FeeInvoiceTab';
 import PlacementTab from '../components/PlacementTab';
 import LibraryTab from '../components/LibraryTab';
@@ -855,11 +854,6 @@ export default function StudentDashboard() {
           {/* ACADEMIC CALENDAR TAB */}
           {tab === 'calendar' && (
             <AcademicCalendarTab role="student" />
-          )}
-
-          {/* MONTHLY REPORT TAB */}
-          {tab === 'monthly-reports' && (
-            <MonthlyReportTab role="student" />
           )}
 
           {/* FEE INVOICE TAB */}

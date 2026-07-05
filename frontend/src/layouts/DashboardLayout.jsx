@@ -157,7 +157,6 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Assignments', icon: <AssignmentIcon />, path: `/dashboard/faculty?tab=assignments` },
       { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/faculty?tab=notices` },
       { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/faculty?tab=calendar` },
-      { text: 'Monthly Reporting', icon: <AssessmentIcon />, path: `/dashboard/faculty?tab=monthly-reports` },
       { text: 'Placement Drives', icon: <BusinessCenterIcon />, path: `/dashboard/faculty?tab=placements` },
       { text: 'Library Catalog', icon: <LibraryBooksIcon />, path: `/dashboard/faculty?tab=library` },
       { text: 'Send Notifications', icon: <NotificationsIcon />, path: `/dashboard/faculty?tab=notifications` }
@@ -171,7 +170,6 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Academic Assignments', icon: <AssignmentIcon />, path: `/dashboard/student?tab=assignments` },
       { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/student?tab=notices` },
       { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/student?tab=calendar` },
-      { text: 'Performance Reports', icon: <AssessmentIcon />, path: `/dashboard/student?tab=monthly-reports` },
       { text: 'Financial Records', icon: <ReceiptIcon />, path: `/dashboard/student?tab=fees` },
       { text: 'Career Placements', icon: <BusinessCenterIcon />, path: `/dashboard/student?tab=placements` },
       { text: 'Library Borrowings', icon: <LibraryBooksIcon />, path: `/dashboard/student?tab=library` }
@@ -184,7 +182,6 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Application Approvals', icon: <AssignmentIcon />, path: `/dashboard/hod?tab=applications` },
       { text: 'Exam Approvals', icon: <AssignmentIcon />, path: `/dashboard/hod?tab=exams` },
       { text: 'Academic Performance', icon: <QueryStatsIcon />, path: `/dashboard/hod?tab=results` },
-      { text: 'Departmental Reports', icon: <AssessmentIcon />, path: `/dashboard/hod?tab=reports` },
       { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/hod?tab=notices` },
       { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/hod?tab=calendar` }
     );

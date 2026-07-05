@@ -9,7 +9,6 @@ import StudentDirectoryTab from '../components/StudentDirectoryTab';
 import ApplicationApprovalsTab from '../components/ApplicationApprovalsTab';
 import ExamApprovalsTab from '../components/ExamApprovalsTab';
 import ResultApprovalsTab from '../components/ResultApprovalsTab';
-import MonthlyReportTab from '../components/MonthlyReportTab';
 import NoticeTab from '../components/NoticeTab';
 import TimetableTab from '../components/TimetableTab';
 import LostFoundTab from '../components/LostFoundTab';
@@ -51,7 +50,6 @@ export default function HodDashboard() {
       {tab === 'results' && <ResultApprovalsTab role="hod" />}
 
       {/* DEPARTMENT & ERP MODULES */}
-      {tab === 'reports' && <MonthlyReportTab role="hod" />}
       { tab === 'notices' && <NoticeTab role="hod" /> }
       { tab === 'calendar' && <AcademicCalendarTab role="hod" /> }
       { tab === 'timetable' && <TimetableTab role="hod" /> }
