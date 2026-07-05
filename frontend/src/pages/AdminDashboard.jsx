@@ -4,6 +4,8 @@ import {
   Box,
   Typography,
   Card,
+  CardContent,
+  CardActions,
   Grid,
   Button,
   Table,
@@ -22,13 +24,17 @@ import {
   Chip,
   IconButton,
   CircularProgress,
+  Divider,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockResetIcon from '@mui/icons-material/LockReset';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AddIcon from '@mui/icons-material/Add';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 import { api } from '../context/AuthContext';
@@ -81,6 +87,7 @@ export default function AdminDashboard() {
   const [openExamQuestionsDialog, setOpenExamQuestionsDialog] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
   const [subjects, setSubjects] = useState([]);
+  const [pendingApplications, setPendingApplications] = useState([]);
   
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -122,11 +129,30 @@ export default function AdminDashboard() {
       } else if (tab === 'audit') {
         const res = await api.get('/audit');
         setAuditLogs(res.data.logs || []);
+      } else if (tab === 'applications') {
+        const res = await api.get('/applications/pending');
+        setPendingApplications(res.data);
       }
     } catch (err) {
       showToast('Failed to load portal data.', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Review Application (Approve / Reject)
+  const handleApplicationReview = async (id, status) => {
+    const remarks = status === 'rejected'
+      ? window.prompt('Enter rejection reason (optional):')
+      : '';
+    if (status === 'rejected' && remarks === null) return; // cancelled
+    try {
+      await api.post(`/applications/review/${id}`, { status, remarks: remarks || '' });
+      showToast(`Application ${status} successfully.`, 'success');
+      const res = await api.get('/applications/pending');
+      setPendingApplications(res.data);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to review application.', 'error');
     }
   };
 
@@ -749,6 +775,80 @@ export default function AdminDashboard() {
           {/* LIBRARY LEDGER TAB */}
           {tab === 'library' && (
             <LibraryTab role="admin" />
+          )}
+
+          {/* APPLICATION APPROVALS TAB */}
+          {tab === 'applications' && (
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>Application Approvals</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Review leave requests, document requests, and other student/faculty applications.
+              </Typography>
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
+              ) : pendingApplications.length === 0 ? (
+                <Card sx={{ p: 4, textAlign: 'center', borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
+                  <CheckCircleOutlineIcon sx={{ fontSize: 56, color: 'success.main', mb: 1 }} />
+                  <Typography variant="h6" color="text.secondary">All caught up!</Typography>
+                  <Typography variant="body2" color="text.secondary">No pending applications at this time.</Typography>
+                </Card>
+              ) : (
+                <Grid container spacing={3}>
+                  {pendingApplications.map((app) => (
+                    <Grid item xs={12} md={6} key={app._id}>
+                      <Card sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
+                        <Box sx={{ p: 0.5, bgcolor: app.type === 'leave' ? 'warning.light' : app.type === 'document' ? 'info.light' : 'primary.light' }} />
+                        <CardContent sx={{ p: 3 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                            <Box>
+                              <Chip label={app.type?.replace('_', ' ').toUpperCase() || 'REQUEST'} size="small" color={app.type === 'leave' ? 'warning' : 'info'} sx={{ mb: 0.5, fontWeight: 'bold', textTransform: 'capitalize' }} />
+                              <Typography variant="h6" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>{app.subject || app.title || 'Application'}</Typography>
+                            </Box>
+                            <Chip label="Pending" size="small" sx={{ bgcolor: 'warning.light', color: 'warning.dark', fontWeight: 'bold' }} />
+                          </Box>
+
+                          <Divider sx={{ my: 1.5 }} />
+
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <AccountCircleIcon fontSize="small" color="action" />
+                            <Typography variant="body2"><strong>From:</strong> {app.applicant?.name || 'Unknown'} ({app.applicant?.role || '—'})</Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <CalendarMonthIcon fontSize="small" color="action" />
+                            <Typography variant="body2"><strong>Submitted:</strong> {new Date(app.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</Typography>
+                          </Box>
+                          {app.description && (
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, p: 1.5, bgcolor: 'action.hover', borderRadius: '8px', fontStyle: 'italic' }}>
+                              "{app.description}"
+                            </Typography>
+                          )}
+                        </CardContent>
+                        <CardActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+                          <Button
+                            variant="contained"
+                            color="success"
+                            startIcon={<CheckCircleOutlineIcon />}
+                            onClick={() => handleApplicationReview(app._id, 'approved')}
+                            sx={{ borderRadius: '8px', flex: 1 }}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            startIcon={<CancelIcon />}
+                            onClick={() => handleApplicationReview(app._id, 'rejected')}
+                            sx={{ borderRadius: '8px', flex: 1 }}
+                          >
+                            Reject
+                          </Button>
+                        </CardActions>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </Box>
           )}
 
           {/* SCHOLARSHIP APPROVER TAB */}

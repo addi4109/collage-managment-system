@@ -162,7 +162,8 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Library Ledger', icon: <LibraryBooksIcon />, path: `/dashboard/admin?tab=library` },
       { text: 'Scholarship Approver', icon: <CardGiftcardIcon />, path: `/dashboard/admin?tab=scholarships` },
       { text: 'Send Notifications', icon: <NotificationsIcon />, path: `/dashboard/admin?tab=notifications` },
-      { text: 'System Audit Logs', icon: <SecurityIcon />, path: `/dashboard/admin?tab=audit` }
+      { text: 'System Audit Logs', icon: <SecurityIcon />, path: `/dashboard/admin?tab=audit` },
+      { text: 'Application Approvals', icon: <AssignmentIcon />, path: `/dashboard/admin?tab=applications` }
     );
   } else if (user?.role === 'faculty') {
     menuItems.push(
