@@ -3,19 +3,21 @@ import Student from '../models/Student.js';
 import Faculty from '../models/Faculty.js';
 import { logActivity } from './activityLogService.js';
 
-export const createEvent = async (eventData, creatorId, userRole) => {
+export const createEvent = async (eventData, user) => {
   const { title, description, eventType, startDate, endDate, departmentId, visibility, color } = eventData;
+  const userRole = user.role;
+  const creatorId = user.id;
 
-  if (userRole === 'faculty') {
-    const faculty = await Faculty.findOne({ userId: creatorId, isDeleted: false });
-    if (!faculty) {
-      throw new Error('Faculty profile not found.');
-    }
+  if (userRole === 'hod') {
     if (visibility === 'department' && departmentId) {
-      if (!faculty.assignedDepartments.map(d => d.toString()).includes(departmentId.toString())) {
-        throw new Error('Forbidden: You can only create events for your assigned departments.');
+      if (user.departmentId && user.departmentId.toString() !== departmentId.toString()) {
+        throw new Error('Forbidden: You can only create events for your assigned department.');
       }
     }
+  }
+
+  if (userRole === 'faculty') {
+    throw new Error('Forbidden: Faculty cannot create events.');
   }
 
   const event = new Event({
@@ -54,11 +56,16 @@ export const getEvents = async (user) => {
       query.$or = [
         { visibility: 'college' },
         { visibility: 'department', departmentId: { $in: faculty.assignedDepartments } },
-        { createdBy: user.id },
       ];
     } else {
       query.visibility = 'college';
     }
+  } else if (user.role === 'hod') {
+    query.$or = [
+      { visibility: 'college' },
+      { visibility: 'department', departmentId: user.departmentId },
+      { createdBy: user.id },
+    ];
   }
 
   return await Event.find(query)

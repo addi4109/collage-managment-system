@@ -21,10 +21,11 @@ import BeachAccessIcon from '@mui/icons-material/BeachAccess';
 import EventIcon from '@mui/icons-material/Event';
 import SchoolIcon from '@mui/icons-material/School';
 import AddIcon from '@mui/icons-material/Add';
-import { api } from '../context/AuthContext';
+import { api, useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 export default function AcademicCalendarTab({ role }) {
+  const { user } = useAuth();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState([]);
@@ -42,6 +43,12 @@ export default function AcademicCalendarTab({ role }) {
     departmentId: '',
     color: '#1976d2',
   });
+
+  useEffect(() => {
+    if (role === 'hod' && user?.departmentId) {
+      setForm(prev => ({ ...prev, departmentId: user.departmentId }));
+    }
+  }, [role, user]);
 
   const eventTypes = [
     { value: 'event', label: 'College Event', color: '#1976d2' },
@@ -65,9 +72,14 @@ export default function AcademicCalendarTab({ role }) {
       const res = await api.get('/calendar');
       setEvents(res.data);
 
-      if (role === 'admin' || role === 'faculty') {
+      if (role === 'admin' || role === 'hod') {
         const depRes = await api.get('/departments');
-        setDepartments(depRes.data);
+        if (role === 'hod') {
+          const myDept = depRes.data.find(d => d._id === user?.departmentId);
+          setDepartments(myDept ? [myDept] : []);
+        } else {
+          setDepartments(depRes.data);
+        }
       }
     } catch (err) {
       showToast('Error loading calendar events.', 'error');
@@ -123,7 +135,7 @@ export default function AcademicCalendarTab({ role }) {
         <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
           Academic Calendar
         </Typography>
-        {(role === 'admin' || role === 'faculty') && (
+        {(role === 'admin' || role === 'hod') && (
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpenCreate(true)}>
             Add Event
           </Button>
@@ -177,7 +189,7 @@ export default function AcademicCalendarTab({ role }) {
                     </Typography>
                   )}
 
-                  {(role === 'admin' || (role === 'faculty' && e.createdBy === api.defaults.headers.common?.userId)) && (
+                  {(role === 'admin' || (role === 'hod' && e.createdBy === user?.id)) && (
                     <Button
                       color="error"
                       size="small"
@@ -294,6 +306,7 @@ export default function AcademicCalendarTab({ role }) {
                 label="Select Department"
                 fullWidth
                 required
+                disabled={role === 'hod'}
                 value={form.departmentId}
                 onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
               >

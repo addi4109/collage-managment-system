@@ -2,7 +2,7 @@ import * as calendarService from '../services/calendarService.js';
 
 export const createEvent = async (req, res) => {
   try {
-    const event = await calendarService.createEvent(req.body, req.user.id, req.user.role);
+    const event = await calendarService.createEvent(req.body, req.user);
     res.status(201).json(event);
   } catch (error) {
     console.error('Create event error:', error);

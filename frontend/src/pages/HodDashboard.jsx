@@ -14,6 +14,7 @@ import NoticeTab from '../components/NoticeTab';
 import TimetableTab from '../components/TimetableTab';
 import LostFoundTab from '../components/LostFoundTab';
 import ContactSupportTab from '../components/ContactSupportTab';
+import AcademicCalendarTab from '../components/AcademicCalendarTab';
 
 export default function HodDashboard() {
   const [searchParams] = useSearchParams();
@@ -51,9 +52,10 @@ export default function HodDashboard() {
 
       {/* DEPARTMENT & ERP MODULES */}
       {tab === 'reports' && <MonthlyReportTab role="hod" />}
-      {tab === 'notices' && <NoticeTab role="hod" />}
-      {tab === 'timetable' && <TimetableTab role="hod" />}
-      {tab === 'lostfound' && <LostFoundTab role="hod" />}
+      { tab === 'notices' && <NoticeTab role="hod" /> }
+      { tab === 'calendar' && <AcademicCalendarTab role="hod" /> }
+      { tab === 'timetable' && <TimetableTab role="hod" /> }
+      { tab === 'lostfound' && <LostFoundTab role="hod" /> }
       {tab === 'contact' && <ContactSupportTab role="hod" />}
     </Box>
   );
