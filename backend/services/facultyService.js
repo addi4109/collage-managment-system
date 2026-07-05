@@ -4,7 +4,7 @@ import Faculty from '../models/Faculty.js';
 import { logActivity } from './auditService.js';
 
 export const createFaculty = async (facultyData, adminId, ipAddress) => {
-  const { name, username, password, assignedDepartments, assignedYears } = facultyData;
+  const { name, username, password, assignedDepartments, assignedYears, assignedSubjects } = facultyData;
 
   const existingUser = await User.findOne({ 
     username: username.toLowerCase(),
@@ -38,6 +38,7 @@ export const createFaculty = async (facultyData, adminId, ipAddress) => {
     employeeId,
     assignedDepartments,
     assignedYears,
+    assignedSubjects,
   });
   await newFaculty.save();
 
@@ -80,6 +81,7 @@ export const getFaculties = async (filters = {}) => {
   const profiles = await Faculty.find(query)
     .populate('userId', 'name email username status')
     .populate('assignedDepartments', 'name code')
+    .populate('assignedSubjects', 'name code type')
     .sort({ employeeId: 1 });
 
   return profiles.filter(p => p.userId !== null);
@@ -91,7 +93,7 @@ export const updateFaculty = async (facultyId, facultyData, adminId, ipAddress) 
     throw new Error('Faculty profile not found.');
   }
 
-  const { name, assignedDepartments, assignedYears } = facultyData;
+  const { name, assignedDepartments, assignedYears, assignedSubjects } = facultyData;
 
   // Update User account
   const user = await User.findById(faculty.userId);
@@ -105,6 +107,7 @@ export const updateFaculty = async (facultyId, facultyData, adminId, ipAddress) 
   if (facultyData.employeeId) faculty.employeeId = facultyData.employeeId;
   if (assignedDepartments) faculty.assignedDepartments = assignedDepartments;
   if (assignedYears) faculty.assignedYears = assignedYears;
+  if (assignedSubjects) faculty.assignedSubjects = assignedSubjects;
   if (facultyData.phone !== undefined) faculty.phone = facultyData.phone;
 
   await faculty.save();

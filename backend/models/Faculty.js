@@ -27,6 +27,13 @@ const facultySchema = new mongoose.Schema(
       enum: ['First Year', 'Second Year', 'Third Year'],
       default: [],
     },
+    assignedSubjects: {
+      type: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Subject',
+      }],
+      default: [],
+    },
     phone: {
       type: String,
       trim: true,

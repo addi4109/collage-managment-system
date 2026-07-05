@@ -24,8 +24,9 @@ export default function FacultyDirectoryTab({ role }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [departments, setDepartments] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   
-  const initialForm = { name: '', username: '', password: '', assignedDepartments: [], assignedYears: [] };
+  const initialForm = { name: '', username: '', password: '', assignedDepartments: [], assignedYears: [], assignedSubjects: [] };
   const [form, setForm] = useState(initialForm);
   const [editId, setEditId] = useState(null);
 
@@ -39,6 +40,8 @@ export default function FacultyDirectoryTab({ role }) {
       if (role === 'hod' || role === 'principal') {
         const deptRes = await api.get('/departments');
         setDepartments(deptRes.data);
+        const subRes = await api.get('/subjects');
+        setSubjects(subRes.data);
       }
     } catch (err) {
       showToast('Failed to load faculty directory.', 'error');
@@ -61,6 +64,7 @@ export default function FacultyDirectoryTab({ role }) {
         password: '',
         assignedDepartments: faculty.assignedDepartments?.map(d => d._id) || [],
         assignedYears: faculty.assignedYears || [],
+        assignedSubjects: faculty.assignedSubjects?.map(s => s._id) || [],
       });
     } else {
       setIsEditMode(false);
@@ -146,6 +150,7 @@ export default function FacultyDirectoryTab({ role }) {
                 <TableCell>Username</TableCell>
                 <TableCell>Assigned Departments</TableCell>
                 <TableCell>Assigned Years</TableCell>
+                <TableCell>Assigned Subjects</TableCell>
                 {(role === 'principal' || role === 'hod') && <TableCell align="right">Actions</TableCell>}
               </TableRow>
             </TableHead>
@@ -162,6 +167,11 @@ export default function FacultyDirectoryTab({ role }) {
                   <TableCell>
                     {f.assignedYears?.map((y, idx) => (
                       <Chip key={idx} label={y} size="small" variant="outlined" sx={{ mr: 0.5 }} />
+                    ))}
+                  </TableCell>
+                  <TableCell>
+                    {f.assignedSubjects?.map(s => (
+                      <Chip key={s._id} label={s.name} size="small" variant="outlined" color="secondary" sx={{ mr: 0.5, mb: 0.5 }} />
                     ))}
                   </TableCell>
                   {(role === 'principal' || role === 'hod') && (
@@ -217,17 +227,33 @@ export default function FacultyDirectoryTab({ role }) {
               select
               margin="dense"
               fullWidth
-              required
-              label="Assign Year Scope"
-              SelectProps={{
-                multiple: true,
-                value: form.assignedYears,
-                onChange: (e) => setForm({ ...form, assignedYears: e.target.value }),
-              }}
+              SelectProps={{ multiple: true }}
+              label="Assigned Years"
+              value={form.assignedYears}
+              onChange={(e) => setForm({ ...form, assignedYears: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value })}
+              sx={{ mb: 2 }}
             >
-              {['First Year', 'Second Year', 'Third Year', 'Fourth Year'].map((y) => (
-                <MenuItem key={y} value={y}>{y}</MenuItem>
-              ))}
+              <MenuItem value="First Year">First Year</MenuItem>
+              <MenuItem value="Second Year">Second Year</MenuItem>
+              <MenuItem value="Third Year">Third Year</MenuItem>
+            </TextField>
+            <TextField
+              select
+              margin="dense"
+              fullWidth
+              SelectProps={{ multiple: true }}
+              label="Assigned Subjects"
+              value={form.assignedSubjects}
+              onChange={(e) => setForm({ ...form, assignedSubjects: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value })}
+              sx={{ mb: 2 }}
+            >
+              {subjects
+                .filter(s => form.assignedDepartments.includes(s.departmentId?._id || s.departmentId) && form.assignedYears.includes(s.year))
+                .map((s) => (
+                  <MenuItem key={s._id} value={s._id}>
+                    {s.name} ({s.code}) - {s.semester}
+                  </MenuItem>
+                ))}
             </TextField>
           </DialogContent>
           <DialogActions>

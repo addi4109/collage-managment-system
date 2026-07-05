@@ -267,6 +267,7 @@ export default function FacultyResultsTab() {
                             <TextField
                               type="number"
                               size="small"
+                              disabled={!user.assignedSubjects?.includes(sub.subjectId)}
                               inputProps={{ min: 0, max: maxI }}
                               value={sub.internalMarks}
                               onChange={(e) => handleMarkChange(sub.subjectId, 'internalMarks', parseInt(e.target.value || 0, 10))}
@@ -282,6 +283,7 @@ export default function FacultyResultsTab() {
                             <TextField
                               type="number"
                               size="small"
+                              disabled={!user.assignedSubjects?.includes(sub.subjectId)}
                               inputProps={{ min: 0, max: maxP }}
                               value={sub.practicalMarks}
                               onChange={(e) => handleMarkChange(sub.subjectId, 'practicalMarks', parseInt(e.target.value || 0, 10))}
@@ -297,6 +299,7 @@ export default function FacultyResultsTab() {
                             <TextField
                               type="number"
                               size="small"
+                              disabled={!user.assignedSubjects?.includes(sub.subjectId)}
                               inputProps={{ min: 0, max: maxT }}
                               value={sub.theoryMarks}
                               onChange={(e) => handleMarkChange(sub.subjectId, 'theoryMarks', parseInt(e.target.value || 0, 10))}
@@ -311,6 +314,7 @@ export default function FacultyResultsTab() {
                           <TextField
                             type="number"
                             size="small"
+                            disabled={!user.assignedSubjects?.includes(sub.subjectId)}
                             inputProps={{ min: 0, max: 100 }}
                             value={sub.attendancePercentage}
                             onChange={(e) => handleMarkChange(sub.subjectId, 'attendancePercentage', parseInt(e.target.value || 0, 10))}

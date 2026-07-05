@@ -95,7 +95,8 @@ export const login = async ({ credential, password, role, captchaToken, captchaV
 
   if (user.role === 'faculty') {
     const facultyProfile = await Faculty.findOne({ userId: user._id, isDeleted: false })
-      .populate('assignedDepartments', 'name code');
+      .populate('assignedDepartments', 'name code')
+      .populate('assignedSubjects', 'name code type');
     if (facultyProfile) {
       userData.employeeId = facultyProfile.employeeId;
       userData.assignedDepartments = (facultyProfile.assignedDepartments || [])
@@ -105,12 +106,16 @@ export const login = async ({ credential, password, role, captchaToken, captchaV
         .filter(Boolean)
         .map(d => ({ id: d._id.toString(), name: d.name, code: d.code }));
       userData.assignedYears = facultyProfile.assignedYears;
+      userData.assignedSubjects = (facultyProfile.assignedSubjects || [])
+        .filter(Boolean)
+        .map(s => s._id.toString());
       userData.phone = facultyProfile.phone;
     } else {
       userData.employeeId = '';
       userData.assignedDepartments = [];
       userData.assignedDepartmentDetails = [];
       userData.assignedYears = [];
+      userData.assignedSubjects = [];
       userData.phone = '';
     }
   } else if (user.role === 'student') {

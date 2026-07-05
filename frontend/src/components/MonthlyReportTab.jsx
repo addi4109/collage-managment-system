@@ -496,6 +496,7 @@ export default function MonthlyReportTab({ role }) {
                             label="Score"
                             type="number"
                             size="small"
+                            disabled={role === 'faculty' && !user.assignedSubjects?.includes(sub.subjectId)}
                             value={sub.score}
                             onChange={(e) => handleScoreChange(idx, e.target.value)}
                           />
