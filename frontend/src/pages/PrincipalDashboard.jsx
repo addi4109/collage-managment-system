@@ -52,6 +52,7 @@ import ScholarshipTab from '../components/ScholarshipTab';
 import ContactSupportTab from '../components/ContactSupportTab';
 import NotificationTab from '../components/NotificationTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
+import HodManagementTab from '../components/HodManagementTab';
 
 export default function PrincipalDashboard() {
   const [searchParams] = useSearchParams();
@@ -426,6 +427,10 @@ export default function PrincipalDashboard() {
           )}
 
           {/* FACULTY MANAGEMENT */}
+          {tab === 'hods' && (
+            <HodManagementTab />
+          )}
+
           {tab === 'faculty' && (
             <Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
