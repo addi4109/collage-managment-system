@@ -45,6 +45,7 @@ import PlacementTab from '../components/PlacementTab';
 import LibraryTab from '../components/LibraryTab';
 import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
+import StudentApplicationsTab from '../components/StudentApplicationsTab';
 
 export default function StudentDashboard() {
   const [searchParams] = useSearchParams();
@@ -95,21 +96,17 @@ export default function StudentDashboard() {
         setStats(res.data);
       } else if (tab === 'attendance') {
         const res = await api.get('/attendance/student-summary');
-        setFees(res.data); // reuse fee state container for attendance summaries
+        setFees(res.data);
       } else if (tab === 'exams') {
         const res = await api.get('/exams/student');
         setExams(res.data);
       } else if (tab === 'results') {
-        // Load marksheet for Sem 1 as default, can filter later
         try {
           const res = await api.get(`/results/marksheet?semester=${user.semester || 'Sem 1'}`);
           setMarksheet(res.data);
         } catch (e) {
           setMarksheet(null);
         }
-      } else if (tab === 'applications') {
-        const res = await api.get('/applications/my');
-        setApplications(res.data);
       }
     } catch (err) {
       showToast('Error loading details.', 'error');
@@ -152,19 +149,16 @@ export default function StudentDashboard() {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 240, height: 240 } },
         async (decodedText) => {
-          // Parse the QR data — faculty encodes { sessionToken: '...' }
           let token = decodedText;
           try {
             const parsed = JSON.parse(decodedText);
             if (parsed.sessionToken) token = parsed.sessionToken;
           } catch (_) {
-            // raw string token
           }
 
           setScanResult(token);
           await stopScanner();
 
-          // Auto submit check-in
           try {
             await api.post('/attendance/checkin', { sessionToken: token });
             showToast('✅ Attendance marked successfully!', 'success');
@@ -175,7 +169,7 @@ export default function StudentDashboard() {
             showToast(err.response?.data?.message || 'Check-in failed. Token may be expired.', 'error');
           }
         },
-        () => {} // ignore per-frame errors
+        () => {} 
       );
     } catch (err) {
       showToast('Camera access denied or not available.', 'error');
@@ -187,7 +181,6 @@ export default function StudentDashboard() {
     if (scannerRef.current) {
       try {
         const state = scannerRef.current.getState();
-        // state 2 = SCANNING
         if (state === 2) {
           await scannerRef.current.stop();
         }
@@ -203,22 +196,6 @@ export default function StudentDashboard() {
     setScannerOpen(false);
     setScanResult(null);
   }, [stopScanner]);
-
-  // Submit leave application
-  const handleAppSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitLoading(true);
-    try {
-      await api.post('/applications', appForm);
-      showToast('Application request submitted successfully.', 'success');
-      setOpenAppDialog(false);
-      loadData();
-    } catch (err) {
-      showToast('Error submitting request.', 'error');
-    } finally {
-      setSubmitLoading(false);
-    }
-  };
 
   // ── Proctoring Event Triggers ──
   const logViolation = async (eventType, details) => {
@@ -248,7 +225,6 @@ export default function StudentDashboard() {
       setWarningsCount(0);
       setTimeLeft(exam.duration * 60);
 
-      // Enter Fullscreen
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(() => {});
       }
@@ -428,13 +404,13 @@ export default function StudentDashboard() {
                 <Grid item xs={12} sm={4}>
                   <Card sx={{ p: 3, borderRadius: '16px', bgcolor: 'warning.light', color: '#fff' }}>
                     <Typography variant="body2">Fees Outstanding Balance</Typography>
-                    <Typography variant="h3" sx={{ fontWeight: 800 }}>${stats.feesDue}</Typography>
+                    <Typography variant="h3" sx={{ fontWeight: 'bold' }}>${stats.feesDue}</Typography>
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={4}>
                   <Card sx={{ p: 3, borderRadius: '16px', bgcolor: 'success.light', color: '#fff' }}>
                     <Typography variant="body2">Available MCQ Exams</Typography>
-                    <Typography variant="h3" sx={{ fontWeight: 800 }}>{stats.upcomingExamsCount}</Typography>
+                    <Typography variant="h3" sx={{ fontWeight: 'bold' }}>{stats.upcomingExamsCount}</Typography>
                   </Card>
                 </Grid>
               </Grid>
@@ -787,48 +763,7 @@ export default function StudentDashboard() {
 
           {/* SUBMIT REQUEST APPLICATIONS */}
           {tab === 'applications' && (
-            <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Leaves & Document Requests</Typography>
-                <Button variant="contained" onClick={() => setOpenAppDialog(true)}>
-                  Submit Application
-                </Button>
-              </Box>
-              {applications.length === 0 ? (
-                <Typography color="text.secondary">No submitted requests found.</Typography>
-              ) : (
-                <TableContainer component={Paper} sx={{ borderRadius: '16px' }}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Application Type</TableCell>
-                        <TableCell>Description</TableCell>
-                        <TableCell>Date Submitted</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell>Remarks</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {applications.map((a) => (
-                        <TableRow key={a._id}>
-                          <TableCell sx={{ fontWeight: 'bold' }}>{a.type}</TableCell>
-                          <TableCell>{a.description}</TableCell>
-                          <TableCell>{new Date(a.createdAt).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={a.status}
-                              color={a.status === 'approved' ? 'success' : a.status === 'rejected' ? 'error' : 'warning'}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell>{a.remarks || 'N/A'}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </Box>
+            <StudentApplicationsTab />
           )}
 
           {/* TIMETABLE TAB */}
@@ -876,45 +811,6 @@ export default function StudentDashboard() {
           )}
         </>
       )}
-
-      {/* SUBMIT REQUEST DIALOG */}
-      <Dialog open={openAppDialog} onClose={() => setOpenAppDialog(false)} maxWidth="sm" fullWidth>
-        <form onSubmit={handleAppSubmit}>
-          <DialogTitle sx={{ fontWeight: 'bold' }}>Submit Application Request</DialogTitle>
-          <DialogContent>
-            <TextField
-              select
-              margin="dense"
-              fullWidth
-              required
-              label="Request Type"
-              value={appForm.type}
-              onChange={(e) => setAppForm({ ...appForm, type: e.target.value })}
-              sx={{ mb: 2, mt: 1 }}
-            >
-              {['Leave Application', 'Bonafide Request', 'Document Request', 'ID Card Request'].map(t => (
-                <MenuItem key={t} value={t}>{t}</MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              margin="dense"
-              fullWidth
-              required
-              multiline
-              rows={4}
-              label="Application Details / Description"
-              value={appForm.description}
-              onChange={(e) => setAppForm({ ...appForm, description: e.target.value })}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenAppDialog(false)}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={submitLoading}>
-              {submitLoading ? <CircularProgress size={24} /> : 'Submit'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
     </Box>
   );
 }

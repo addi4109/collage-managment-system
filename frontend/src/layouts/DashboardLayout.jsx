@@ -156,6 +156,7 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Exam Administration', icon: <AssignmentIcon />, path: `/dashboard/faculty?tab=exams` },
       { text: 'Result Processing', icon: <ReceiptIcon />, path: `/dashboard/faculty?tab=results` },
       { text: 'Admission Processing', icon: <PeopleIcon />, path: `/dashboard/faculty?tab=admissions` },
+      { text: 'Service Requests', icon: <CampaignIcon />, path: `/dashboard/faculty?tab=my_applications` },
       { text: 'Assignments', icon: <AssignmentIcon />, path: `/dashboard/faculty?tab=assignments` },
       { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/faculty?tab=notices` },
       { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/faculty?tab=calendar` },
@@ -179,6 +180,7 @@ export default function DashboardLayout({ mode, toggleTheme }) {
     menuItems.push(
       { text: 'Faculty Directory', icon: <PeopleIcon />, path: `/dashboard/hod?tab=faculty` },
       { text: 'Student Directory', icon: <PeopleIcon />, path: `/dashboard/hod?tab=students` },
+      { text: 'Service Requests', icon: <CampaignIcon />, path: `/dashboard/hod?tab=my_applications` },
       { text: 'Subject Directory', icon: <MenuBookIcon />, path: `/dashboard/hod?tab=subjects` },
       { text: 'Class Schedules', icon: <CalendarMonthIcon />, path: `/dashboard/hod?tab=timetable` },
       { text: 'Placement Drives', icon: <BusinessCenterIcon />, path: `/dashboard/hod?tab=placements` },

@@ -11,18 +11,19 @@ export const createApplication = async (appData, requestUser) => {
     applicantRole: requestUser.role,
     type,
     description,
-    departmentId: requestUser.role === 'student' ? requestUser.departmentId : requestUser.assignedDepartments[0],
-    year: requestUser.role === 'student' ? requestUser.year : requestUser.assignedYears[0] || 'First Year',
+    departmentId: requestUser.role === 'faculty' ? requestUser.assignedDepartments[0] : requestUser.departmentId,
+    year: requestUser.role === 'student' ? requestUser.year : (requestUser.assignedYears?.[0] || 'First Year'),
     semester: requestUser.role === 'student' ? requestUser.semester : 'Sem 1',
     attachments: attachments || [],
-    status: 'pending',
+    status: requestUser.role === 'hod' ? 'pending_principal' : 'pending_hod',
   });
 
   return await application.save();
 };
 
-export const getPendingApplications = async (departmentId = null) => {
-  const query = { status: 'pending', isDeleted: false };
+export const getPendingApplications = async (departmentId = null, role = 'principal') => {
+  const statusFilter = role === 'hod' ? 'pending_hod' : 'pending_principal';
+  const query = { status: statusFilter, isDeleted: false };
   if (departmentId) {
     query.departmentId = departmentId;
   }
@@ -37,13 +38,24 @@ export const getMyApplications = async (userId) => {
     .sort({ createdAt: -1 });
 };
 
-export const reviewApplication = async (applicationId, status, remarks, adminId, ipAddress) => {
-  const app = await Application.findOne({ _id: applicationId, status: 'pending', isDeleted: false });
+export const reviewApplication = async (applicationId, status, remarks, adminId, ipAddress, adminRole) => {
+  const app = await Application.findOne({ 
+    _id: applicationId, 
+    status: { $in: ['pending_hod', 'pending_principal'] }, 
+    isDeleted: false 
+  });
+  
   if (!app) {
     throw new Error('Pending application not found.');
   }
 
-  app.status = status;
+  let finalStatus = status; // 'approved' or 'rejected'
+
+  if (status === 'approved' && adminRole === 'hod' && app.applicantRole === 'faculty') {
+    finalStatus = 'pending_principal';
+  }
+
+  app.status = finalStatus;
   app.remarks = remarks || '';
   await app.save();
 

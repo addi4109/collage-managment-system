@@ -16,7 +16,7 @@ const applicationSchema = new mongoose.Schema(
     applicantRole: {
       type: String,
       required: true,
-      enum: ['student', 'faculty'],
+      enum: ['student', 'faculty', 'hod'],
     },
     type: {
       type: String,
@@ -46,8 +46,8 @@ const applicationSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: ['pending', 'approved', 'rejected'],
-      default: 'pending',
+      enum: ['pending_hod', 'pending_principal', 'approved', 'rejected'],
+      default: 'pending_hod',
       index: true,
     },
     remarks: {

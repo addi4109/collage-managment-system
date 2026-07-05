@@ -45,6 +45,7 @@ import AcademicCalendarTab from '../components/AcademicCalendarTab';
 import LibraryTab from '../components/LibraryTab';
 import FacultyResultsTab from '../components/FacultyResultsTab';
 import NotificationTab from '../components/NotificationTab';
+import StudentApplicationsTab from '../components/StudentApplicationsTab';
 import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 import { getSemestersForYear } from '../utils/academicHelpers';
@@ -776,6 +777,10 @@ export default function FacultyDashboard() {
           {/* SEND NOTIFICATIONS TAB */}
           {tab === 'notifications' && (
             <NotificationTab role="faculty" />
+          )}
+
+          {tab === 'my_applications' && (
+            <StudentApplicationsTab />
           )}
 
           {tab === 'contact' && (

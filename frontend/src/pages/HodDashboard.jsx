@@ -12,8 +12,9 @@ import ResultApprovalsTab from '../components/ResultApprovalsTab';
 import PlacementTab from '../components/PlacementTab';
 import NoticeTab from '../components/NoticeTab';
 import TimetableTab from '../components/TimetableTab';
-import LostFoundTab from '../components/LostFoundTab';
+import NotificationTab from '../components/NotificationTab';
 import ContactSupportTab from '../components/ContactSupportTab';
+import StudentApplicationsTab from '../components/StudentApplicationsTab';
 import AcademicCalendarTab from '../components/AcademicCalendarTab';
 
 export default function HodDashboard() {
@@ -45,7 +46,12 @@ export default function HodDashboard() {
       {tab === 'students' && <StudentDirectoryTab role="hod" />}
       {tab === 'subjects' && <SubjectManagementTab role="hod" userDepartmentId={user.departmentId} />}
 
-      {/* APPROVALS */}
+      {/* APPLICATIONS */}
+      {tab === 'my_applications' && (
+        <StudentApplicationsTab />
+      )}
+
+      {/* APPLICATION APPROVALS */}
       {tab === 'applications' && <ApplicationApprovalsTab role="hod" />}
       {tab === 'exams' && <ExamApprovalsTab role="hod" />}
       {tab === 'results' && <ResultApprovalsTab role="hod" />}

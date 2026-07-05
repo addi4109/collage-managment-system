@@ -35,7 +35,7 @@ export const listMyApplications = async (req, res) => {
 export const listPending = async (req, res) => {
   try {
     const departmentId = req.user.role === 'hod' ? req.user.departmentId : null;
-    const apps = await applicationService.getPendingApplications(departmentId);
+    const apps = await applicationService.getPendingApplications(departmentId, req.user.role);
     res.status(200).json(apps);
   } catch (err) {
     res.status(500).json({ message: 'Failed to retrieve pending applications.' });
@@ -48,7 +48,7 @@ export const review = async (req, res) => {
     if (!status || !['approved', 'rejected'].includes(status)) {
       return res.status(400).json({ message: 'Valid review status is required.' });
     }
-    const app = await applicationService.reviewApplication(req.params.id, status, remarks, req.user.id, req.ip);
+    const app = await applicationService.reviewApplication(req.params.id, status, remarks, req.user.id, req.ip, req.user.role);
     res.status(200).json({ message: `Application ${status} successfully.`, application: app });
   } catch (err) {
     res.status(400).json({ message: err.message });

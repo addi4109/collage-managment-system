@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Grid, Card, CardContent, CardActions,
-  Button, Chip, Divider, CircularProgress
+  Button, Chip, Divider, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -32,15 +33,23 @@ export default function ApplicationApprovalsTab() {
     loadData();
   }, []);
 
-  const handleApplicationReview = async (id, status) => {
-    const remarks = status === 'rejected'
-      ? window.prompt('Enter rejection reason (optional):')
-      : '';
-    if (status === 'rejected' && remarks === null) return; // cancelled
+  const [reviewDialog, setReviewDialog] = useState({ open: false, id: null, status: '', remarks: '' });
+
+  const openReviewDialog = (id, status) => {
+    setReviewDialog({ open: true, id, status, remarks: '' });
+  };
+
+  const closeReviewDialog = () => {
+    setReviewDialog({ open: false, id: null, status: '', remarks: '' });
+  };
+
+  const handleApplicationReview = async () => {
+    const { id, status, remarks } = reviewDialog;
     try {
-      await api.post(`/applications/review/${id}`, { status, remarks: remarks || '' });
+      await api.post(`/applications/review/${id}`, { status, remarks });
       showToast(`Application ${status} successfully.`, 'success');
       loadData();
+      closeReviewDialog();
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to review application.', 'error');
     }
@@ -97,7 +106,7 @@ export default function ApplicationApprovalsTab() {
                     variant="contained"
                     color="success"
                     startIcon={<CheckCircleOutlineIcon />}
-                    onClick={() => handleApplicationReview(app._id, 'approved')}
+                    onClick={() => openReviewDialog(app._id, 'approved')}
                     sx={{ borderRadius: '8px', flex: 1 }}
                   >
                     Approve
@@ -106,7 +115,7 @@ export default function ApplicationApprovalsTab() {
                     variant="outlined"
                     color="error"
                     startIcon={<CancelIcon />}
-                    onClick={() => handleApplicationReview(app._id, 'rejected')}
+                    onClick={() => openReviewDialog(app._id, 'rejected')}
                     sx={{ borderRadius: '8px', flex: 1 }}
                   >
                     Reject
@@ -117,6 +126,40 @@ export default function ApplicationApprovalsTab() {
           ))}
         </Grid>
       )}
+
+      {/* Review Dialog */}
+      <Dialog open={reviewDialog.open} onClose={closeReviewDialog} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>
+          {reviewDialog.status === 'approved' ? 'Approve Application' : 'Reject Application'}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            {reviewDialog.status === 'approved' 
+              ? 'Are you sure you want to approve this application? You can provide optional suggestions or remarks.'
+              : 'Are you sure you want to reject this application? Please provide a reason.'}
+          </Typography>
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            label={reviewDialog.status === 'approved' ? 'Suggestions / Remarks (Optional)' : 'Rejection Reason'}
+            value={reviewDialog.remarks}
+            onChange={(e) => setReviewDialog({ ...reviewDialog, remarks: e.target.value })}
+            required={reviewDialog.status === 'rejected'}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={closeReviewDialog} color="inherit">Cancel</Button>
+          <Button 
+            onClick={handleApplicationReview} 
+            variant="contained" 
+            color={reviewDialog.status === 'approved' ? 'success' : 'error'}
+            disabled={reviewDialog.status === 'rejected' && !reviewDialog.remarks.trim()}
+          >
+            Confirm {reviewDialog.status === 'approved' ? 'Approval' : 'Rejection'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

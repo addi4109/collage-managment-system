@@ -6,8 +6,8 @@ import { upload } from '../middleware/uploadMiddleware.js';
 const router = express.Router();
 
 // Applicant routes
-router.post('/', authenticateToken, requireRole(['student', 'faculty']), upload.array('attachments'), submitApplication);
-router.get('/my', authenticateToken, requireRole(['student', 'faculty']), listMyApplications);
+router.post('/', authenticateToken, requireRole(['student', 'faculty', 'hod']), upload.array('attachments'), submitApplication);
+router.get('/my', authenticateToken, requireRole(['student', 'faculty', 'hod']), listMyApplications);
 
 // Admin/HOD reviews
 router.get('/pending', authenticateToken, requireRole(['principal', 'hod']), listPending);
