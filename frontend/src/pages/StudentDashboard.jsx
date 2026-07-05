@@ -44,6 +44,7 @@ import MonthlyReportTab from '../components/MonthlyReportTab';
 import FeeInvoiceTab from '../components/FeeInvoiceTab';
 import PlacementTab from '../components/PlacementTab';
 import LibraryTab from '../components/LibraryTab';
+import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 
 export default function StudentDashboard() {
@@ -874,6 +875,10 @@ export default function StudentDashboard() {
           {/* LIBRARY TAB */}
           {tab === 'library' && (
             <LibraryTab role="student" />
+          )}
+
+          {tab === 'contact' && (
+            <ContactSupportTab />
           )}
         </>
       )}

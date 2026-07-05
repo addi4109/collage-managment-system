@@ -46,6 +46,7 @@ import PlacementTab from '../components/PlacementTab';
 import LibraryTab from '../components/LibraryTab';
 import FacultyResultsTab from '../components/FacultyResultsTab';
 import NotificationTab from '../components/NotificationTab';
+import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 
 export default function FacultyDashboard() {
@@ -897,6 +898,10 @@ export default function FacultyDashboard() {
           {/* SEND NOTIFICATIONS TAB */}
           {tab === 'notifications' && (
             <NotificationTab role="faculty" />
+          )}
+
+          {tab === 'contact' && (
+            <ContactSupportTab />
           )}
         </>
       )}

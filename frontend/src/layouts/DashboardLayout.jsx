@@ -207,7 +207,8 @@ export default function DashboardLayout({ mode, toggleTheme }) {
   // Common menus
   menuItems.push(
     { text: 'Class Schedules', icon: <CalendarMonthIcon />, path: `/dashboard/${user?.role}?tab=timetable` },
-    { text: 'Lost & Found', icon: <HelpIcon />, path: `/dashboard/${user?.role}?tab=lostfound` }
+    { text: 'Lost & Found', icon: <HelpIcon />, path: `/dashboard/${user?.role}?tab=lostfound` },
+    { text: 'Contact Us', icon: <ContactSupportIcon />, path: `/dashboard/${user?.role}?tab=contact` }
   );
 
   const drawerContent = (

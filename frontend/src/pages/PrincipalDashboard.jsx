@@ -48,6 +48,7 @@ import FeeInvoiceTab from '../components/FeeInvoiceTab';
 import PlacementTab from '../components/PlacementTab';
 import LibraryTab from '../components/LibraryTab';
 import NotificationTab from '../components/NotificationTab';
+import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 import HodManagementTab from '../components/HodManagementTab';
 
@@ -855,6 +856,10 @@ export default function PrincipalDashboard() {
           {/* NOTIFICATIONS TAB */}
           {tab === 'notifications' && (
             <NotificationTab role="admin" />
+          )}
+
+          {tab === 'contact' && (
+            <ContactSupportTab />
           )}
         </>
       )}
