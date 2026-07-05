@@ -51,6 +51,7 @@ import LibraryTab from '../components/LibraryTab';
 import ScholarshipTab from '../components/ScholarshipTab';
 import ContactSupportTab from '../components/ContactSupportTab';
 import NotificationTab from '../components/NotificationTab';
+import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 
 export default function AdminDashboard() {
   const [searchParams] = useSearchParams();
@@ -418,6 +419,9 @@ export default function AdminDashboard() {
                   </Card>
                 </Grid>
               </Grid>
+
+              {/* LATEST UPDATES FEED */}
+              <LatestUpdatesPanel role="admin" />
             </Box>
           )}
 

@@ -47,6 +47,7 @@ import ComplaintsTab from '../components/ComplaintsTab';
 import LibraryTab from '../components/LibraryTab';
 import ScholarshipTab from '../components/ScholarshipTab';
 import ContactSupportTab from '../components/ContactSupportTab';
+import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 
 export default function StudentDashboard() {
   const [searchParams] = useSearchParams();
@@ -462,6 +463,9 @@ export default function StudentDashboard() {
                   </Box>
                 )}
               </Card>
+
+              {/* LATEST UPDATES FEED */}
+              <LatestUpdatesPanel role="student" />
             </Box>
           )}
 

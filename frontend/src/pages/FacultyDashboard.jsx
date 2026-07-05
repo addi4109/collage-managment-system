@@ -48,6 +48,7 @@ import LibraryTab from '../components/LibraryTab';
 import FacultyResultsTab from '../components/FacultyResultsTab';
 import NotificationTab from '../components/NotificationTab';
 import ContactSupportTab from '../components/ContactSupportTab';
+import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 
 export default function FacultyDashboard() {
   const [searchParams] = useSearchParams();
@@ -529,6 +530,9 @@ export default function FacultyDashboard() {
                   </TableContainer>
                 )}
               </Card>
+
+              {/* LATEST UPDATES FEED */}
+              <LatestUpdatesPanel role="faculty" />
             </Box>
           )}
 
