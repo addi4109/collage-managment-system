@@ -254,15 +254,21 @@ export default function FacultyDashboard() {
     e.preventDefault();
     setSubmitLoading(true);
     try {
+      const payload = {
+        ...studentForm,
+        enrollmentNumber: studentForm.rollNumber,
+        email: studentForm.email || `${studentForm.username}@student.edu`,
+      };
+      
       if (isEditMode) {
-        await api.put(`/students/${editStudentId}`, studentForm);
+        await api.put(`/students/${editStudentId}`, payload);
         // If faculty provided a new password, reset it via dedicated endpoint
         if (studentForm.password && studentForm.password.trim()) {
           await api.post(`/students/${editStudentId}/reset-password`, { password: studentForm.password });
         }
         showToast('Student profile updated successfully.', 'success');
       } else {
-        await api.post('/students', studentForm);
+        await api.post('/students', payload);
         showToast('Student registered successfully.', 'success');
       }
       setOpenStudentDialog(false);
@@ -934,15 +940,6 @@ export default function FacultyDashboard() {
                 <TextField
                   fullWidth
                   required
-                  label="Enrollment Number"
-                  value={studentForm.enrollmentNumber}
-                  onChange={(e) => setStudentForm({ ...studentForm, enrollmentNumber: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
                   label="Username"
                   value={studentForm.username}
                   onChange={(e) => setStudentForm({ ...studentForm, username: e.target.value })}
@@ -975,17 +972,7 @@ export default function FacultyDashboard() {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  required
-                  type="email"
-                  label="Email"
-                  value={studentForm.email}
-                  onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Phone"
+                  label="Phone Number (Optional)"
                   value={studentForm.phone}
                   onChange={(e) => setStudentForm({ ...studentForm, phone: e.target.value })}
                 />
@@ -1025,32 +1012,6 @@ export default function FacultyDashboard() {
                 >
                   {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                 </TextField>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Parent/Guardian Name"
-                  value={studentForm.parentName}
-                  onChange={(e) => setStudentForm({ ...studentForm, parentName: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Parent Mobile"
-                  value={studentForm.parentMobile}
-                  onChange={(e) => setStudentForm({ ...studentForm, parentMobile: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={2}
-                  label="Residential Address"
-                  value={studentForm.address}
-                  onChange={(e) => setStudentForm({ ...studentForm, address: e.target.value })}
-                />
               </Grid>
             </Grid>
           </DialogContent>
