@@ -12,6 +12,7 @@ import ResultApprovalsTab from '../components/ResultApprovalsTab';
 import PlacementTab from '../components/PlacementTab';
 import NoticeTab from '../components/NoticeTab';
 import TimetableTab from '../components/TimetableTab';
+import LostFoundTab from '../components/LostFoundTab';
 import NotificationTab from '../components/NotificationTab';
 import ContactSupportTab from '../components/ContactSupportTab';
 import StudentApplicationsTab from '../components/StudentApplicationsTab';
