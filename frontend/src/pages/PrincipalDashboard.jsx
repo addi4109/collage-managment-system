@@ -59,7 +59,7 @@ import { getSemestersForYear } from '../utils/academicHelpers';
 
 export default function PrincipalDashboard() {
   const [searchParams] = useSearchParams();
-  const tab = searchParams.get('tab') || 'stats';
+  const tab = searchParams.get('tab') || 'overview';
   const { showToast } = useToast();
 
   // Data States
@@ -91,7 +91,7 @@ export default function PrincipalDashboard() {
   const loadData = async () => {
     setLoading(true);
     try {
-      if (tab === 'stats') {
+      if (tab === 'overview') {
         const res = await api.get('/reports/analytics');
         setStats(res.data);
       } else if (tab === 'faculty') {
@@ -166,7 +166,7 @@ export default function PrincipalDashboard() {
       ) : (
         <>
           {/* STATS VIEW */}
-          {tab === 'stats' && stats && (
+          {tab === 'overview' && stats && (
             <Box>
               <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} sm={6} md={3}>
