@@ -37,6 +37,7 @@ import { api, useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { TableSkeleton } from '../components/SkeletonLoader';
 import TimetableTab from '../components/TimetableTab';
+import StudentDirectoryTab from '../components/StudentDirectoryTab';
 import LostFoundTab from '../components/LostFoundTab';
 import AssignmentTab from '../components/AssignmentTab';
 import NoticeTab from '../components/NoticeTab';
@@ -70,11 +71,6 @@ export default function FacultyDashboard() {
   const [selectedSem, setSelectedSem] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
 
-  // Dialog States
-  const [openStudentDialog, setOpenStudentDialog] = useState(false);
-  const [studentForm, setStudentForm] = useState({ name: '', username: '', password: '', email: '', phone: '', rollNumber: '', enrollmentNumber: '', departmentId: '', year: '', semester: '', parentName: '', parentMobile: '', address: '' });
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editStudentId, setEditStudentId] = useState(null);
 
   // Admission Request Form
   const [openAdmissionDialog, setOpenAdmissionDialog] = useState(false);
@@ -218,79 +214,6 @@ export default function FacultyDashboard() {
     loadData();
   }, [tab]);
 
-  // Student CRUD Actions
-  const handleOpenStudentForm = (student = null) => {
-    setShowPassword(false);
-    if (student) {
-      setIsEditMode(true);
-      setEditStudentId(student._id);
-      setStudentForm({
-        name: student.userId.name,
-        username: student.userId.username,
-        password: '', // blank = keep current; fill in to reset
-        email: student.userId.email,
-        phone: student.phone || '',
-        rollNumber: student.rollNumber,
-        enrollmentNumber: student.enrollmentNumber,
-        departmentId: student.departmentId._id,
-        year: student.year,
-        semester: student.semester,
-        parentName: student.parentName || '',
-        parentMobile: student.parentMobile || '',
-        address: student.address || '',
-      });
-    } else {
-      setIsEditMode(false);
-      setStudentForm({
-        name: '', username: '', password: '', email: '', phone: '',
-        rollNumber: '', enrollmentNumber: '',
-        departmentId: selectedDept, year: selectedYear, semester: selectedSem || 'Sem 1',
-        parentName: '', parentMobile: '', address: ''
-      });
-    }
-    setOpenStudentDialog(true);
-  };
-
-  const handleStudentSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitLoading(true);
-    try {
-      const payload = {
-        ...studentForm,
-        enrollmentNumber: studentForm.rollNumber,
-        email: studentForm.email || `${studentForm.username}@student.edu`,
-      };
-      
-      if (isEditMode) {
-        await api.put(`/students/${editStudentId}`, payload);
-        // If faculty provided a new password, reset it via dedicated endpoint
-        if (studentForm.password && studentForm.password.trim()) {
-          await api.post(`/students/${editStudentId}/reset-password`, { password: studentForm.password });
-        }
-        showToast('Student profile updated successfully.', 'success');
-      } else {
-        await api.post('/students', payload);
-        showToast('Student registered successfully.', 'success');
-      }
-      setOpenStudentDialog(false);
-      loadData();
-    } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to save student profile.', 'error');
-    } finally {
-      setSubmitLoading(false);
-    }
-  };
-
-  const handleDeleteStudent = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this student?')) return;
-    try {
-      await api.delete(`/students/${id}`);
-      showToast('Student soft-deleted successfully.', 'success');
-      loadData();
-    } catch (err) {
-      showToast('Failed to delete student.', 'error');
-    }
-  };
 
   // Admission Request Form
   const handleOpenAdmissionForm = () => {
@@ -544,47 +467,7 @@ export default function FacultyDashboard() {
 
           {/* STUDENT CRUD */}
           {tab === 'students' && (
-            <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Students Directory</Typography>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenStudentForm()}>
-                  Register Student
-                </Button>
-              </Box>
-              <TableContainer component={Paper} sx={{ borderRadius: '16px' }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Roll Number</TableCell>
-                      <TableCell>Enrollment</TableCell>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Department</TableCell>
-                      <TableCell>Class</TableCell>
-                      <TableCell align="right">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {students.map((s) => (
-                      <TableRow key={s._id}>
-                        <TableCell sx={{ fontWeight: 'bold' }}>{s.rollNumber}</TableCell>
-                        <TableCell>{s.enrollmentNumber}</TableCell>
-                        <TableCell>{s.userId?.name}</TableCell>
-                        <TableCell>{s.departmentId?.name}</TableCell>
-                        <TableCell>{s.year} - {s.semester}</TableCell>
-                        <TableCell align="right">
-                          <IconButton size="small" color="primary" onClick={() => handleOpenStudentForm(s)}>
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton size="small" color="error" onClick={() => handleDeleteStudent(s._id)}>
-                            <DeleteIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
+            <StudentDirectoryTab role="faculty" />
           )}
 
           {/* ADMISSIONS REQUEST */}
@@ -913,117 +796,6 @@ export default function FacultyDashboard() {
         </>
       )}
 
-      {/* DYNAMIC REGISTER STUDENT DIALOG */}
-      <Dialog open={openStudentDialog} onClose={() => setOpenStudentDialog(false)} maxWidth="md" fullWidth>
-        <form onSubmit={handleStudentSubmit}>
-          <DialogTitle sx={{ fontWeight: 'bold' }}>{isEditMode ? 'Modify Student Profile' : 'Register New Student'}</DialogTitle>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Student Full Name"
-                  value={studentForm.name}
-                  onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Roll Number"
-                  value={studentForm.rollNumber}
-                  onChange={(e) => setStudentForm({ ...studentForm, rollNumber: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Username"
-                  value={studentForm.username}
-                  onChange={(e) => setStudentForm({ ...studentForm, username: e.target.value })}
-                  disabled={isEditMode}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required={!isEditMode}
-                  type={showPassword ? 'text' : 'password'}
-                  label={isEditMode ? 'Reset Password (leave blank to keep current)' : 'Password'}
-                  placeholder={isEditMode ? '••••••••  (optional)' : '••••••••'}
-                  value={studentForm.password || ''}
-                  onChange={(e) => setStudentForm({ ...studentForm, password: e.target.value })}
-                  InputProps={{
-                    endAdornment: (
-                      <IconButton
-                        size="small"
-                        onClick={() => setShowPassword(v => !v)}
-                        edge="end"
-                        title={showPassword ? 'Hide password' : 'Show password'}
-                      >
-                        {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-                      </IconButton>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Phone Number (Optional)"
-                  value={studentForm.phone}
-                  onChange={(e) => setStudentForm({ ...studentForm, phone: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  select
-                  fullWidth
-                  required
-                  label="Department"
-                  value={studentForm.departmentId}
-                  onChange={(e) => setStudentForm({ ...studentForm, departmentId: e.target.value })}
-                >
-                  {depts.map(d => <MenuItem key={d._id} value={d._id}>{d.name}</MenuItem>)}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  select
-                  fullWidth
-                  required
-                  label="Year"
-                  value={studentForm.year}
-                  onChange={(e) => setStudentForm({ ...studentForm, year: e.target.value })}
-                >
-                  {user.assignedYears.map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  select
-                  fullWidth
-                  required
-                  label="Semester"
-                  value={studentForm.semester}
-                  onChange={(e) => setStudentForm({ ...studentForm, semester: e.target.value })}
-                >
-                  {getSemestersForYear(studentForm.year).map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-                </TextField>
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenStudentDialog(false)}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={submitLoading}>
-              {submitLoading ? <CircularProgress size={24} /> : 'Save Student'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
 
       {/* ADMISSION ENQUIRY DIALOG */}
       <Dialog open={openAdmissionDialog} onClose={() => setOpenAdmissionDialog(false)} maxWidth="sm" fullWidth>
