@@ -31,6 +31,7 @@ import { getSemestersForYear } from '../utils/academicHelpers';
 
 export default function NoticeTab({ role }) {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [notices, setNotices] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -45,7 +46,7 @@ export default function NoticeTab({ role }) {
     category: 'General',
     priority: 'Medium',
     pinned: false,
-    departmentId: '',
+    departmentId: role === 'hod' ? user?.departmentId || '' : '',
     year: 'All',
     semester: 'All',
     publishAt: '',
@@ -69,7 +70,7 @@ export default function NoticeTab({ role }) {
       const res = await api.get('/notices');
       setNotices(res.data);
 
-      if (role === 'admin' || role === 'faculty') {
+      if (['admin', 'principal', 'faculty', 'hod'].includes(role)) {
         const depRes = await api.get('/departments');
         setDepartments(depRes.data);
       }
@@ -138,8 +139,15 @@ export default function NoticeTab({ role }) {
         <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
           Notice Board
         </Typography>
-        {(role === 'admin' || role === 'faculty') && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpenCreate(true)}>
+        {(['admin', 'principal', 'faculty', 'hod'].includes(role)) && (
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => {
+            setForm({
+              title: '', content: '', category: 'General', priority: 'Medium', pinned: false,
+              departmentId: role === 'hod' ? user?.departmentId || '' : '',
+              year: 'All', semester: 'All', publishAt: '', expiryDate: ''
+            });
+            setOpenCreate(true);
+          }}>
             Post Notice
           </Button>
         )}
@@ -300,9 +308,10 @@ export default function NoticeTab({ role }) {
               label="Target Department"
               fullWidth
               value={form.departmentId}
+              disabled={role === 'hod'}
               onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
             >
-              <MenuItem value="">All Departments</MenuItem>
+              {role !== 'hod' && <MenuItem value="">All Departments</MenuItem>}
               {departments.map((d) => (
                 <MenuItem key={d._id} value={d._id}>{d.name}</MenuItem>
               ))}
