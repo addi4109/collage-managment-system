@@ -187,7 +187,6 @@ export default function DashboardLayout({ mode, toggleTheme }) {
     );
   } else if (user?.role === 'principal') {
     menuItems.push(
-      { text: 'College Overview', icon: <DashboardIcon />, path: `/dashboard/principal?tab=overview` },
       { text: 'HOD Management', icon: <PeopleIcon />, path: `/dashboard/principal?tab=hods` },
       { text: 'Department Directory', icon: <MenuBookIcon />, path: `/dashboard/principal?tab=departments` },
       { text: 'Faculty Directory', icon: <PeopleIcon />, path: `/dashboard/principal?tab=faculty` },

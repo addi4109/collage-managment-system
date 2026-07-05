@@ -52,6 +52,7 @@ import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 import HodManagementTab from '../components/HodManagementTab';
 import FacultyDirectoryTab from '../components/FacultyDirectoryTab';
+import DepartmentDirectoryTab from '../components/DepartmentDirectoryTab';
 import ApplicationApprovalsTab from '../components/ApplicationApprovalsTab';
 import ExamApprovalsTab from '../components/ExamApprovalsTab';
 import ResultApprovalsTab from '../components/ResultApprovalsTab';
@@ -59,7 +60,7 @@ import { getSemestersForYear } from '../utils/academicHelpers';
 
 export default function PrincipalDashboard() {
   const [searchParams] = useSearchParams();
-  const tab = searchParams.get('tab') || 'overview';
+  const tab = searchParams.get('tab') || 'hods';
   const { showToast } = useToast();
 
   // Data States
@@ -91,10 +92,7 @@ export default function PrincipalDashboard() {
   const loadData = async () => {
     setLoading(true);
     try {
-      if (tab === 'overview') {
-        const res = await api.get('/reports/analytics');
-        setStats(res.data);
-      } else if (tab === 'faculty') {
+      if (tab === 'faculty') {
         const res = await api.get('/faculty');
         setFaculties(res.data);
         await loadDepartments();
@@ -165,88 +163,9 @@ export default function PrincipalDashboard() {
         <TableSkeleton />
       ) : (
         <>
-          {/* STATS VIEW */}
-          {tab === 'overview' && stats && (
-            <Box>
-              <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{ p: 3, borderRadius: '16px', bgcolor: 'primary.light', color: '#fff' }}>
-                    <Typography variant="body2">Total Students Enrolled</Typography>
-                    <Typography variant="h3" sx={{ fontWeight: 800 }}>{stats.totalStudents}</Typography>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{ p: 3, borderRadius: '16px', bgcolor: 'secondary.light', color: '#fff' }}>
-                    <Typography variant="body2">Faculty Strength</Typography>
-                    <Typography variant="h3" sx={{ fontWeight: 800 }}>{stats.totalFaculty}</Typography>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{ p: 3, borderRadius: '16px', bgcolor: 'success.light', color: '#fff' }}>
-                    <Typography variant="body2">Average Attendance Rate</Typography>
-                    <Typography variant="h3" sx={{ fontWeight: 800 }}>{stats.averageAttendance}%</Typography>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{ p: 3, borderRadius: '16px', bgcolor: 'warning.light', color: '#fff' }}>
-                    <Typography variant="body2">Pending Applications</Typography>
-                    <Typography variant="h3" sx={{ fontWeight: 800 }}>{stats.pendingApplications}</Typography>
-                  </Card>
-                </Grid>
-              </Grid>
-
-              <Grid container spacing={4}>
-                <Grid item xs={12} md={7}>
-                  <Card sx={{ p: 3, borderRadius: '16px' }}>
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>Fee Collection Analytics</Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={[
-                        { name: 'Total Billed', amount: stats.billing?.totalBilled || 0 },
-                        { name: 'Total Collected', amount: stats.billing?.totalPaid || 0 },
-                        { name: 'Total Due', amount: stats.billing?.totalDue || 0 }
-                      ]}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="amount" fill="#4F46E5" radius={[8, 8, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} md={5}>
-                  <Card sx={{ p: 3, borderRadius: '16px' }}>
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>Exam Status Matrix</Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: 'Draft', value: stats.examStats?.draft || 0 },
-                            { name: 'Scheduled', value: stats.examStats?.scheduled || 0 },
-                            { name: 'Active', value: stats.examStats?.active || 0 },
-                            { name: 'Ended', value: stats.examStats?.ended || 0 }
-                          ].filter(d => d.value > 0)}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name }) => name}
-                        >
-                          {['#cbd5e1', '#3b82f6', '#10b981', '#ef4444'].map((color, index) => (
-                            <Cell key={`cell-${index}`} fill={color} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </Card>
-                </Grid>
-              </Grid>
-
-              {/* LATEST UPDATES FEED */}
-              <LatestUpdatesPanel role="admin" />
-            </Box>
+          {/* DEPARTMENT DIRECTORY */}
+          {tab === 'departments' && (
+            <DepartmentDirectoryTab />
           )}
 
           {/* FACULTY MANAGEMENT */}
