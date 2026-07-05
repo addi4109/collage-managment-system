@@ -248,14 +248,14 @@ export default function PrincipalDashboard() {
             <FeeInvoiceTab role="admin" />
           )}
 
-          {/* PLACEMENT CELL TAB */}
-          {tab === 'placements' && (
-            <PlacementTab role="admin" />
-          )}
-
           {/* LIBRARY LEDGER TAB */}
           {tab === 'library' && (
-            <LibraryTab role="admin" />
+            <LibraryTab role="principal" />
+          )}
+
+          {/* PLACEMENT DRIVES TAB */}
+          {tab === 'placements' && (
+            <PlacementTab role="principal" />
           )}
 
           {/* APPLICATION APPROVALS TAB */}
