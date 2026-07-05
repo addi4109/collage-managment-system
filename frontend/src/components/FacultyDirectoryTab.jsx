@@ -32,7 +32,7 @@ export default function FacultyDirectoryTab({ role }) {
   const loadData = async () => {
     setLoading(true);
     try {
-      const endpoint = role === 'hod' ? '/hod/faculty' : '/faculty';
+      const endpoint = '/faculty';
       const res = await api.get(endpoint);
       setFaculties(res.data);
       
