@@ -30,8 +30,8 @@ router.post('/:id/end', requireRole(['faculty']), end);
 router.get('/:id/results', requireRole(['faculty', 'principal']), getResults);
 
 // Admin Review
-router.get('/pending', requireRole(['principal']), listPending);
-router.post('/:id/review', requireRole(['principal']), review);
+router.get('/pending', requireRole(['principal', 'hod']), listPending);
+router.post('/:id/review', requireRole(['principal', 'hod']), review);
 
 // Student Exam taking
 router.get('/student', requireRole(['student']), listStudentExams);

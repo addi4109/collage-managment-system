@@ -54,7 +54,8 @@ export const submit = async (req, res) => {
 
 export const listPending = async (req, res) => {
   try {
-    const results = await resultService.getPendingResults();
+    const departmentId = req.user.role === 'hod' ? req.user.departmentId : null;
+    const results = await resultService.getPendingResults(departmentId);
     res.status(200).json(results);
   } catch (err) {
     res.status(500).json({ message: 'Failed to retrieve pending results.' });

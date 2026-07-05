@@ -28,8 +28,12 @@ export const submitExamForApproval = async (examId, facultyId) => {
   return await exam.save();
 };
 
-export const getPendingExams = async () => {
-  return await Exam.find({ status: 'pending_approval', isDeleted: false })
+export const getPendingExams = async (departmentId = null) => {
+  const query = { status: 'pending_approval', isDeleted: false };
+  if (departmentId) {
+    query.departmentId = departmentId;
+  }
+  return await Exam.find(query)
     .populate('subjectId', 'name code')
     .populate('departmentId', 'name code')
     .populate('facultyId', 'name email');

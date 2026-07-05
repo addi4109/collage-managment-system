@@ -9,8 +9,8 @@ const router = express.Router();
 router.post('/', authenticateToken, requireRole(['student', 'faculty']), upload.array('attachments'), submitApplication);
 router.get('/my', authenticateToken, requireRole(['student', 'faculty']), listMyApplications);
 
-// Admin-only reviews
-router.get('/pending', authenticateToken, requireRole(['principal']), listPending);
-router.post('/review/:id', authenticateToken, requireRole(['principal']), review);
+// Admin/HOD reviews
+router.get('/pending', authenticateToken, requireRole(['principal', 'hod']), listPending);
+router.post('/review/:id', authenticateToken, requireRole(['principal', 'hod']), review);
 
 export default router;

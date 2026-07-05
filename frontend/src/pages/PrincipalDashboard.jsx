@@ -52,6 +52,11 @@ import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 import HodManagementTab from '../components/HodManagementTab';
 import SubjectManagementTab from '../components/SubjectManagementTab';
+import FacultyDirectoryTab from '../components/FacultyDirectoryTab';
+import StudentDirectoryTab from '../components/StudentDirectoryTab';
+import ApplicationApprovalsTab from '../components/ApplicationApprovalsTab';
+import ExamApprovalsTab from '../components/ExamApprovalsTab';
+import ResultApprovalsTab from '../components/ResultApprovalsTab';
 import { getSemestersForYear } from '../utils/academicHelpers';
 
 export default function PrincipalDashboard() {
@@ -122,22 +127,6 @@ export default function PrincipalDashboard() {
       showToast('Failed to load portal data.', 'error');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Review Application (Approve / Reject)
-  const handleApplicationReview = async (id, status) => {
-    const remarks = status === 'rejected'
-      ? window.prompt('Enter rejection reason (optional):')
-      : '';
-    if (status === 'rejected' && remarks === null) return; // cancelled
-    try {
-      await api.post(`/applications/review/${id}`, { status, remarks: remarks || '' });
-      showToast(`Application ${status} successfully.`, 'success');
-      const res = await api.get('/applications/pending');
-      setPendingApplications(res.data);
-    } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to review application.', 'error');
     }
   };
 
@@ -354,57 +343,19 @@ export default function PrincipalDashboard() {
             <HodManagementTab />
           )}
 
+          {/* FACULTY MANAGEMENT */}
           {tab === 'faculty' && (
-            <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Faculty Directory</Typography>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenFacultyForm()}>
-                  Register Faculty
-                </Button>
-              </Box>
-              <TableContainer component={Paper} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Username</TableCell>
-                      <TableCell>Assigned Departments</TableCell>
-                      <TableCell>Assigned Years</TableCell>
-                      <TableCell align="right">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {faculties.map((f) => (
-                      <TableRow key={f._id}>
-                        <TableCell sx={{ fontWeight: 'bold' }}>{f.userId?.name}</TableCell>
-                        <TableCell>{f.userId?.username}</TableCell>
-                        <TableCell>
-                          {f.assignedDepartments.map(d => (
-                            <Chip key={d._id} label={d.name} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
-                          ))}
-                        </TableCell>
-                        <TableCell>
-                          {f.assignedYears.map((y, idx) => (
-                            <Chip key={idx} label={y} size="small" variant="outlined" sx={{ mr: 0.5 }} />
-                          ))}
-                        </TableCell>
-                        <TableCell align="right">
-                          <IconButton size="small" onClick={() => handleResetPasswordPrompt(f)} color="warning" title="Reset Password">
-                            <LockResetIcon />
-                          </IconButton>
-                          <IconButton size="small" onClick={() => handleOpenFacultyForm(f)} color="primary">
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton size="small" onClick={() => handleDeleteFaculty(f._id)} color="error">
-                            <DeleteIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
+            <FacultyDirectoryTab 
+              role="principal" 
+              handleOpenFacultyForm={handleOpenFacultyForm} 
+              handleResetPasswordPrompt={handleResetPasswordPrompt} 
+              handleDeleteFaculty={handleDeleteFaculty} 
+            />
+          )}
+
+          {/* STUDENT MANAGEMENT */}
+          {tab === 'students' && (
+            <StudentDirectoryTab role="principal" />
           )}
 
           {/* ADMISSIONS APPROVAL */}
@@ -452,127 +403,10 @@ export default function PrincipalDashboard() {
           )}
 
           {/* RESULT DECLARATION */}
-          {tab === 'results' && (
-            <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Pending Student Results</Typography>
-                {resultBatches.length > 0 && (
-                  <Button variant="contained" color="success" onClick={handleDeclareAll}>
-                    Declare All Pending
-                  </Button>
-                )}
-              </Box>
-              {resultBatches.length === 0 ? (
-                <Typography color="text.secondary">No submitted student results found.</Typography>
-              ) : (
-                <TableContainer component={Paper} sx={{ borderRadius: '16px' }}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Student</TableCell>
-                        <TableCell>Roll Number</TableCell>
-                        <TableCell>Department</TableCell>
-                        <TableCell>Class</TableCell>
-                        <TableCell>Submitted By</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell align="right">Action</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {resultBatches.map((r) => (
-                        <TableRow key={r._id}>
-                          <TableCell sx={{ fontWeight: 'bold' }}>{r.studentName}</TableCell>
-                          <TableCell>{r.rollNumber}</TableCell>
-                          <TableCell>{r.departmentId?.name}</TableCell>
-                          <TableCell>{r.year} - {r.semester}</TableCell>
-                          <TableCell>{r.facultyId?.name}</TableCell>
-                          <TableCell>
-                            <Chip label={r.status} color="warning" size="small" />
-                          </TableCell>
-                          <TableCell align="right">
-                            <Button size="small" variant="contained" color="success" onClick={() => handleDeclareBatch(r._id)}>
-                              Approve & Declare
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </Box>
-          )}
+          {tab === 'results' && <ResultApprovalsTab />}
 
           {/* EXAM APPROVALS */}
-          {tab === 'exams' && (
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 3 }}>Pending Exam Approvals</Typography>
-              {pendingExams.length === 0 ? (
-                <Typography color="text.secondary">No exams are pending approval right now.</Typography>
-              ) : (
-                <TableContainer component={Paper} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Exam Title</TableCell>
-                        <TableCell>Subject</TableCell>
-                        <TableCell>Department</TableCell>
-                        <TableCell>Class</TableCell>
-                        <TableCell>Duration</TableCell>
-                        <TableCell>Created By</TableCell>
-                        <TableCell align="center">Questions</TableCell>
-                        <TableCell align="right">Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {pendingExams.map((e) => (
-                        <TableRow key={e._id}>
-                          <TableCell sx={{ fontWeight: 'bold' }}>{e.title}</TableCell>
-                          <TableCell>{e.subjectId?.name || 'N/A'}</TableCell>
-                          <TableCell>{e.departmentId?.name || 'N/A'}</TableCell>
-                          <TableCell>{e.year} - {e.semester}</TableCell>
-                          <TableCell>{e.duration} mins</TableCell>
-                          <TableCell>{e.facultyId?.name || 'N/A'}</TableCell>
-                          <TableCell align="center">
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => {
-                                setSelectedExam(e);
-                                setOpenExamQuestionsDialog(true);
-                              }}
-                            >
-                              View ({e.questions?.length || 0})
-                            </Button>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                              <Button
-                                size="small"
-                                variant="contained"
-                                color="success"
-                                onClick={() => handleReviewExam(e._id, true)}
-                              >
-                                Approve
-                              </Button>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="error"
-                                onClick={() => handleReviewExam(e._id, false)}
-                              >
-                                Reject
-                              </Button>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </Box>
-          )}
+          {tab === 'exams' && <ExamApprovalsTab />}
 
           {/* SUBJECTS DIRECTORY */}
           {tab === 'subjects' && (
@@ -648,78 +482,7 @@ export default function PrincipalDashboard() {
           )}
 
           {/* APPLICATION APPROVALS TAB */}
-          {tab === 'applications' && (
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>Application Approvals</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Review leave requests, document requests, and other student/faculty applications.
-              </Typography>
-              {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
-              ) : pendingApplications.length === 0 ? (
-                <Card sx={{ p: 4, textAlign: 'center', borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
-                  <CheckCircleOutlineIcon sx={{ fontSize: 56, color: 'success.main', mb: 1 }} />
-                  <Typography variant="h6" color="text.secondary">All caught up!</Typography>
-                  <Typography variant="body2" color="text.secondary">No pending applications at this time.</Typography>
-                </Card>
-              ) : (
-                <Grid container spacing={3}>
-                  {pendingApplications.map((app) => (
-                    <Grid item xs={12} md={6} key={app._id}>
-                      <Card sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
-                        <Box sx={{ p: 0.5, bgcolor: app.type === 'leave' ? 'warning.light' : app.type === 'document' ? 'info.light' : 'primary.light' }} />
-                        <CardContent sx={{ p: 3 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                            <Box>
-                              <Chip label={app.type?.replace('_', ' ').toUpperCase() || 'REQUEST'} size="small" color={app.type === 'leave' ? 'warning' : 'info'} sx={{ mb: 0.5, fontWeight: 'bold', textTransform: 'capitalize' }} />
-                              <Typography variant="h6" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>{app.subject || app.title || 'Application'}</Typography>
-                            </Box>
-                            <Chip label="Pending" size="small" sx={{ bgcolor: 'warning.light', color: 'warning.dark', fontWeight: 'bold' }} />
-                          </Box>
-
-                          <Divider sx={{ my: 1.5 }} />
-
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                            <AccountCircleIcon fontSize="small" color="action" />
-                            <Typography variant="body2"><strong>From:</strong> {app.applicant?.name || 'Unknown'} ({app.applicant?.role || '—'})</Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                            <CalendarMonthIcon fontSize="small" color="action" />
-                            <Typography variant="body2"><strong>Submitted:</strong> {new Date(app.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</Typography>
-                          </Box>
-                          {app.description && (
-                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, p: 1.5, bgcolor: 'action.hover', borderRadius: '8px', fontStyle: 'italic' }}>
-                              "{app.description}"
-                            </Typography>
-                          )}
-                        </CardContent>
-                        <CardActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-                          <Button
-                            variant="contained"
-                            color="success"
-                            startIcon={<CheckCircleOutlineIcon />}
-                            onClick={() => handleApplicationReview(app._id, 'approved')}
-                            sx={{ borderRadius: '8px', flex: 1 }}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            startIcon={<CancelIcon />}
-                            onClick={() => handleApplicationReview(app._id, 'rejected')}
-                            sx={{ borderRadius: '8px', flex: 1 }}
-                          >
-                            Reject
-                          </Button>
-                        </CardActions>
-                      </Card>
-                    </Grid>
-                  ))}
-                </Grid>
-              )}
-            </Box>
-          )}
+          {tab === 'applications' && <ApplicationApprovalsTab />}
 
           {/* NOTIFICATIONS TAB */}
           {tab === 'notifications' && (

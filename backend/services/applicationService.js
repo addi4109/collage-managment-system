@@ -21,8 +21,12 @@ export const createApplication = async (appData, requestUser) => {
   return await application.save();
 };
 
-export const getPendingApplications = async () => {
-  return await Application.find({ status: 'pending', isDeleted: false })
+export const getPendingApplications = async (departmentId = null) => {
+  const query = { status: 'pending', isDeleted: false };
+  if (departmentId) {
+    query.departmentId = departmentId;
+  }
+  return await Application.find(query)
     .populate('departmentId', 'name code')
     .sort({ createdAt: -1 });
 };

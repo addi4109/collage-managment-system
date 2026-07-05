@@ -34,7 +34,8 @@ export const listMyApplications = async (req, res) => {
 
 export const listPending = async (req, res) => {
   try {
-    const apps = await applicationService.getPendingApplications();
+    const departmentId = req.user.role === 'hod' ? req.user.departmentId : null;
+    const apps = await applicationService.getPendingApplications(departmentId);
     res.status(200).json(apps);
   } catch (err) {
     res.status(500).json({ message: 'Failed to retrieve pending applications.' });

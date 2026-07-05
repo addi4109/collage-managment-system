@@ -21,7 +21,8 @@ export const submitForApproval = async (req, res) => {
 
 export const listPending = async (req, res) => {
   try {
-    const exams = await examService.getPendingExams();
+    const departmentId = req.user.role === 'hod' ? req.user.departmentId : null;
+    const exams = await examService.getPendingExams(departmentId);
     res.status(200).json(exams);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch pending exams.' });

@@ -13,10 +13,10 @@ router.post('/student/:studentId', requireRole(['faculty']), saveDraft);
 router.post('/student/:studentId/submit', requireRole(['faculty']), submit);
 
 // Admin routes
-router.get('/pending', requireRole(['principal']), listPending);
-router.post('/approve/:id', requireRole(['principal']), approve);
-router.post('/declare/:id', requireRole(['principal']), declare);
-router.post('/declare-all', requireRole(['principal']), declareAll);
+router.get('/pending', requireRole(['principal', 'hod']), listPending);
+router.post('/approve/:id', requireRole(['principal', 'hod']), approve);
+router.post('/declare/:id', requireRole(['principal', 'hod']), declare);
+router.post('/declare-all', requireRole(['principal', 'hod']), declareAll);
 
 // Student routes
 router.get('/marksheet', requireRole(['student']), getMarksheet);

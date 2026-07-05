@@ -209,8 +209,12 @@ export const submitStudentResult = async (studentId, semester, facultyId) => {
   return result;
 };
 
-export const getPendingResults = async () => {
-  return await Result.find({ status: 'submitted' })
+export const getPendingResults = async (departmentId = null) => {
+  const query = { status: 'submitted' };
+  if (departmentId) {
+    query.departmentId = departmentId;
+  }
+  return await Result.find(query)
     .populate('departmentId', 'name code')
     .populate('facultyId', 'name email')
     .sort({ updatedAt: -1 });
