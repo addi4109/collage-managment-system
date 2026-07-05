@@ -3,8 +3,9 @@ import {
   Box, Typography, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Button, Chip, IconButton, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
-  Grid
+  Grid, Accordion, AccordionSummary, AccordionDetails
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -142,56 +143,90 @@ export default function FacultyDirectoryTab({ role }) {
       ) : faculties.length === 0 ? (
         <Typography color="text.secondary">No faculty members found.</Typography>
       ) : (
-        <TableContainer component={Paper} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Username</TableCell>
-                <TableCell>Assigned Departments</TableCell>
-                <TableCell>Assigned Years</TableCell>
-                <TableCell>Assigned Subjects</TableCell>
-                {(role === 'principal' || role === 'hod') && <TableCell align="right">Actions</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {faculties.map((f) => (
-                <TableRow key={f._id}>
-                  <TableCell sx={{ fontWeight: 'bold' }}>{f.userId?.name}</TableCell>
-                  <TableCell>{f.userId?.username}</TableCell>
-                  <TableCell>
-                    {f.assignedDepartments?.map(d => (
-                      <Chip key={d._id} label={d.name} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
-                    ))}
-                  </TableCell>
-                  <TableCell>
-                    {f.assignedYears?.map((y, idx) => (
-                      <Chip key={idx} label={y} size="small" variant="outlined" sx={{ mr: 0.5 }} />
-                    ))}
-                  </TableCell>
-                  <TableCell>
-                    {f.assignedSubjects?.map(s => (
-                      <Chip key={s._id} label={s.name} size="small" variant="outlined" color="secondary" sx={{ mr: 0.5, mb: 0.5 }} />
-                    ))}
-                  </TableCell>
-                  {(role === 'principal' || role === 'hod') && (
-                    <TableCell align="right">
-                      <IconButton size="small" onClick={() => handleResetPasswordPrompt(f)} color="warning" title="Reset Password">
-                        <LockResetIcon />
-                      </IconButton>
-                      <IconButton size="small" onClick={() => handleOpenForm(f)} color="primary">
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton size="small" onClick={() => handleDelete(f._id)} color="error">
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Box>
+          {(() => {
+            const allDepartmentsMap = new Map();
+            faculties.forEach(f => {
+              if (f.assignedDepartments && f.assignedDepartments.length > 0) {
+                f.assignedDepartments.forEach(d => {
+                  if (!allDepartmentsMap.has(d._id)) {
+                    allDepartmentsMap.set(d._id, d);
+                  }
+                });
+              } else {
+                if (!allDepartmentsMap.has('unassigned')) {
+                  allDepartmentsMap.set('unassigned', { _id: 'unassigned', name: 'Unassigned Departments' });
+                }
+              }
+            });
+            const allDepartmentsList = Array.from(allDepartmentsMap.values());
+
+            return allDepartmentsList.map(dept => {
+              const deptFaculties = faculties.filter(f => {
+                if (dept._id === 'unassigned') {
+                  return !f.assignedDepartments || f.assignedDepartments.length === 0;
+                }
+                return f.assignedDepartments?.some(d => d._id === dept._id);
+              });
+
+              if (deptFaculties.length === 0) return null;
+
+              return (
+                <Accordion key={dept._id} defaultExpanded sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' }, boxShadow: 2, border: '1px solid', borderColor: 'divider' }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'action.hover', borderRadius: '12px' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{dept.name}</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ p: 0 }}>
+                    <TableContainer component={Paper} elevation={0} sx={{ borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Name</TableCell>
+                            <TableCell>Username</TableCell>
+                            <TableCell>Assigned Years</TableCell>
+                            <TableCell>Assigned Subjects</TableCell>
+                            {(role === 'principal' || role === 'hod') && <TableCell align="right">Actions</TableCell>}
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {deptFaculties.map((f) => (
+                            <TableRow key={f._id}>
+                              <TableCell sx={{ fontWeight: 'bold' }}>{f.userId?.name}</TableCell>
+                              <TableCell>{f.userId?.username}</TableCell>
+                              <TableCell>
+                                {f.assignedYears?.map((y, idx) => (
+                                  <Chip key={idx} label={y} size="small" variant="outlined" sx={{ mr: 0.5 }} />
+                                ))}
+                              </TableCell>
+                              <TableCell>
+                                {f.assignedSubjects?.map(s => (
+                                  <Chip key={s._id} label={s.name} size="small" variant="outlined" color="secondary" sx={{ mr: 0.5, mb: 0.5 }} />
+                                ))}
+                              </TableCell>
+                              {(role === 'principal' || role === 'hod') && (
+                                <TableCell align="right">
+                                  <IconButton size="small" onClick={() => handleResetPasswordPrompt(f)} color="warning" title="Reset Password">
+                                    <LockResetIcon />
+                                  </IconButton>
+                                  <IconButton size="small" onClick={() => handleOpenForm(f)} color="primary">
+                                    <EditIcon />
+                                  </IconButton>
+                                  <IconButton size="small" onClick={() => handleDelete(f._id)} color="error">
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </TableCell>
+                              )}
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </AccordionDetails>
+                </Accordion>
+              );
+            });
+          })()}
+        </Box>
       )}
 
       {/* Faculty Form Dialog */}
