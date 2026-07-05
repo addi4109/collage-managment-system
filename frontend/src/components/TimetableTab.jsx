@@ -40,6 +40,7 @@ export default function TimetableTab({ role }) {
   const isAdmin = role === 'admin';
   const isHod = role === 'hod';
   const isAdminOrHod = isAdmin || isHod;
+  const isPrincipal = role === 'principal';
   const isFaculty = role === 'faculty';
   const isStudent = role === 'student';
 
@@ -103,9 +104,9 @@ export default function TimetableTab({ role }) {
     }
   }, [isStudent, user]);
 
-  // Load departments if admin, hod or student
+  // Load departments if admin, hod, principal or student
   useEffect(() => {
-    if (isAdminOrHod || isStudent) {
+    if (isAdminOrHod || isPrincipal || isStudent) {
       fetchDepartments();
     }
   }, [role]);
@@ -144,7 +145,7 @@ export default function TimetableTab({ role }) {
 
   // Refetch list when filters change
   useEffect(() => {
-    if (isAdminOrHod || isStudent) {
+    if (isAdminOrHod || isPrincipal || isStudent) {
       fetchClassSchedule();
     }
   }, [selectedDept, selectedYear, selectedSem]);
@@ -208,12 +209,13 @@ export default function TimetableTab({ role }) {
 
   return (
     <Box sx={{ p: 1 }}>
-      {/* ── ADMIN/HOD VIEW: Timetable Builder ── */}
-      {isAdminOrHod && (
+      {/* ── ADMIN/HOD/PRINCIPAL VIEW: Timetable Builder ── */}
+      {(isAdminOrHod || isPrincipal) && (
         <Grid container spacing={4}>
-          {/* Create Form Column */}
-          <Grid item xs={12} md={5}>
-            <Card sx={{ p: 4, borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
+          {/* Create Form Column (Hidden for Principal) */}
+          {isAdminOrHod && (
+            <Grid item xs={12} md={5}>
+              <Card sx={{ p: 4, borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
               <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CalendarMonthIcon color="primary" /> Create Timetable Record
               </Typography>
@@ -354,9 +356,10 @@ export default function TimetableTab({ role }) {
               </form>
             </Card>
           </Grid>
+          )}
 
           {/* List and Preview Column */}
-          <Grid item xs={12} md={7}>
+          <Grid item xs={12} md={isAdminOrHod ? 7 : 12}>
             <Card sx={{ p: 4, borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
               <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
                 Class Timetable Slots
@@ -416,7 +419,7 @@ export default function TimetableTab({ role }) {
                                         <TableCell sx={{ fontWeight: 'bold' }}>Subject</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }}>Faculty</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }}>Room</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold' }} align="right">Action</TableCell>
+                                        {isAdminOrHod && <TableCell sx={{ fontWeight: 'bold' }} align="right">Action</TableCell>}
                                       </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -427,11 +430,13 @@ export default function TimetableTab({ role }) {
                                           <TableCell sx={{ fontWeight: 'medium' }}>{slot.subjectName}</TableCell>
                                           <TableCell>{slot.facultyName}</TableCell>
                                           <TableCell>{slot.roomNumber}</TableCell>
-                                          <TableCell align="right">
-                                            <IconButton color="error" size="small" onClick={() => handleDelete(slot._id)}>
-                                              <DeleteIcon fontSize="small" />
-                                            </IconButton>
-                                          </TableCell>
+                                          {isAdminOrHod && (
+                                            <TableCell align="right">
+                                              <IconButton color="error" size="small" onClick={() => handleDelete(slot._id)}>
+                                                <DeleteIcon fontSize="small" />
+                                              </IconButton>
+                                            </TableCell>
+                                          )}
                                         </TableRow>
                                       ))}
                                     </TableBody>

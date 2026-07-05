@@ -225,7 +225,7 @@ export default function PrincipalDashboard() {
 
           {/* TIMETABLE TAB */}
           {tab === 'timetable' && (
-            <TimetableTab role="admin" />
+            <TimetableTab role="principal" />
           )}
 
           {/* LOST & FOUND TAB */}
