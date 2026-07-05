@@ -43,11 +43,9 @@ import NoticeTab from '../components/NoticeTab';
 import AcademicCalendarTab from '../components/AcademicCalendarTab';
 import MonthlyReportTab from '../components/MonthlyReportTab';
 import PlacementTab from '../components/PlacementTab';
-import ComplaintsTab from '../components/ComplaintsTab';
 import LibraryTab from '../components/LibraryTab';
 import FacultyResultsTab from '../components/FacultyResultsTab';
 import NotificationTab from '../components/NotificationTab';
-import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 
 export default function FacultyDashboard() {
@@ -892,11 +890,6 @@ export default function FacultyDashboard() {
             <PlacementTab role="faculty" />
           )}
 
-          {/* COMPLAINTS TAB */}
-          {tab === 'complaints' && (
-            <ComplaintsTab role="faculty" />
-          )}
-
           {/* LIBRARY CATALOG TAB */}
           {tab === 'library' && (
             <LibraryTab role="faculty" />
@@ -904,11 +897,6 @@ export default function FacultyDashboard() {
           {/* SEND NOTIFICATIONS TAB */}
           {tab === 'notifications' && (
             <NotificationTab role="faculty" />
-          )}
-
-          {/* CONTACT SUPPORT TAB */}
-          {tab === 'contact' && (
-            <ContactSupportTab />
           )}
         </>
       )}

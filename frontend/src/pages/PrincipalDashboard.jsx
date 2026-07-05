@@ -46,10 +46,7 @@ import NoticeTab from '../components/NoticeTab';
 import AcademicCalendarTab from '../components/AcademicCalendarTab';
 import FeeInvoiceTab from '../components/FeeInvoiceTab';
 import PlacementTab from '../components/PlacementTab';
-import ComplaintsTab from '../components/ComplaintsTab';
 import LibraryTab from '../components/LibraryTab';
-import ScholarshipTab from '../components/ScholarshipTab';
-import ContactSupportTab from '../components/ContactSupportTab';
 import NotificationTab from '../components/NotificationTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 import HodManagementTab from '../components/HodManagementTab';
@@ -776,11 +773,6 @@ export default function PrincipalDashboard() {
             <PlacementTab role="admin" />
           )}
 
-          {/* GRIEVANCES TICKET RESOLVER TAB */}
-          {tab === 'complaints' && (
-            <ComplaintsTab role="admin" />
-          )}
-
           {/* LIBRARY LEDGER TAB */}
           {tab === 'library' && (
             <LibraryTab role="admin" />
@@ -860,19 +852,9 @@ export default function PrincipalDashboard() {
             </Box>
           )}
 
-          {/* SCHOLARSHIP APPROVER TAB */}
-          {tab === 'scholarships' && (
-            <ScholarshipTab role="admin" />
-          )}
-
           {/* NOTIFICATIONS TAB */}
           {tab === 'notifications' && (
             <NotificationTab role="admin" />
-          )}
-
-          {/* CONTACT SUPPORT TAB */}
-          {tab === 'contact' && (
-            <ContactSupportTab />
           )}
         </>
       )}

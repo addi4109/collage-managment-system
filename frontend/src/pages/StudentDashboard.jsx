@@ -43,10 +43,7 @@ import AcademicCalendarTab from '../components/AcademicCalendarTab';
 import MonthlyReportTab from '../components/MonthlyReportTab';
 import FeeInvoiceTab from '../components/FeeInvoiceTab';
 import PlacementTab from '../components/PlacementTab';
-import ComplaintsTab from '../components/ComplaintsTab';
 import LibraryTab from '../components/LibraryTab';
-import ScholarshipTab from '../components/ScholarshipTab';
-import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 
 export default function StudentDashboard() {
@@ -874,23 +871,9 @@ export default function StudentDashboard() {
             <PlacementTab role="student" />
           )}
 
-          {/* COMPLAINTS TAB */}
-          {tab === 'complaints' && (
-            <ComplaintsTab role="student" />
-          )}
-
           {/* LIBRARY TAB */}
           {tab === 'library' && (
             <LibraryTab role="student" />
-          )}
-
-          {/* SCHOLARSHIP TAB */}
-          {tab === 'scholarships' && (
-            <ScholarshipTab role="student" />
-          )}
-
-          {tab === 'contact' && (
-            <ContactSupportTab />
           )}
         </>
       )}

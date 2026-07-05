@@ -159,7 +159,6 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/faculty?tab=calendar` },
       { text: 'Monthly Reports Entry', icon: <AssessmentIcon />, path: `/dashboard/faculty?tab=monthly-reports` },
       { text: 'Placement Drives', icon: <BusinessCenterIcon />, path: `/dashboard/faculty?tab=placements` },
-      { text: 'Complaints Received', icon: <ReportProblemIcon />, path: `/dashboard/faculty?tab=complaints` },
       { text: 'Library Catalog', icon: <LibraryBooksIcon />, path: `/dashboard/faculty?tab=library` },
       { text: 'Send Notifications', icon: <NotificationsIcon />, path: `/dashboard/faculty?tab=notifications` }
     );
@@ -175,9 +174,7 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Performance Reports', icon: <AssessmentIcon />, path: `/dashboard/student?tab=monthly-reports` },
       { text: 'Fees & Receipts', icon: <ReceiptIcon />, path: `/dashboard/student?tab=fees` },
       { text: 'Career Placements', icon: <BusinessCenterIcon />, path: `/dashboard/student?tab=placements` },
-      { text: 'Helpdesk Grievance', icon: <ReportProblemIcon />, path: `/dashboard/student?tab=complaints` },
-      { text: 'My Library Lends', icon: <LibraryBooksIcon />, path: `/dashboard/student?tab=library` },
-      { text: 'My Scholarships', icon: <CardGiftcardIcon />, path: `/dashboard/student?tab=scholarships` }
+      { text: 'My Library Lends', icon: <LibraryBooksIcon />, path: `/dashboard/student?tab=library` }
     );
   } else if (user?.role === 'hod') {
     menuItems.push(
@@ -201,9 +198,7 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'System Notice Board', icon: <CampaignIcon />, path: `/dashboard/principal?tab=notices` },
       { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/principal?tab=calendar` },
       { text: 'Placement Drives', icon: <BusinessCenterIcon />, path: `/dashboard/principal?tab=placements` },
-      { text: 'Grievance Resolver', icon: <ReportProblemIcon />, path: `/dashboard/principal?tab=complaints` },
       { text: 'Library Ledger', icon: <LibraryBooksIcon />, path: `/dashboard/principal?tab=library` },
-      { text: 'Scholarship Approver', icon: <CardGiftcardIcon />, path: `/dashboard/principal?tab=scholarships` },
       { text: 'System Audit Logs', icon: <SecurityIcon />, path: `/dashboard/principal?tab=audit` },
       { text: 'Application Approvals', icon: <AssignmentIcon />, path: `/dashboard/principal?tab=applications` }
     );
@@ -212,8 +207,7 @@ export default function DashboardLayout({ mode, toggleTheme }) {
   // Common menus
   menuItems.push(
     { text: 'Weekly Timetables', icon: <CalendarMonthIcon />, path: `/dashboard/${user?.role}?tab=timetable` },
-    { text: 'Lost & Found Board', icon: <HelpIcon />, path: `/dashboard/${user?.role}?tab=lostfound` },
-    { text: 'Contact Us', icon: <ContactSupportIcon />, path: `/dashboard/${user?.role}?tab=contact` }
+    { text: 'Lost & Found Board', icon: <HelpIcon />, path: `/dashboard/${user?.role}?tab=lostfound` }
   );
 
   const drawerContent = (
