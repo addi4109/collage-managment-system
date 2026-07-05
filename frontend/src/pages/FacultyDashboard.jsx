@@ -48,6 +48,7 @@ import FacultyResultsTab from '../components/FacultyResultsTab';
 import NotificationTab from '../components/NotificationTab';
 import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
+import { getSemestersForYear } from '../utils/academicHelpers';
 
 export default function FacultyDashboard() {
   const [searchParams] = useSearchParams();
@@ -640,7 +641,7 @@ export default function FacultyDashboard() {
                         onChange={(e) => setSessionForm({ ...sessionForm, semester: e.target.value })}
                         sx={{ mb: 2 }}
                       >
-                        {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                        {getSemestersForYear(sessionForm.year).map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                       </TextField>
                       <TextField
                         fullWidth
@@ -1010,7 +1011,7 @@ export default function FacultyDashboard() {
                   value={studentForm.semester}
                   onChange={(e) => setStudentForm({ ...studentForm, semester: e.target.value })}
                 >
-                  {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                  {getSemestersForYear(studentForm.year).map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                 </TextField>
               </Grid>
             </Grid>
@@ -1186,7 +1187,7 @@ export default function FacultyDashboard() {
                 value={examForm.semester || 'Sem 1'}
                 onChange={(e) => setExamForm({ ...examForm, semester: e.target.value })}
               >
-                {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                {getSemestersForYear(examForm.year).map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
               </TextField>
             </Grid>
             <Grid item xs={12} sm={6}>

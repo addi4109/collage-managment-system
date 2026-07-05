@@ -103,7 +103,7 @@ export default function StudentDashboard() {
       } else if (tab === 'results') {
         // Load marksheet for Sem 1 as default, can filter later
         try {
-          const res = await api.get('/results/marksheet?semester=Sem 1');
+          const res = await api.get(`/results/marksheet?semester=${user.semester || 'Sem 1'}`);
           setMarksheet(res.data);
         } catch (e) {
           setMarksheet(null);

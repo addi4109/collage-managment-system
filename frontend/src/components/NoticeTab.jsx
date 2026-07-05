@@ -24,8 +24,10 @@ import HelpIcon from '@mui/icons-material/Help';
 import AddIcon from '@mui/icons-material/Add';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DownloadIcon from '@mui/icons-material/Download';
-import { api } from '../context/AuthContext';
+import SendIcon from '@mui/icons-material/Send';
+import { useAuth, api } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { getSemestersForYear } from '../utils/academicHelpers';
 
 export default function NoticeTab({ role }) {
   const { showToast } = useToast();
@@ -327,7 +329,7 @@ export default function NoticeTab({ role }) {
                   value={form.semester}
                   onChange={(e) => setForm({ ...form, semester: e.target.value })}
                 >
-                  {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'All'].map(s => (
+                  {['All', ...getSemestersForYear(form.year)].map(s => (
                     <MenuItem key={s} value={s}>{s}</MenuItem>
                   ))}
                 </TextField>

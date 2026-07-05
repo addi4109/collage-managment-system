@@ -99,6 +99,29 @@ export const AuthProvider = ({ children }) => {
     fetchMe();
   }, [accessToken]);
 
+  // Session Inactivity Auto-Logout Timer (60 minutes)
+  useEffect(() => {
+    let timeoutId;
+    if (!accessToken) return;
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        console.warn('Session ended due to inactivity.');
+        logout();
+      }, 60 * 60 * 1000); 
+    };
+
+    const events = ['mousemove', 'keydown', 'scroll', 'click'];
+    events.forEach(event => window.addEventListener(event, resetTimer));
+    resetTimer();
+
+    return () => {
+      clearTimeout(timeoutId);
+      events.forEach(event => window.removeEventListener(event, resetTimer));
+    };
+  }, [accessToken]);
+
   const login = async (credential, password, role, captchaToken, captchaValue) => {
     const res = await api.post('/auth/login', {
       credential,

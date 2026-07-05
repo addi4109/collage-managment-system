@@ -33,6 +33,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 import { api, useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { getSemestersForYear } from '../utils/academicHelpers';
 
 export default function LostFoundTab() {
   const { user } = useAuth();
@@ -561,7 +562,7 @@ export default function LostFoundTab() {
                   onChange={(e) => setPostForm({ ...postForm, semester: e.target.value })}
                   sx={{ mb: 2 }}
                 >
-                  {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map((s) => (
+                  {getSemestersForYear(postForm.year).map((s) => (
                     <MenuItem key={s} value={s}>{s}</MenuItem>
                   ))}
                 </TextField>
@@ -608,7 +609,7 @@ export default function LostFoundTab() {
                   onChange={(e) => setPostForm({ ...postForm, semester: e.target.value })}
                   sx={{ mb: 2 }}
                 >
-                  {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map((s) => (
+                  {getSemestersForYear(postForm.year).map((s) => (
                     <MenuItem key={s} value={s}>{s}</MenuItem>
                   ))}
                 </TextField>

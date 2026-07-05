@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import { api, useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { getSemestersForYear } from '../utils/academicHelpers';
 import { TableSkeleton } from './SkeletonLoader';
 
 export default function FacultyResultsTab() {
@@ -168,7 +169,7 @@ export default function FacultyResultsTab() {
               value={selectedSem}
               onChange={(e) => setSelectedSem(e.target.value)}
             >
-              {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+              {getSemestersForYear(selectedYear).map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
             </TextField>
           </Grid>
           <Grid item xs={12} sm={3}>

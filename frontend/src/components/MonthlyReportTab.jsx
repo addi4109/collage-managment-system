@@ -23,9 +23,10 @@ import {
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import SendIcon from '@mui/icons-material/Send';
-import { api } from '../context/AuthContext';
+import DescriptionIcon from '@mui/icons-material/Description';
+import { useAuth, api } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { getSemestersForYear } from '../utils/academicHelpers';
 
 export default function MonthlyReportTab({ role }) {
   const { showToast } = useToast();
@@ -356,7 +357,7 @@ export default function MonthlyReportTab({ role }) {
                   value={filter.semester}
                   onChange={(e) => setFilter({ ...filter, semester: e.target.value })}
                 >
-                  {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map(s => (
+                  {getSemestersForYear(filter.year).map(s => (
                     <MenuItem key={s} value={s}>{s}</MenuItem>
                   ))}
                 </TextField>

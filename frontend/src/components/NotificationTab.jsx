@@ -38,8 +38,10 @@ import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import InboxIcon from '@mui/icons-material/Inbox';
+import SearchIcon from '@mui/icons-material/Search';
 import { api, useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { getSemestersForYear } from '../utils/academicHelpers';
 
 const TARGET_OPTIONS_ADMIN = [
   { value: 'all_students', label: 'All Students', icon: <SchoolIcon />, color: '#4F46E5' },
@@ -271,7 +273,7 @@ export default function NotificationTab({ role }) {
                         onChange={e => setSemester(e.target.value)}
                       >
                         <MenuItem value="">All Semesters</MenuItem>
-                        {['Sem 1','Sem 2','Sem 3','Sem 4','Sem 5','Sem 6'].map(s => (
+                        {getSemestersForYear(year).map(s => (
                           <MenuItem key={s} value={s}>{s}</MenuItem>
                         ))}
                       </TextField>

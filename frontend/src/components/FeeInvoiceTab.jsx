@@ -28,9 +28,11 @@ import CreditCardIcon from '@mui/icons-material/CreditCard';
 import LocalActivityIcon from '@mui/icons-material/LocalActivity';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PaidIcon from '@mui/icons-material/Paid';
 import AddIcon from '@mui/icons-material/Add';
-import { api } from '../context/AuthContext';
+import { useAuth, api } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { getSemestersForYear } from '../utils/academicHelpers';
 
 export default function FeeInvoiceTab({ role }) {
   const { showToast } = useToast();
@@ -438,7 +440,7 @@ export default function FeeInvoiceTab({ role }) {
                   value={structureForm.semester}
                   onChange={(e) => setStructureForm({ ...structureForm, semester: e.target.value })}
                 >
-                  {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map(s => (
+                  {getSemestersForYear(structureForm.year).map(s => (
                     <MenuItem key={s} value={s}>{s}</MenuItem>
                   ))}
                 </TextField>
@@ -494,7 +496,7 @@ export default function FeeInvoiceTab({ role }) {
                   value={batchForm.semester}
                   onChange={(e) => setBatchForm({ ...batchForm, semester: e.target.value })}
                 >
-                  {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map(s => (
+                  {getSemestersForYear(batchForm.year).map(s => (
                     <MenuItem key={s} value={s}>{s}</MenuItem>
                   ))}
                 </TextField>

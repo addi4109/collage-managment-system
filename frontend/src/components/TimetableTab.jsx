@@ -21,13 +21,14 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { api, useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { getSemestersForYear } from '../utils/academicHelpers';
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const yearsList = ['First Year', 'Second Year', 'Third Year'];
-const semestersList = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'];
 
 export default function TimetableTab({ role }) {
   const { user } = useAuth();
@@ -225,7 +226,7 @@ export default function TimetableTab({ role }) {
                       fullWidth
                       label="Year"
                       value={form.year}
-                      onChange={(e) => setForm({ ...form, year: e.target.value })}
+                      onChange={(e) => setForm({ ...form, year: e.target.value, semester: getSemestersForYear(e.target.value)[0] })}
                       required
                     >
                       {yearsList.map(y => (
@@ -243,7 +244,7 @@ export default function TimetableTab({ role }) {
                       onChange={(e) => setForm({ ...form, semester: e.target.value })}
                       required
                     >
-                      {semestersList.map(s => (
+                      {getSemestersForYear(form.year).map(s => (
                         <MenuItem key={s} value={s}>{s}</MenuItem>
                       ))}
                     </TextField>
@@ -369,7 +370,10 @@ export default function TimetableTab({ role }) {
                     size="small"
                     label="Filter Year"
                     value={selectedYear}
-                    onChange={(e) => setSelectedYear(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedYear(e.target.value);
+                      setSelectedSem(getSemestersForYear(e.target.value)[0]);
+                    }}
                   >
                     {yearsList.map(y => (
                       <MenuItem key={y} value={y}>{y}</MenuItem>
@@ -386,7 +390,7 @@ export default function TimetableTab({ role }) {
                     value={selectedSem}
                     onChange={(e) => setSelectedSem(e.target.value)}
                   >
-                    {semestersList.map(s => (
+                    {getSemestersForYear(selectedYear).map((s) => (
                       <MenuItem key={s} value={s}>{s}</MenuItem>
                     ))}
                   </TextField>
@@ -511,7 +515,10 @@ export default function TimetableTab({ role }) {
                 fullWidth
                 label="Year"
                 value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
+                onChange={(e) => {
+                  setSelectedYear(e.target.value);
+                  setSelectedSem(getSemestersForYear(e.target.value)[0]);
+                }}
               >
                 {yearsList.map(y => (
                   <MenuItem key={y} value={y}>{y}</MenuItem>
@@ -527,7 +534,7 @@ export default function TimetableTab({ role }) {
                 value={selectedSem}
                 onChange={(e) => setSelectedSem(e.target.value)}
               >
-                {semestersList.map(s => (
+                {getSemestersForYear(selectedYear).map((s) => (
                   <MenuItem key={s} value={s}>{s}</MenuItem>
                 ))}
               </TextField>

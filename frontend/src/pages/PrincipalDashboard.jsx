@@ -51,6 +51,7 @@ import NotificationTab from '../components/NotificationTab';
 import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 import HodManagementTab from '../components/HodManagementTab';
+import { getSemestersForYear } from '../utils/academicHelpers';
 
 export default function PrincipalDashboard() {
   const [searchParams] = useSearchParams();
@@ -1042,7 +1043,7 @@ export default function PrincipalDashboard() {
                   value={subjectForm.semester}
                   onChange={(e) => setSubjectForm({ ...subjectForm, semester: e.target.value })}
                 >
-                  {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map((s) => (
+                  {getSemestersForYear(subjectForm.year).map((s) => (
                     <MenuItem key={s} value={s}>{s}</MenuItem>
                   ))}
                 </TextField>

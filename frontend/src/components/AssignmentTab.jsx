@@ -31,8 +31,9 @@ import GradeIcon from '@mui/icons-material/Grade';
 import DeleteIcon from '@mui/icons-material/Delete';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { api } from '../context/AuthContext';
+import { useAuth, api } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { getSemestersForYear } from '../utils/academicHelpers';
 
 export default function AssignmentTab({ role }) {
   const { showToast } = useToast();
@@ -356,7 +357,7 @@ export default function AssignmentTab({ role }) {
                   value={form.semester}
                   onChange={(e) => setForm({ ...form, semester: e.target.value })}
                 >
-                  {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'].map(s => (
+                  {getSemestersForYear(form.year).map(s => (
                     <MenuItem key={s} value={s}>{s}</MenuItem>
                   ))}
                 </TextField>
