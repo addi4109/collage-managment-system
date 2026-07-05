@@ -143,9 +143,11 @@ export default function DashboardLayout({ mode, toggleTheme }) {
   }, [location, user, navigate]);
 
   // Sidebar Menu Scoping
-  const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: `/dashboard/${user?.role}` },
-  ];
+  const menuItems = [];
+  
+  if (user?.role !== 'principal') {
+    menuItems.push({ text: 'Dashboard', icon: <DashboardIcon />, path: `/dashboard/${user?.role}` });
+  }
 
   if (user?.role === 'faculty') {
     menuItems.push(
