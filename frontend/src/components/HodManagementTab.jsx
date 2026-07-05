@@ -22,6 +22,7 @@ export default function HodManagementTab() {
     email: '',
     username: '',
     password: '',
+    employeeId: '',
     departmentId: '', // Optional: if HODs are tied to departments, we could fetch departments here.
   });
 
@@ -50,7 +51,7 @@ export default function HodManagementTab() {
 
   const handleCreateHod = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.username || !formData.password || !formData.departmentId) {
+    if (!formData.name || !formData.email || !formData.username || !formData.password || !formData.employeeId || !formData.departmentId) {
       return showToast('Please fill all fields', 'warning');
     }
     setSubmitLoading(true);
@@ -58,7 +59,7 @@ export default function HodManagementTab() {
       await api.post('/principal/hod', formData);
       showToast('HOD created successfully', 'success');
       setOpenDialog(false);
-      setFormData({ name: '', email: '', username: '', password: '', departmentId: '' });
+      setFormData({ name: '', email: '', username: '', password: '', employeeId: '', departmentId: '' });
       loadData();
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to create HOD', 'error');
@@ -170,6 +171,14 @@ export default function HodManagementTab() {
               required
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            />
+            <TextField
+              fullWidth
+              margin="dense"
+              label="Employee ID"
+              required
+              value={formData.employeeId}
+              onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
             />
             <TextField
               select
