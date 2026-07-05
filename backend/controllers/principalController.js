@@ -26,13 +26,16 @@ export const getPrincipalStats = async (req, res) => {
 
 export const createHOD = async (req, res) => {
   try {
-    const { name, username, email, password, employeeId, departmentId, phone } = req.body;
+    const { name, username, password, departmentId, phone } = req.body;
 
     // Validate if HOD already exists for this department
     const existingHOD = await HOD.findOne({ departmentId, isDeleted: false });
     if (existingHOD) {
       return res.status(400).json({ message: 'An HOD is already assigned to this department.' });
     }
+
+    const email = `${username}@hod.edu`;
+    const employeeId = `HOD-${username.toUpperCase()}`;
 
     const passwordHash = await bcrypt.hash(password, 10);
     const newUser = new User({

@@ -19,10 +19,8 @@ export default function HodManagementTab() {
 
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     username: '',
     password: '',
-    employeeId: '',
     departmentId: '', // Optional: if HODs are tied to departments, we could fetch departments here.
   });
 
@@ -51,7 +49,7 @@ export default function HodManagementTab() {
 
   const handleCreateHod = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.username || !formData.password || !formData.employeeId || !formData.departmentId) {
+    if (!formData.name || !formData.username || !formData.password || !formData.departmentId) {
       return showToast('Please fill all fields', 'warning');
     }
     setSubmitLoading(true);
@@ -59,7 +57,7 @@ export default function HodManagementTab() {
       await api.post('/principal/hod', formData);
       showToast('HOD created successfully', 'success');
       setOpenDialog(false);
-      setFormData({ name: '', email: '', username: '', password: '', employeeId: '', departmentId: '' });
+      setFormData({ name: '', username: '', password: '', departmentId: '' });
       loadData();
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to create HOD', 'error');
@@ -102,7 +100,6 @@ export default function HodManagementTab() {
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Username</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Department</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
@@ -110,7 +107,7 @@ export default function HodManagementTab() {
           <TableBody>
             {hods.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                <TableCell colSpan={4} align="center" sx={{ py: 3, color: 'text.secondary' }}>
                   No HODs found.
                 </TableCell>
               </TableRow>
@@ -119,7 +116,6 @@ export default function HodManagementTab() {
                 <TableRow key={hod._id} hover>
                   <TableCell>{hod.userId?.name || 'N/A'}</TableCell>
                   <TableCell>{hod.userId?.username || 'N/A'}</TableCell>
-                  <TableCell>{hod.userId?.email || 'N/A'}</TableCell>
                   <TableCell>{hod.departmentId?.name || 'Unassigned'}</TableCell>
                   <TableCell align="right">
                     <IconButton color="error" onClick={() => handleDeleteHod(hod._id)}>
@@ -149,15 +145,6 @@ export default function HodManagementTab() {
             <TextField
               fullWidth
               margin="dense"
-              label="Email"
-              type="email"
-              required
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-            <TextField
-              fullWidth
-              margin="dense"
               label="Username"
               required
               value={formData.username}
@@ -171,14 +158,6 @@ export default function HodManagementTab() {
               required
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            />
-            <TextField
-              fullWidth
-              margin="dense"
-              label="Employee ID"
-              required
-              value={formData.employeeId}
-              onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
             />
             <TextField
               select
