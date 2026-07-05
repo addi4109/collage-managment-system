@@ -31,11 +31,12 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InfoIcon from '@mui/icons-material/Info';
 import DownloadIcon from '@mui/icons-material/Download';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
-import { api } from '../context/AuthContext';
+import { api, useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 export default function PlacementTab({ role }) {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [drives, setDrives] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -210,6 +211,16 @@ export default function PlacementTab({ role }) {
     }
   };
 
+  const handlePublishDrive = async (id) => {
+    try {
+      await api.put(`/placements/drives/${id}/publish`);
+      showToast('Drive published successfully to your department.', 'success');
+      loadData();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to publish drive.', 'error');
+    }
+  };
+
   if (loading) return <LinearProgress color="primary" />;
 
   return (
@@ -218,7 +229,7 @@ export default function PlacementTab({ role }) {
         <Typography variant="h5" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
           <BusinessCenterIcon color="primary" /> Placement Cell Job Portal
         </Typography>
-        {(role === 'admin' || role === 'faculty') && (
+        {role === 'principal' && (
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpenCreate(true)}>
             Add Placement Drive
           </Button>
@@ -357,32 +368,44 @@ export default function PlacementTab({ role }) {
               );
             })
           ) : (
-            drives.map((drive) => (
-              <Grid item xs={12} md={6} key={drive._id}>
-                <Card sx={{ p: 3, borderRadius: '16px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{drive.companyName}</Typography>
-                      <Chip label={`${drive.package} LPA`} color="primary" />
+            drives.map((drive) => {
+              const isPublishedByMe = drive.publishedByDepartments?.some(d => d._id === user?.departmentId);
+
+              return (
+                <Grid item xs={12} md={6} key={drive._id}>
+                  <Card sx={{ p: 3, borderRadius: '16px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{drive.companyName}</Typography>
+                        <Chip label={`${drive.package} LPA`} color="primary" />
+                      </Box>
+                      <Typography variant="body2" sx={{ mb: 1 }}>Role: <b>{drive.role}</b></Typography>
+                      <Typography variant="body2" sx={{ mb: 1 }}>Target Depts: <b>{drive.departmentIds?.map(d => d.name).join(', ')}</b></Typography>
+                      <Typography variant="body2" sx={{ mb: 1 }}>Published By: <b>{drive.publishedByDepartments?.map(d => d.name).join(', ') || 'None'}</b></Typography>
+                      <Typography variant="body2" sx={{ mb: 2 }}>Eligible CGPA: <b>{drive.eligibilityCriteria}</b></Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Deadline: {new Date(drive.deadline).toLocaleString()}
+                      </Typography>
                     </Box>
-                    <Typography variant="body2" sx={{ mb: 1 }}>Role: <b>{drive.role}</b></Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>Target Depts: <b>{drive.departmentIds?.map(d => d.name).join(', ')}</b></Typography>
-                    <Typography variant="body2" sx={{ mb: 2 }}>Eligible CGPA: <b>{drive.eligibilityCriteria}</b></Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Deadline: {new Date(drive.deadline).toLocaleString()}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 1, mt: 3 }}>
-                    <Button variant="outlined" size="small" onClick={() => handleViewApplicants(drive._id)}>
-                      View Applicants
-                    </Button>
-                    <Button variant="outlined" color="error" size="small" onClick={() => handleDeleteDrive(drive._id)}>
-                      Delete
-                    </Button>
-                  </Box>
-                </Card>
-              </Grid>
-            ))
+                    <Box sx={{ display: 'flex', gap: 1, mt: 3, flexWrap: 'wrap' }}>
+                      <Button variant="outlined" size="small" onClick={() => handleViewApplicants(drive._id)}>
+                        View Applicants
+                      </Button>
+                      {role === 'hod' && !isPublishedByMe && (
+                        <Button variant="contained" color="success" size="small" onClick={() => handlePublishDrive(drive._id)}>
+                          Publish to Students
+                        </Button>
+                      )}
+                      {role === 'principal' && (
+                        <Button variant="outlined" color="error" size="small" onClick={() => handleDeleteDrive(drive._id)}>
+                          Delete
+                        </Button>
+                      )}
+                    </Box>
+                  </Card>
+                </Grid>
+              );
+            })
           )}
         </Grid>
       )}

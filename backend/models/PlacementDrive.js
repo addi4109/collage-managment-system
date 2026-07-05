@@ -35,6 +35,12 @@ const placementDriveSchema = new mongoose.Schema(
         required: true,
       },
     ],
+    publishedByDepartments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Department',
+      },
+    ],
     placementYear: {
       type: String,
       required: true,

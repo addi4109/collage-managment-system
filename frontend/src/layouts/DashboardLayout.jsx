@@ -157,7 +157,6 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Assignments', icon: <AssignmentIcon />, path: `/dashboard/faculty?tab=assignments` },
       { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/faculty?tab=notices` },
       { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/faculty?tab=calendar` },
-      { text: 'Placement Drives', icon: <BusinessCenterIcon />, path: `/dashboard/faculty?tab=placements` },
       { text: 'Library Catalog', icon: <LibraryBooksIcon />, path: `/dashboard/faculty?tab=library` },
       { text: 'Send Notifications', icon: <NotificationsIcon />, path: `/dashboard/faculty?tab=notifications` }
     );
@@ -179,7 +178,8 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Faculty Directory', icon: <PeopleIcon />, path: `/dashboard/hod?tab=faculty` },
       { text: 'Student Directory', icon: <PeopleIcon />, path: `/dashboard/hod?tab=students` },
       { text: 'Subject Directory', icon: <MenuBookIcon />, path: `/dashboard/hod?tab=subjects` },
-      { text: 'Application Approvals', icon: <AssignmentIcon />, path: `/dashboard/hod?tab=applications` },
+      { text: 'Class Schedules', icon: <CalendarMonthIcon />, path: `/dashboard/hod?tab=timetable` },
+      { text: 'Placement Drives', icon: <BusinessCenterIcon />, path: `/dashboard/hod?tab=placements` },
       { text: 'Exam Approvals', icon: <AssignmentIcon />, path: `/dashboard/hod?tab=exams` },
       { text: 'Academic Performance', icon: <QueryStatsIcon />, path: `/dashboard/hod?tab=results` },
       { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/hod?tab=notices` },

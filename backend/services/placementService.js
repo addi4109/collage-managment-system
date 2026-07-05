@@ -23,14 +23,36 @@ export const createPlacementDrive = async (driveData, creatorId) => {
   await drive.save();
   await logActivity(creatorId, 'CREATE_PLACEMENT_DRIVE', 'Placement', `Created drive: ${companyName} (${role})`);
 
-  // Dispatch notifications to students in matching departments
-  const students = await Student.find({ departmentId: { $in: departmentIds }, isDeleted: false });
+  return drive;
+};
+
+export const publishDriveToDepartment = async (driveId, user) => {
+  const drive = await PlacementDrive.findById(driveId);
+  if (!drive) throw new Error('Placement drive not found.');
+
+  // Check if HOD belongs to one of the assigned departments
+  const hodDepartmentId = user.departmentId;
+  if (!hodDepartmentId) throw new Error('You do not belong to a department.');
+  
+  if (!drive.departmentIds.includes(hodDepartmentId)) {
+    throw new Error('This placement drive is not assigned to your department.');
+  }
+
+  if (drive.publishedByDepartments.includes(hodDepartmentId)) {
+    throw new Error('Already published for your department.');
+  }
+
+  drive.publishedByDepartments.push(hodDepartmentId);
+  await drive.save();
+
+  // Notify students
+  const students = await Student.find({ departmentId: hodDepartmentId, isDeleted: false });
   for (const s of students) {
     await createNotification(
       s.userId,
-      'New Placement Drive',
-      `${companyName} is recruiting for the role of ${role} with package ${ctcPackage} LPA. Apply before ${new Date(deadline).toLocaleDateString()}`,
-      'Exam Scheduled'
+      'New Placement Drive Published',
+      `${drive.companyName} is recruiting for the role of ${drive.role} with package ${drive.package} LPA. Apply before ${new Date(drive.deadline).toLocaleDateString()}`,
+      'BusinessCenterIcon' // arbitrary notification icon
     );
   }
 
@@ -45,11 +67,12 @@ export const getPlacementDrives = async (user) => {
     if (!student) {
       throw new Error('Student profile not found.');
     }
-    // Only show drives targeted at the student's department
-    query.departmentIds = student.departmentId;
+    // Only show drives published to the student's department
+    query.publishedByDepartments = student.departmentId;
 
     const drives = await PlacementDrive.find(query)
       .populate('departmentIds', 'name code')
+      .populate('publishedByDepartments', 'name code')
       .sort({ deadline: 1 });
 
     const enrichedDrives = [];
@@ -58,15 +81,25 @@ export const getPlacementDrives = async (user) => {
       enrichedDrives.push({
         drive: d,
         application,
-        isEligible: student.userId ? true : false, // We'll double-check CGPA on submit, but show indicator
-        cgpaMet: student.userId ? true : false, // Mock check or placeholder
+        isEligible: true,
+        cgpaMet: true,
       });
     }
     return enrichedDrives;
-  } else {
-    // Admin / Faculty
+  } else if (user.role === 'hod') {
+    const hodDepartmentId = user.departmentId;
+    if (hodDepartmentId) {
+      query.departmentIds = hodDepartmentId;
+    }
     return await PlacementDrive.find(query)
       .populate('departmentIds', 'name code')
+      .populate('publishedByDepartments', 'name code')
+      .sort({ createdAt: -1 });
+  } else {
+    // Principal
+    return await PlacementDrive.find(query)
+      .populate('departmentIds', 'name code')
+      .populate('publishedByDepartments', 'name code')
       .sort({ createdAt: -1 });
   }
 };
@@ -128,7 +161,7 @@ export const getDriveApplications = async (driveId, user) => {
     throw new Error('Placement drive not found.');
   }
 
-  if (user.role !== 'admin' && drive.createdBy.toString() !== user.id) {
+  if (user.role === 'hod' && !drive.departmentIds.includes(user.departmentId)) {
     throw new Error('Unauthorized to view this drive applications.');
   }
 
@@ -140,24 +173,37 @@ export const getDriveApplications = async (driveId, user) => {
   for (const app of applications) {
     const student = await Student.findOne({ userId: app.studentId._id, isDeleted: false })
       .populate('departmentId', 'name code');
-    enriched.push({
-      application: app,
-      studentDetails: student,
-    });
+      
+    if (user.role === 'hod') {
+      if (student && student.departmentId && student.departmentId._id.toString() === user.departmentId) {
+        enriched.push({
+          application: app,
+          studentDetails: student,
+        });
+      }
+    } else {
+      enriched.push({
+        application: app,
+        studentDetails: student,
+      });
+    }
   }
 
   return enriched;
 };
 
-export const updateApplicationStatus = async (applicationId, updateData, facultyUserId, userRole) => {
+export const updateApplicationStatus = async (applicationId, updateData, userId, userRole, userDept) => {
   const application = await PlacementApplication.findById(applicationId).populate('driveId');
   if (!application) {
     throw new Error('Placement application not found.');
   }
 
-  const drive = application.driveId;
-  if (userRole !== 'admin' && drive.createdBy.toString() !== facultyUserId) {
-    throw new Error('Unauthorized to modify this application status.');
+  // Security check: Only principal or the student's HOD can verify/update.
+  if (userRole === 'hod') {
+    const student = await Student.findOne({ userId: application.studentId, isDeleted: false });
+    if (!student || student.departmentId.toString() !== userDept) {
+      throw new Error('Unauthorized to modify this application status.');
+    }
   }
 
   const { status, rounds, offerLetterUrl } = updateData;

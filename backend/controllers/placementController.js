@@ -20,6 +20,17 @@ export const listDrives = async (req, res) => {
   }
 };
 
+export const publishDrive = async (req, res) => {
+  try {
+    const { driveId } = req.params;
+    const drive = await placementService.publishDriveToDepartment(driveId, req.user);
+    res.json(drive);
+  } catch (error) {
+    console.error('Publish drive error:', error);
+    res.status(500).json({ message: error.message || 'Internal server error publishing drive.' });
+  }
+};
+
 export const applyDrive = async (req, res) => {
   try {
     const { driveId } = req.params;
@@ -64,7 +75,8 @@ export const updateStatus = async (req, res) => {
       applicationId,
       req.body,
       req.user.id,
-      req.user.role
+      req.user.role,
+      req.user.departmentId
     );
     res.json(application);
   } catch (error) {

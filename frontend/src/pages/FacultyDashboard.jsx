@@ -42,7 +42,6 @@ import LostFoundTab from '../components/LostFoundTab';
 import AssignmentTab from '../components/AssignmentTab';
 import NoticeTab from '../components/NoticeTab';
 import AcademicCalendarTab from '../components/AcademicCalendarTab';
-import PlacementTab from '../components/PlacementTab';
 import LibraryTab from '../components/LibraryTab';
 import FacultyResultsTab from '../components/FacultyResultsTab';
 import NotificationTab from '../components/NotificationTab';
@@ -768,11 +767,6 @@ export default function FacultyDashboard() {
           {/* ACADEMIC CALENDAR TAB */}
           {tab === 'calendar' && (
             <AcademicCalendarTab role="faculty" />
-          )}
-
-          {/* PLACEMENT drives TAB */}
-          {tab === 'placements' && (
-            <PlacementTab role="faculty" />
           )}
 
           {/* LIBRARY CATALOG TAB */}
