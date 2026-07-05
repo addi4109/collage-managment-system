@@ -51,9 +51,7 @@ import NotificationTab from '../components/NotificationTab';
 import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 import HodManagementTab from '../components/HodManagementTab';
-import SubjectManagementTab from '../components/SubjectManagementTab';
 import FacultyDirectoryTab from '../components/FacultyDirectoryTab';
-import StudentDirectoryTab from '../components/StudentDirectoryTab';
 import ApplicationApprovalsTab from '../components/ApplicationApprovalsTab';
 import ExamApprovalsTab from '../components/ExamApprovalsTab';
 import ResultApprovalsTab from '../components/ResultApprovalsTab';
@@ -100,17 +98,12 @@ export default function PrincipalDashboard() {
         const res = await api.get('/faculty');
         setFaculties(res.data);
         await loadDepartments();
-      } else if (tab === 'admissions') {
-        const res = await api.get('/admissions/pending');
-        setAdmissions(res.data);
       } else if (tab === 'results') {
         const res = await api.get('/results/pending');
         setResultBatches(res.data);
       } else if (tab === 'exams') {
         const res = await api.get('/exams/pending');
         setPendingExams(res.data);
-      } else if (tab === 'subjects') {
-        // Subjects are now handled internally by SubjectManagementTab
       } else if (tab === 'audit') {
         const res = await api.get('/audit');
         setAuditLogs(res.data.logs || []);
@@ -129,17 +122,7 @@ export default function PrincipalDashboard() {
     loadData();
   }, [tab]);
 
-  // Approve/Reject Admission
-  const handleAdmissionReview = async (id, approve) => {
-    try {
-      const endpoint = approve ? `/admissions/approve/${id}` : `/admissions/reject/${id}`;
-      await api.post(endpoint);
-      showToast(`Admission request ${approve ? 'approved' : 'rejected'}.`, 'success');
-      loadData();
-    } catch (err) {
-      showToast(err.response?.data?.message || 'Error updating admission.', 'error');
-    }
-  };
+
 
   // Declare Results
   const handleDeclareBatch = async (id) => {
@@ -276,54 +259,9 @@ export default function PrincipalDashboard() {
             <FacultyDirectoryTab role="principal" />
           )}
 
-          {/* STUDENT MANAGEMENT */}
-          {tab === 'students' && (
-            <StudentDirectoryTab role="principal" />
-          )}
 
-          {/* ADMISSIONS APPROVAL */}
-          {tab === 'admissions' && (
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 3 }}>Pending Admission Approvals</Typography>
-              {admissions.length === 0 ? (
-                <Typography color="text.secondary">No pending admission requests found.</Typography>
-              ) : (
-                <TableContainer component={Paper} sx={{ borderRadius: '16px' }}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Enrollment</TableCell>
-                        <TableCell>Student Name</TableCell>
-                        <TableCell>Department</TableCell>
-                        <TableCell>Year/Sem</TableCell>
-                        <TableCell>Created By Faculty</TableCell>
-                        <TableCell align="right">Review Action</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {admissions.map((a) => (
-                        <TableRow key={a._id}>
-                          <TableCell sx={{ fontWeight: 'bold' }}>{a.enrollmentNumber}</TableCell>
-                          <TableCell>{a.name}</TableCell>
-                          <TableCell>{a.departmentId?.name}</TableCell>
-                          <TableCell>{a.year} - {a.semester}</TableCell>
-                          <TableCell>{a.createdByFaculty?.name}</TableCell>
-                          <TableCell align="right">
-                            <IconButton color="success" onClick={() => handleAdmissionReview(a._id, true)}>
-                              <CheckCircleIcon />
-                            </IconButton>
-                            <IconButton color="error" onClick={() => handleAdmissionReview(a._id, false)}>
-                              <CancelIcon />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </Box>
-          )}
+
+
 
           {/* RESULT DECLARATION */}
           {tab === 'results' && <ResultApprovalsTab />}
@@ -331,10 +269,7 @@ export default function PrincipalDashboard() {
           {/* EXAM APPROVALS */}
           {tab === 'exams' && <ExamApprovalsTab />}
 
-          {/* SUBJECTS DIRECTORY */}
-          {tab === 'subjects' && (
-            <SubjectManagementTab role="principal" />
-          )}
+
 
           {/* SYSTEM AUDIT LOGS */}
           {tab === 'audit' && (
