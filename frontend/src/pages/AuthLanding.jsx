@@ -36,9 +36,9 @@ export default function AuthLanding({ mode, toggleTheme }) {
       title: 'HOD Portal',
       description: 'Oversee department faculty, manage students, view reports, approve applications, and handle academic processes.',
       icon: <PersonIcon sx={{ fontSize: 48 }} />, // can be updated later
-      gradient: 'linear-gradient(135deg, #8b5cf6, #d946ef)',
-      glowColor: 'rgba(139, 92, 246, 0.5)',
-      btnColor: '#8b5cf6',
+      gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
+      glowColor: 'rgba(245, 158, 11, 0.5)',
+      btnColor: '#f59e0b',
     },
 
     {
