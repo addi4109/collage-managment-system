@@ -18,7 +18,11 @@ import {
   MenuItem,
   IconButton,
   CircularProgress,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -152,52 +156,77 @@ export default function SubjectManagementTab({ role, userDepartmentId }) {
       {subjects.length === 0 ? (
         <Typography color="text.secondary">No subjects are defined yet.</Typography>
       ) : (
-        <TableContainer component={Paper} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Subject Name</TableCell>
-                <TableCell>Subject Code</TableCell>
-                <TableCell>Department</TableCell>
-                <TableCell>Class</TableCell>
-                <TableCell align="center">Internals Max</TableCell>
-                <TableCell align="center">Practicals Max</TableCell>
-                <TableCell align="center">Theory Max</TableCell>
-                <TableCell align="center">Total Max</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {subjects.map((sub) => {
-                const mI = sub.maxInternal !== undefined ? sub.maxInternal : 20;
-                const mP = sub.maxPractical !== undefined ? sub.maxPractical : 30;
-                const mT = sub.maxTheory !== undefined ? sub.maxTheory : 80;
-                return (
-                  <TableRow key={sub._id}>
-                    <TableCell sx={{ fontWeight: 'bold' }}>{sub.name}</TableCell>
-                    <TableCell>{sub.code}</TableCell>
-                    <TableCell>{sub.departmentId?.name || 'N/A'}</TableCell>
-                    <TableCell>{sub.year} - {sub.semester}</TableCell>
-                    <TableCell align="center">{mI}</TableCell>
-                    <TableCell align="center">{mP}</TableCell>
-                    <TableCell align="center">{mT}</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>{mI + mP + mT}</TableCell>
-                    <TableCell align="right">
-                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                        <IconButton size="small" color="primary" onClick={() => handleOpenSubjectForm(sub)}>
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton size="small" color="error" onClick={() => handleDeleteSubject(sub._id)}>
-                          <DeleteIcon />
-                        </IconButton>
+        <Box>
+          {['First Year', 'Second Year', 'Third Year', 'Fourth Year'].map((year) => {
+            const yearSubjects = subjects.filter(s => s.year === year);
+            if (yearSubjects.length === 0) return null;
+            return (
+              <Accordion key={year} defaultExpanded sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' }, boxShadow: 2, border: '1px solid', borderColor: 'divider' }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'action.hover', borderRadius: '12px' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{year}</Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={{ p: 0 }}>
+                  {getSemestersForYear(year).map(sem => {
+                    const semSubjects = yearSubjects.filter(s => s.semester === sem);
+                    if (semSubjects.length === 0) return null;
+                    return (
+                      <Box key={sem} sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider', '&:last-child': { borderBottom: 'none' } }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2, color: 'primary.main' }}>
+                          {sem}
+                        </Typography>
+                        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '8px' }}>
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow sx={{ bgcolor: 'action.hover' }}>
+                                <TableCell>Subject Name</TableCell>
+                                <TableCell>Code</TableCell>
+                                {role !== 'hod' && <TableCell>Department</TableCell>}
+                                <TableCell align="center">Internals Max</TableCell>
+                                <TableCell align="center">Practicals Max</TableCell>
+                                <TableCell align="center">Theory Max</TableCell>
+                                <TableCell align="center">Total Max</TableCell>
+                                <TableCell align="right">Actions</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {semSubjects.map((sub) => {
+                                const mI = sub.maxInternal !== undefined ? sub.maxInternal : 20;
+                                const mP = sub.maxPractical !== undefined ? sub.maxPractical : 30;
+                                const mT = sub.maxTheory !== undefined ? sub.maxTheory : 80;
+                                const total = mI + mP + mT;
+                                return (
+                                  <TableRow key={sub._id}>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>{sub.name}</TableCell>
+                                    <TableCell>{sub.code}</TableCell>
+                                    {role !== 'hod' && <TableCell>{sub.departmentId?.name || 'N/A'}</TableCell>}
+                                    <TableCell align="center">{mI}</TableCell>
+                                    <TableCell align="center">{mP}</TableCell>
+                                    <TableCell align="center">{mT}</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>{total}</TableCell>
+                                    <TableCell align="right">
+                                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                                        <IconButton size="small" color="primary" onClick={() => handleOpenSubjectForm(sub)}>
+                                          <EditIcon />
+                                        </IconButton>
+                                        <IconButton size="small" color="error" onClick={() => handleDeleteSubject(sub._id)}>
+                                          <DeleteIcon />
+                                        </IconButton>
+                                      </Box>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
                       </Box>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                    );
+                  })}
+                </AccordionDetails>
+              </Accordion>
+            );
+          })}
+        </Box>
       )}
 
       {/* SUBJECT CREATE/EDIT DIALOG */}
