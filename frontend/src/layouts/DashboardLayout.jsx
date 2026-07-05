@@ -145,7 +145,7 @@ export default function DashboardLayout({ mode, toggleTheme }) {
   // Sidebar Menu Scoping
   const menuItems = [];
   
-  if (user?.role !== 'principal') {
+  if (user?.role !== 'principal' && user?.role !== 'hod') {
     menuItems.push({ text: 'Dashboard', icon: <DashboardIcon />, path: `/dashboard/${user?.role}` });
   }
 
@@ -181,6 +181,7 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Faculty Directory', icon: <PeopleIcon />, path: `/dashboard/hod?tab=faculty` },
       { text: 'Student Directory', icon: <PeopleIcon />, path: `/dashboard/hod?tab=students` },
       { text: 'Service Requests', icon: <CampaignIcon />, path: `/dashboard/hod?tab=my_applications` },
+      { text: 'Application Approvals', icon: <AssignmentIcon />, path: `/dashboard/hod?tab=applications` },
       { text: 'Subject Directory', icon: <MenuBookIcon />, path: `/dashboard/hod?tab=subjects` },
       { text: 'Class Schedules', icon: <CalendarMonthIcon />, path: `/dashboard/hod?tab=timetable` },
       { text: 'Placement Drives', icon: <BusinessCenterIcon />, path: `/dashboard/hod?tab=placements` },
