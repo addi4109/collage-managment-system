@@ -64,11 +64,6 @@ export default function PrincipalDashboard() {
   const tab = searchParams.get('tab') || 'stats';
   const { showToast } = useToast();
 
-  // Dialog and Form States
-  const [openFacultyDialog, setOpenFacultyDialog] = useState(false);
-  const [facultyForm, setFacultyForm] = useState({ name: '', username: '', password: '', assignedDepartments: [], assignedYears: [] });
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editFacultyId, setEditFacultyId] = useState(null);
   // Data States
   const [stats, setStats] = useState(null);
   const [faculties, setFaculties] = useState([]);
@@ -180,73 +175,6 @@ export default function PrincipalDashboard() {
 
   // Subject Operations extracted to SubjectManagementTab
 
-  // Faculty CRUD Operations
-  const handleOpenFacultyForm = (faculty = null) => {
-    if (faculty) {
-      setIsEditMode(true);
-      setEditFacultyId(faculty._id);
-      setFacultyForm({
-        name: faculty.userId.name,
-        username: faculty.userId.username,
-        password: '',
-        assignedDepartments: faculty.assignedDepartments.map(d => d._id),
-        assignedYears: faculty.assignedYears,
-      });
-    } else {
-      setIsEditMode(false);
-      setFacultyForm({ name: '', username: '', password: '', assignedDepartments: [], assignedYears: [] });
-    }
-    setOpenFacultyDialog(true);
-  };
-
-  const handleFacultySubmit = async (e) => {
-    e.preventDefault();
-    setSubmitLoading(true);
-    try {
-      if (isEditMode) {
-        await api.put(`/faculty/${editFacultyId}`, facultyForm);
-        if (facultyForm.password) {
-          await api.put(`/faculty/${editFacultyId}/password`, { password: facultyForm.password });
-        }
-        showToast('Faculty profile updated.', 'success');
-      } else {
-        await api.post('/faculty', facultyForm);
-        showToast('Faculty member registered successfully.', 'success');
-      }
-      setOpenFacultyDialog(false);
-      loadData();
-    } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to submit faculty form.', 'error');
-    } finally {
-      setSubmitLoading(false);
-    }
-  };
-
-  const handleDeleteFaculty = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this faculty profile?')) return;
-    try {
-      await api.delete(`/faculty/${id}`);
-      showToast('Faculty profile soft-deleted.', 'success');
-      loadData();
-    } catch (err) {
-      showToast('Failed to delete faculty.', 'error');
-    }
-  };
-
-  const handleResetPasswordPrompt = async (faculty) => {
-    const newPassword = window.prompt(`Enter new password for faculty member ${faculty.userId?.name}:`);
-    if (newPassword === null) return; // cancelled
-    if (!newPassword.trim()) {
-      return showToast('Password cannot be empty.', 'warning');
-    }
-
-    try {
-      await api.put(`/faculty/${faculty._id}/password`, { password: newPassword });
-      showToast('Faculty password reset successfully.', 'success');
-    } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to reset password.', 'error');
-    }
-  };
 
   return (
     <Box>
@@ -345,12 +273,7 @@ export default function PrincipalDashboard() {
 
           {/* FACULTY MANAGEMENT */}
           {tab === 'faculty' && (
-            <FacultyDirectoryTab 
-              role="principal" 
-              handleOpenFacultyForm={handleOpenFacultyForm} 
-              handleResetPasswordPrompt={handleResetPasswordPrompt} 
-              handleDeleteFaculty={handleDeleteFaculty} 
-            />
+            <FacultyDirectoryTab role="principal" />
           )}
 
           {/* STUDENT MANAGEMENT */}
@@ -494,83 +417,6 @@ export default function PrincipalDashboard() {
           )}
         </>
       )}
-
-      {/* FACULTY REGISTRATION DIALOG */}
-      <Dialog open={openFacultyDialog} onClose={() => setOpenFacultyDialog(false)} maxWidth="xs" fullWidth>
-        <form onSubmit={handleFacultySubmit}>
-          <DialogTitle sx={{ fontWeight: 'bold' }}>{isEditMode ? 'Modify Faculty Profile' : 'Register Faculty Member'}</DialogTitle>
-          <DialogContent>
-            <TextField
-              margin="dense"
-              fullWidth
-              required
-              label="Full Name"
-              value={facultyForm.name}
-              onChange={(e) => setFacultyForm({ ...facultyForm, name: e.target.value })}
-              sx={{ mb: 2, mt: 1 }}
-            />
-            <TextField
-              margin="dense"
-              fullWidth
-              required
-              label="Username"
-              value={facultyForm.username}
-              onChange={(e) => setFacultyForm({ ...facultyForm, username: e.target.value })}
-              disabled={isEditMode}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              margin="dense"
-              fullWidth
-              required={!isEditMode}
-              type="password"
-              label={isEditMode ? "Reset Password (leave blank to keep current)" : "Password"}
-              value={facultyForm.password || ''}
-              onChange={(e) => setFacultyForm({ ...facultyForm, password: e.target.value })}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              select
-              margin="dense"
-              fullWidth
-              required
-              label="Assign Department"
-              SelectProps={{
-                multiple: true,
-                value: facultyForm.assignedDepartments,
-                onChange: (e) => setFacultyForm({ ...facultyForm, assignedDepartments: e.target.value }),
-              }}
-              sx={{ mb: 2 }}
-            >
-              {departments.map((d) => (
-                <MenuItem key={d._id} value={d._id}>{d.name}</MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              select
-              margin="dense"
-              fullWidth
-              required
-              label="Assign Year Scope"
-              SelectProps={{
-                multiple: true,
-                value: facultyForm.assignedYears,
-                onChange: (e) => setFacultyForm({ ...facultyForm, assignedYears: e.target.value }),
-              }}
-            >
-              {['First Year', 'Second Year', 'Third Year'].map((y) => (
-                <MenuItem key={y} value={y}>{y}</MenuItem>
-              ))}
-            </TextField>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenFacultyDialog(false)}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={submitLoading}>
-              {submitLoading ? <CircularProgress size={24} /> : 'Save Profile'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
 
       {/* EXAM QUESTIONS VIEW DIALOG */}
       <Dialog open={openExamQuestionsDialog} onClose={() => setOpenExamQuestionsDialog(false)} maxWidth="md" fullWidth>
