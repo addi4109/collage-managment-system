@@ -25,22 +25,8 @@ export default function HodDashboard() {
 
   return (
     <Box>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>HOD Dashboard</Typography>
-        <Typography variant="body1" color="text.secondary">
-          Welcome to the Head of Department portal for {user.departmentName || 'your department'}.
-        </Typography>
-      </Box>
-
       {/* STATS VIEW */}
-      {tab === 'stats' && (
-        <Box>
-          <Typography variant="h6">Overview (Coming Soon)</Typography>
-          <Typography variant="body2" color="text.secondary">
-            Use the sidebar to navigate to Subjects Directory or other modules.
-          </Typography>
-        </Box>
-      )}
+      {/* Overview is handled by specific tabs */}
 
       {/* DIRECTORIES */}
       {tab === 'faculty' && <FacultyDirectoryTab role="hod" />}
