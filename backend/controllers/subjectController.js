@@ -3,6 +3,9 @@ import Subject from '../models/Subject.js';
 export const getSubjects = async (req, res) => {
   try {
     const query = { isDeleted: false };
+    if (req.user.role === 'hod') {
+      req.query.departmentId = req.user.departmentId;
+    }
     if (req.query.departmentId) query.departmentId = req.query.departmentId;
     if (req.query.year) query.year = req.query.year;
     if (req.query.semester) query.semester = req.query.semester;

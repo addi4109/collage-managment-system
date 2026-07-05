@@ -2,6 +2,9 @@ import * as timetableService from '../services/timetableService.js';
 
 export const saveDaySchedule = async (req, res) => {
   try {
+    if (req.user.role === 'hod') {
+      req.body.departmentId = req.user.departmentId;
+    }
     const timetable = await timetableService.createTimetableEntry(req.body, req.user.id);
     res.status(200).json({ message: 'Timetable entry saved successfully.', timetable });
   } catch (err) {
@@ -11,6 +14,9 @@ export const saveDaySchedule = async (req, res) => {
 
 export const getClassSchedule = async (req, res) => {
   try {
+    if (req.user.role === 'hod') {
+      req.query.departmentId = req.user.departmentId;
+    }
     const { departmentId, year, semester } = req.query;
     if (!departmentId || !year || !semester) {
       return res.status(400).json({ message: 'Missing parameters departmentId, year, or semester.' });

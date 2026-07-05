@@ -22,6 +22,9 @@ export const getDashboardAnalytics = async (req, res) => {
 
 export const downloadStudentsReport = async (req, res) => {
   try {
+    if (req.user.role === 'hod') {
+      req.query.departmentId = req.user.departmentId;
+    }
     const { departmentId, year, semester } = req.query;
     const csv = await reportService.exportStudentsReport(departmentId, year, semester, req.user);
     res.setHeader('Content-Type', 'text/csv');
@@ -34,6 +37,9 @@ export const downloadStudentsReport = async (req, res) => {
 
 export const downloadAttendanceReport = async (req, res) => {
   try {
+    if (req.user.role === 'hod') {
+      req.query.departmentId = req.user.departmentId;
+    }
     const { departmentId, year, semester, subjectId } = req.query;
     const csv = await reportService.exportAttendanceReport(departmentId, year, semester, subjectId, req.user);
     res.setHeader('Content-Type', 'text/csv');
@@ -46,6 +52,9 @@ export const downloadAttendanceReport = async (req, res) => {
 
 export const downloadPerformanceReport = async (req, res) => {
   try {
+    if (req.user.role === 'hod') {
+      req.query.departmentId = req.user.departmentId;
+    }
     const { departmentId, year, semester } = req.query;
     if (!departmentId || !year || !semester) {
       return res.status(400).json({ message: 'departmentId, year, and semester query parameters are required.' });

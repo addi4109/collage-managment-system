@@ -134,6 +134,15 @@ export const getNotices = async (filters = {}, requestUser) => {
         ]
       });
     }
+  } else if (requestUser.role === 'hod') {
+    query.$and = query.$and || [];
+    query.$and.push({
+      $or: [
+        { createdBy: requestUser.id },
+        { departmentId: null },
+        { departmentId: requestUser.departmentId }
+      ]
+    });
   }
 
   // Dynamic filters

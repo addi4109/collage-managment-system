@@ -12,6 +12,9 @@ export const createFaculty = async (req, res) => {
 
 export const getFacultyList = async (req, res) => {
   try {
+    if (req.user.role === 'hod') {
+      req.query.departmentId = req.user.departmentId;
+    }
     const filters = {
       departmentId: req.query.departmentId,
       year: req.query.year,

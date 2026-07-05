@@ -65,6 +65,22 @@ export const getReports = async (user, studentId, month) => {
   if (user.role === 'student') {
     query.studentId = user.id;
     query.published = true;
+  } else if (user.role === 'hod') {
+    if (studentId) query.studentId = studentId;
+    if (month) query.month = month;
+    // We must ensure the returned reports belong to students in HOD's department
+    // We will find all students in the HOD's department and use $in
+    const studentsInDept = await Student.find({ departmentId: user.departmentId }).select('userId');
+    const studentUserIds = studentsInDept.map(s => s.userId);
+    
+    if (query.studentId) {
+       // if HOD asked for a specific student, verify it is in their dept
+       if (!studentUserIds.some(id => id.toString() === query.studentId.toString())) {
+         return [];
+       }
+    } else {
+       query.studentId = { $in: studentUserIds };
+    }
   } else {
     // Faculty or Admin
     if (studentId) query.studentId = studentId;

@@ -25,6 +25,9 @@ export const create = async (req, res) => {
 
 export const list = async (req, res) => {
   try {
+    if (req.user.role === 'hod') {
+      req.query.departmentId = req.user.departmentId;
+    }
     const filters = {
       type: req.query.type,
       status: req.query.status,
