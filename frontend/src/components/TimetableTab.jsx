@@ -17,7 +17,11 @@ import {
   IconButton,
   Divider,
   CircularProgress,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -34,6 +38,8 @@ export default function TimetableTab({ role }) {
   const { user } = useAuth();
   const { showToast } = useToast();
   const isAdmin = role === 'admin';
+  const isHod = role === 'hod';
+  const isAdminOrHod = isAdmin || isHod;
   const isFaculty = role === 'faculty';
   const isStudent = role === 'student';
 
@@ -64,17 +70,22 @@ export default function TimetableTab({ role }) {
   });
   const [saving, setSaving] = useState(false);
 
-  // Fetch all departments
   const fetchDepartments = async () => {
     setLoadingDepts(true);
     try {
       const res = await api.get('/departments');
-      setDepartments(res.data);
-      if (res.data.length > 0) {
-        // Set default selections
-        const firstDeptId = res.data[0]._id;
-        setSelectedDept(firstDeptId);
-        setForm(prev => ({ ...prev, departmentId: firstDeptId }));
+      if (isHod) {
+        const myDept = res.data.find(d => d._id === user?.departmentId);
+        setDepartments(myDept ? [myDept] : []);
+        setSelectedDept(user?.departmentId || '');
+        setForm(prev => ({ ...prev, departmentId: user?.departmentId || '' }));
+      } else {
+        setDepartments(res.data);
+        if (res.data.length > 0) {
+          const firstDeptId = res.data[0]._id;
+          setSelectedDept(firstDeptId);
+          setForm(prev => ({ ...prev, departmentId: firstDeptId }));
+        }
       }
     } catch (err) {
       showToast('Error loading departments.', 'error');
@@ -92,19 +103,24 @@ export default function TimetableTab({ role }) {
     }
   }, [isStudent, user]);
 
-  // Load departments if admin or student
+  // Load departments if admin, hod or student
   useEffect(() => {
-    if (isAdmin || isStudent) {
+    if (isAdminOrHod || isStudent) {
       fetchDepartments();
     }
   }, [role]);
 
-  // Fetch timetable schedule for specific class (Admin & Student)
+  // Fetch timetable schedule for specific class
   const fetchClassSchedule = async () => {
-    if (!selectedDept || !selectedYear || !selectedSem) return;
+    if (!selectedDept) return;
+    if (isStudent && (!selectedYear || !selectedSem)) return;
     setLoadingList(true);
     try {
-      const res = await api.get(`/timetable/class?departmentId=${selectedDept}&year=${selectedYear}&semester=${selectedSem}`);
+      let url = `/timetable/class?departmentId=${selectedDept}`;
+      if (isStudent) {
+        url += `&year=${selectedYear}&semester=${selectedSem}`;
+      }
+      const res = await api.get(url);
       setTimetableList(res.data);
     } catch (err) {
       showToast('Error loading timetable.', 'error');
@@ -128,7 +144,7 @@ export default function TimetableTab({ role }) {
 
   // Refetch list when filters change
   useEffect(() => {
-    if (isAdmin || isStudent) {
+    if (isAdminOrHod || isStudent) {
       fetchClassSchedule();
     }
   }, [selectedDept, selectedYear, selectedSem]);
@@ -192,8 +208,8 @@ export default function TimetableTab({ role }) {
 
   return (
     <Box sx={{ p: 1 }}>
-      {/* ── ADMIN VIEW: Timetable Builder ── */}
-      {isAdmin && (
+      {/* ── ADMIN/HOD VIEW: Timetable Builder ── */}
+      {isAdminOrHod && (
         <Grid container spacing={4}>
           {/* Create Form Column */}
           <Grid item xs={12} md={5}>
@@ -211,6 +227,7 @@ export default function TimetableTab({ role }) {
                       fullWidth
                       label="Department"
                       value={form.departmentId}
+                      disabled={isHod}
                       onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
                       required
                     >
@@ -347,55 +364,21 @@ export default function TimetableTab({ role }) {
               <Divider sx={{ mb: 3 }} />
 
               {/* Filtering for List */}
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Filter Department"
-                    value={selectedDept}
-                    onChange={(e) => setSelectedDept(e.target.value)}
-                  >
-                    {departments.map(d => (
-                      <MenuItem key={d._id} value={d._id}>{d.name}</MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-
-                <Grid item xs={6} sm={4}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Filter Year"
-                    value={selectedYear}
-                    onChange={(e) => {
-                      setSelectedYear(e.target.value);
-                      setSelectedSem(getSemestersForYear(e.target.value)[0]);
-                    }}
-                  >
-                    {yearsList.map(y => (
-                      <MenuItem key={y} value={y}>{y}</MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-
-                <Grid item xs={6} sm={4}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Filter Semester"
-                    value={selectedSem}
-                    onChange={(e) => setSelectedSem(e.target.value)}
-                  >
-                    {getSemestersForYear(selectedYear).map((s) => (
-                      <MenuItem key={s} value={s}>{s}</MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-              </Grid>
+              <Box sx={{ mb: 3 }}>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Filter Department"
+                  value={selectedDept}
+                  disabled={isHod}
+                  onChange={(e) => setSelectedDept(e.target.value)}
+                >
+                  {departments.map(d => (
+                    <MenuItem key={d._id} value={d._id}>{d.name}</MenuItem>
+                  ))}
+                </TextField>
+              </Box>
 
               {loadingList ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -403,39 +386,65 @@ export default function TimetableTab({ role }) {
                 </Box>
               ) : timetableList.length === 0 ? (
                 <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                  No timetable entries found for this class combination.
+                  No timetable entries found.
                 </Typography>
               ) : (
-                <TableContainer component={Paper} sx={{ borderRadius: '8px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
-                  <Table size="small">
-                    <TableHead sx={{ bgcolor: 'action.hover' }}>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Day</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Time</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Subject</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Faculty</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Room</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }} align="right">Action</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {timetableList.map((slot) => (
-                        <TableRow key={slot._id} hover>
-                          <TableCell>{slot.day}</TableCell>
-                          <TableCell>{slot.startTime} - {slot.endTime}</TableCell>
-                          <TableCell sx={{ fontWeight: 'medium' }}>{slot.subjectName}</TableCell>
-                          <TableCell>{slot.facultyName}</TableCell>
-                          <TableCell>{slot.roomNumber}</TableCell>
-                          <TableCell align="right">
-                            <IconButton color="error" size="small" onClick={() => handleDelete(slot._id)}>
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                <Box>
+                  {yearsList.map((year) => {
+                    const yearSlots = timetableList.filter(s => s.year === year);
+                    if (yearSlots.length === 0) return null;
+                    return (
+                      <Accordion key={year} defaultExpanded sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' }, boxShadow: 2, border: '1px solid', borderColor: 'divider' }}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'action.hover', borderRadius: '12px' }}>
+                          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{year}</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails sx={{ p: 0 }}>
+                          {getSemestersForYear(year).map(sem => {
+                            const semSlots = yearSlots.filter(s => s.semester === sem);
+                            if (semSlots.length === 0) return null;
+                            return (
+                              <Box key={sem} sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider', '&:last-child': { borderBottom: 'none' } }}>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2, color: 'primary.main' }}>
+                                  {sem}
+                                </Typography>
+                                <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '8px' }}>
+                                  <Table size="small">
+                                    <TableHead sx={{ bgcolor: 'action.hover' }}>
+                                      <TableRow>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Day</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Time</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Subject</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Faculty</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Room</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }} align="right">Action</TableCell>
+                                      </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                      {semSlots.map((slot) => (
+                                        <TableRow key={slot._id} hover>
+                                          <TableCell>{slot.day}</TableCell>
+                                          <TableCell>{slot.startTime} - {slot.endTime}</TableCell>
+                                          <TableCell sx={{ fontWeight: 'medium' }}>{slot.subjectName}</TableCell>
+                                          <TableCell>{slot.facultyName}</TableCell>
+                                          <TableCell>{slot.roomNumber}</TableCell>
+                                          <TableCell align="right">
+                                            <IconButton color="error" size="small" onClick={() => handleDelete(slot._id)}>
+                                              <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </TableContainer>
+                              </Box>
+                            );
+                          })}
+                        </AccordionDetails>
+                      </Accordion>
+                    );
+                  })}
+                </Box>
               )}
             </Card>
           </Grid>

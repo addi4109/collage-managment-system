@@ -31,7 +31,10 @@ export const createTimetableEntry = async (entryData, creatorId) => {
 };
 
 export const getClassTimetable = async (departmentId, year, semester) => {
-  return await Timetable.find({ departmentId, year, semester })
+  const query = { departmentId };
+  if (year) query.year = year;
+  if (semester) query.semester = semester;
+  return await Timetable.find(query)
     .populate('departmentId', 'name code')
     .sort({ day: 1, startTime: 1 });
 };

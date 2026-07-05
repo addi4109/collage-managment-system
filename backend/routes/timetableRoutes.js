@@ -13,7 +13,7 @@ router.use(authenticateToken);
 
 router.get('/my', getMySchedule);
 router.get('/class', getClassSchedule);
-router.post('/', requireRole(['principal']), saveDaySchedule);
-router.delete('/:id', requireRole(['principal']), deleteEntry);
+router.post('/', requireRole(['principal', 'hod']), saveDaySchedule);
+router.delete('/:id', requireRole(['principal', 'hod']), deleteEntry);
 
 export default router;

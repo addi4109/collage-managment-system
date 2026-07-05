@@ -18,8 +18,8 @@ export const getClassSchedule = async (req, res) => {
       req.query.departmentId = req.user.departmentId;
     }
     const { departmentId, year, semester } = req.query;
-    if (!departmentId || !year || !semester) {
-      return res.status(400).json({ message: 'Missing parameters departmentId, year, or semester.' });
+    if (!departmentId) {
+      return res.status(400).json({ message: 'Missing parameters departmentId.' });
     }
     const timetable = await timetableService.getClassTimetable(departmentId, year, semester);
     res.status(200).json(timetable);
