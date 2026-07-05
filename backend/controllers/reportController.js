@@ -4,7 +4,7 @@ import * as reportService from '../services/reportService.js';
 export const getDashboardAnalytics = async (req, res) => {
   try {
     let stats;
-    if (req.user.role === 'admin') {
+    if (req.user.role === 'principal') {
       stats = await analyticsService.getAdminStats();
     } else if (req.user.role === 'faculty') {
       stats = await analyticsService.getFacultyStats(req.user.id, req.user);

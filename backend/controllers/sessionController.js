@@ -70,7 +70,7 @@ export const startSession = async (req, res) => {
     }
 
     // Verify ownership
-    if (session.facultyId.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (session.facultyId.toString() !== req.user.id && req.user.role !== 'principal') {
       return res.status(403).json({ message: 'Unauthorized. You do not own this session.' });
     }
 
@@ -106,7 +106,7 @@ export const endSession = async (req, res) => {
     }
 
     // Verify ownership
-    if (session.facultyId.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (session.facultyId.toString() !== req.user.id && req.user.role !== 'principal') {
       return res.status(403).json({ message: 'Unauthorized. You do not own this session.' });
     }
 
@@ -125,7 +125,7 @@ export const endSession = async (req, res) => {
 // Retrieve all sessions created by the logged-in faculty
 export const getSessions = async (req, res) => {
   try {
-    const filter = req.user.role === 'admin' ? {} : { facultyId: req.user.id, department: req.user.department };
+    const filter = req.user.role === 'principal' ? {} : { facultyId: req.user.id, department: req.user.department };
     const sessions = await AttendanceSession.find(filter).sort({ createdAt: -1 });
     res.json(sessions);
   } catch (error) {

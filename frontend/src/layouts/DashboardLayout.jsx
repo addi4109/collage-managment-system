@@ -147,25 +147,7 @@ export default function DashboardLayout({ mode, toggleTheme }) {
     { text: 'Dashboard', icon: <DashboardIcon />, path: `/dashboard/${user?.role}` },
   ];
 
-  if (user?.role === 'admin') {
-    menuItems.push(
-      { text: 'Faculty Management', icon: <PeopleIcon />, path: `/dashboard/admin?tab=faculty` },
-      { text: 'Admission Approvals', icon: <ReceiptIcon />, path: `/dashboard/admin?tab=admissions` },
-      { text: 'Result Declaration', icon: <QueryStatsIcon />, path: `/dashboard/admin?tab=results` },
-      { text: 'Exam Approvals', icon: <AssignmentIcon />, path: `/dashboard/admin?tab=exams` },
-      { text: 'Subject Directory', icon: <MenuBookIcon />, path: `/dashboard/admin?tab=subjects` },
-      { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/admin?tab=notices` },
-      { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/admin?tab=calendar` },
-      { text: 'Fee Structures & Invoices', icon: <ReceiptIcon />, path: `/dashboard/admin?tab=fees` },
-      { text: 'Placement Drives', icon: <BusinessCenterIcon />, path: `/dashboard/admin?tab=placements` },
-      { text: 'Grievance Resolver', icon: <ReportProblemIcon />, path: `/dashboard/admin?tab=complaints` },
-      { text: 'Library Ledger', icon: <LibraryBooksIcon />, path: `/dashboard/admin?tab=library` },
-      { text: 'Scholarship Approver', icon: <CardGiftcardIcon />, path: `/dashboard/admin?tab=scholarships` },
-      { text: 'Send Notifications', icon: <NotificationsIcon />, path: `/dashboard/admin?tab=notifications` },
-      { text: 'System Audit Logs', icon: <SecurityIcon />, path: `/dashboard/admin?tab=audit` },
-      { text: 'Application Approvals', icon: <AssignmentIcon />, path: `/dashboard/admin?tab=applications` }
-    );
-  } else if (user?.role === 'faculty') {
+  if (user?.role === 'faculty') {
     menuItems.push(
       { text: 'Student CRUD', icon: <PeopleIcon />, path: `/dashboard/faculty?tab=students` },
       { text: 'Mark Attendance', icon: <QrCodeIcon />, path: `/dashboard/faculty?tab=attendance` },
@@ -214,8 +196,20 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'All Departments', icon: <MenuBookIcon />, path: `/dashboard/principal?tab=departments` },
       { text: 'All Faculty', icon: <PeopleIcon />, path: `/dashboard/principal?tab=faculty` },
       { text: 'All Students', icon: <PeopleIcon />, path: `/dashboard/principal?tab=students` },
-      { text: 'Applications', icon: <AssignmentIcon />, path: `/dashboard/principal?tab=applications` },
-      { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/principal?tab=notices` }
+      { text: 'Admission Approvals', icon: <ReceiptIcon />, path: `/dashboard/principal?tab=admissions` },
+      { text: 'Result Declaration', icon: <QueryStatsIcon />, path: `/dashboard/principal?tab=results` },
+      { text: 'Exam Approvals', icon: <AssignmentIcon />, path: `/dashboard/principal?tab=exams` },
+      { text: 'Subject Directory', icon: <MenuBookIcon />, path: `/dashboard/principal?tab=subjects` },
+      { text: 'System Notice Board', icon: <CampaignIcon />, path: `/dashboard/principal?tab=notices` },
+      { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/principal?tab=calendar` },
+      { text: 'Fee Structures & Invoices', icon: <ReceiptIcon />, path: `/dashboard/principal?tab=fees` },
+      { text: 'Placement Drives', icon: <BusinessCenterIcon />, path: `/dashboard/principal?tab=placements` },
+      { text: 'Grievance Resolver', icon: <ReportProblemIcon />, path: `/dashboard/principal?tab=complaints` },
+      { text: 'Library Ledger', icon: <LibraryBooksIcon />, path: `/dashboard/principal?tab=library` },
+      { text: 'Scholarship Approver', icon: <CardGiftcardIcon />, path: `/dashboard/principal?tab=scholarships` },
+      { text: 'Send Notifications', icon: <NotificationsIcon />, path: `/dashboard/principal?tab=notifications` },
+      { text: 'System Audit Logs', icon: <SecurityIcon />, path: `/dashboard/principal?tab=audit` },
+      { text: 'Application Approvals', icon: <AssignmentIcon />, path: `/dashboard/principal?tab=applications` }
     );
   }
 

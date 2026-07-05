@@ -19,10 +19,10 @@ router.get('/', getFacultyList);
 router.get('/:id', getFacultyDetails);
 
 // Write/management routes restricted to Admin
-router.post('/', requireRole(['admin']), createFaculty);
-router.put('/:id', requireRole(['admin']), updateFaculty);
-router.put('/:id/password', requireRole(['admin']), resetPassword);
-router.put('/:id/status', requireRole(['admin']), updateFacultyStatus);
-router.delete('/:id', requireRole(['admin']), deleteFaculty);
+router.post('/', requireRole(['principal']), createFaculty);
+router.put('/:id', requireRole(['principal']), updateFaculty);
+router.put('/:id/password', requireRole(['principal']), resetPassword);
+router.put('/:id/status', requireRole(['principal']), updateFacultyStatus);
+router.delete('/:id', requireRole(['principal']), deleteFaculty);
 
 export default router;

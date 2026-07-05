@@ -5,8 +5,8 @@ import { authenticateToken, requireRole } from '../middleware/authMiddleware.js'
 const router = express.Router();
 
 router.get('/', authenticateToken, getEvents);
-router.post('/', authenticateToken, requireRole(['faculty', 'admin']), createEvent);
-router.put('/:eventId', authenticateToken, requireRole(['faculty', 'admin']), updateEvent);
-router.delete('/:eventId', authenticateToken, requireRole(['faculty', 'admin']), deleteEvent);
+router.post('/', authenticateToken, requireRole(['faculty', 'principal']), createEvent);
+router.put('/:eventId', authenticateToken, requireRole(['faculty', 'principal']), updateEvent);
+router.delete('/:eventId', authenticateToken, requireRole(['faculty', 'principal']), deleteEvent);
 
 export default router;

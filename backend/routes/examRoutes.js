@@ -27,11 +27,11 @@ router.post('/:id/submit', requireRole(['faculty']), submitForApproval);
 router.post('/:id/schedule', requireRole(['faculty']), schedule);
 router.post('/:id/start', requireRole(['faculty']), start);
 router.post('/:id/end', requireRole(['faculty']), end);
-router.get('/:id/results', requireRole(['faculty', 'admin']), getResults);
+router.get('/:id/results', requireRole(['faculty', 'principal']), getResults);
 
 // Admin Review
-router.get('/pending', requireRole(['admin']), listPending);
-router.post('/:id/review', requireRole(['admin']), review);
+router.get('/pending', requireRole(['principal']), listPending);
+router.post('/:id/review', requireRole(['principal']), review);
 
 // Student Exam taking
 router.get('/student', requireRole(['student']), listStudentExams);

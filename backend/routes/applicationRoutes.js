@@ -10,7 +10,7 @@ router.post('/', authenticateToken, requireRole(['student', 'faculty']), upload.
 router.get('/my', authenticateToken, requireRole(['student', 'faculty']), listMyApplications);
 
 // Admin-only reviews
-router.get('/pending', authenticateToken, requireRole(['admin']), listPending);
-router.post('/review/:id', authenticateToken, requireRole(['admin']), review);
+router.get('/pending', authenticateToken, requireRole(['principal']), listPending);
+router.post('/review/:id', authenticateToken, requireRole(['principal']), review);
 
 export default router;

@@ -61,16 +61,16 @@ export const sendNotification = async (req, res) => {
     let count = 0;
 
     if (target === 'all_students') {
-      if (role !== 'admin') return res.status(403).json({ message: 'Only admin can message all students.' });
+      if (role !== 'principal') return res.status(403).json({ message: 'Only admin can message all students.' });
       count = await notificationService.createRoleNotifications('student', title, message, 'ANNOUNCEMENT', senderId);
 
     } else if (target === 'all_faculty') {
-      if (role !== 'admin') return res.status(403).json({ message: 'Only admin can message all faculty.' });
+      if (role !== 'principal') return res.status(403).json({ message: 'Only admin can message all faculty.' });
       count = await notificationService.createRoleNotifications('faculty', title, message, 'ANNOUNCEMENT', senderId);
 
     } else if (target === 'all_staff') {
       // Admin sends to both students and faculty
-      if (role !== 'admin') return res.status(403).json({ message: 'Only admin can broadcast to all.' });
+      if (role !== 'principal') return res.status(403).json({ message: 'Only admin can broadcast to all.' });
       const s = await notificationService.createRoleNotifications('student', title, message, 'ANNOUNCEMENT', senderId);
       const f = await notificationService.createRoleNotifications('faculty', title, message, 'ANNOUNCEMENT', senderId);
       count = s + f;

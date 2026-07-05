@@ -10,8 +10,8 @@ import { authenticateToken, requireRole } from '../middleware/authMiddleware.js'
 const router = express.Router();
 
 router.get('/', authenticateToken, getReports);
-router.post('/', authenticateToken, requireRole(['faculty', 'admin']), createOrUpdateReport);
-router.put('/:reportId/publish', authenticateToken, requireRole(['faculty', 'admin']), publishReport);
+router.post('/', authenticateToken, requireRole(['faculty', 'principal']), createOrUpdateReport);
+router.put('/:reportId/publish', authenticateToken, requireRole(['faculty', 'principal']), publishReport);
 router.put('/:reportId/sign', authenticateToken, requireRole(['student']), signReport);
 
 export default router;

@@ -19,12 +19,12 @@ router.get('/my', requireRole(['student']), getMyFees);
 router.post('/pay', requireRole(['student']), payInstallment);
 
 // Faculty & Admin: structures and view student billing
-router.get('/structures', requireRole(['admin', 'faculty']), getStructures);
-router.get('/student/:studentId', requireRole(['admin', 'faculty']), getStudentFees);
+router.get('/structures', requireRole(['principal', 'faculty']), getStructures);
+router.get('/student/:studentId', requireRole(['principal', 'faculty']), getStudentFees);
 
 // Admin-only invoicing & setup
-router.post('/structures', requireRole(['admin']), createStructure);
-router.post('/batch-invoice', requireRole(['admin']), createBatchInvoices);
-router.get('/analytics', requireRole(['admin']), getBillingStats);
+router.post('/structures', requireRole(['principal']), createStructure);
+router.post('/batch-invoice', requireRole(['principal']), createBatchInvoices);
+router.get('/analytics', requireRole(['principal']), getBillingStats);
 
 export default router;

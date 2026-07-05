@@ -17,9 +17,9 @@ router.get('/books', listBooks);
 router.get('/my-issues', requireRole(['student']), getStudentLends);
 
 // Admin controls
-router.post('/books', requireRole(['admin']), createBook);
-router.post('/issue', requireRole(['admin']), issue);
-router.put('/return/:issueLogId', requireRole(['admin']), returnBk);
-router.get('/logs', requireRole(['admin', 'faculty']), getLendLogs);
+router.post('/books', requireRole(['principal']), createBook);
+router.post('/issue', requireRole(['principal']), issue);
+router.put('/return/:issueLogId', requireRole(['principal']), returnBk);
+router.get('/logs', requireRole(['principal', 'faculty']), getLendLogs);
 
 export default router;

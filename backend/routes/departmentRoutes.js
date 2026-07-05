@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/', getDepartments);
 
 // Admin-only department CRUD
-router.post('/', authenticateToken, requireRole(['admin']), createOrUpdateDepartment);
-router.delete('/:id', authenticateToken, requireRole(['admin']), deleteDepartment);
+router.post('/', authenticateToken, requireRole(['principal']), createOrUpdateDepartment);
+router.delete('/:id', authenticateToken, requireRole(['principal']), deleteDepartment);
 
 export default router;

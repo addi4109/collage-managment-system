@@ -15,6 +15,6 @@ router.post('/log', requireRole(['student']), logProctorEvent);
 router.post('/warning', requireRole(['student']), incrementWarning);
 
 // Manual block student (Faculty or Admin only)
-router.post('/block-student', requireRole(['faculty', 'admin']), blockStudent);
+router.post('/block-student', requireRole(['faculty', 'principal']), blockStudent);
 
 export default router;

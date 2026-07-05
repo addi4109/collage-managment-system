@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/', authenticateToken, getSubjects);
 
 // Admin-only subject CRUD
-router.post('/', authenticateToken, requireRole(['admin']), createOrUpdateSubject);
-router.delete('/:id', authenticateToken, requireRole(['admin']), deleteSubject);
+router.post('/', authenticateToken, requireRole(['principal']), createOrUpdateSubject);
+router.delete('/:id', authenticateToken, requireRole(['principal']), deleteSubject);
 
 export default router;

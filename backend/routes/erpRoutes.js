@@ -20,24 +20,24 @@ import {
 const router = express.Router();
 
 // ── Placement Routes ──
-router.post('/placements', authenticateToken, requireRole(['admin']), createPlacementDrive);
+router.post('/placements', authenticateToken, requireRole(['principal']), createPlacementDrive);
 router.get('/placements', authenticateToken, getPlacementDrives);
 router.post('/placements/:driveId/apply', authenticateToken, requireRole(['student']), applyToPlacementDrive);
-router.put('/placements/:driveId/selections', authenticateToken, requireRole(['admin']), updatePlacementSelections);
+router.put('/placements/:driveId/selections', authenticateToken, requireRole(['principal']), updatePlacementSelections);
 
 // ── Library Routes ──
-router.post('/library/books', authenticateToken, requireRole(['admin']), addBook);
+router.post('/library/books', authenticateToken, requireRole(['principal']), addBook);
 router.get('/library/books', authenticateToken, getBooks);
-router.post('/library/books/:bookId/issue', authenticateToken, requireRole(['admin']), issueBook);
-router.post('/library/books/:bookId/return', authenticateToken, requireRole(['admin']), returnBook);
+router.post('/library/books/:bookId/issue', authenticateToken, requireRole(['principal']), issueBook);
+router.post('/library/books/:bookId/return', authenticateToken, requireRole(['principal']), returnBook);
 
 // ── Fee Routes ──
 router.get('/fees', authenticateToken, getStudentFeeDetails);
 router.post('/fees/pay', authenticateToken, requireRole(['student']), payFee);
-router.post('/fees/structure', authenticateToken, requireRole(['admin']), setFeeStructure);
+router.post('/fees/structure', authenticateToken, requireRole(['principal']), setFeeStructure);
 
 // ── Calendar Events ──
-router.post('/events', authenticateToken, requireRole(['admin']), addCalendarEvent);
+router.post('/events', authenticateToken, requireRole(['principal']), addCalendarEvent);
 router.get('/events', authenticateToken, getCalendarEvents);
 
 // ── Certificates ──

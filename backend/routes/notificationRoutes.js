@@ -15,9 +15,9 @@ router.post('/read-all', readAll);
 router.get('/sent', getSent);
 
 // Send notification (admin + faculty)
-router.post('/send', requireRole(['admin', 'faculty']), sendNotification);
+router.post('/send', requireRole(['principal', 'faculty']), sendNotification);
 
 // List recipients for individual picker
-router.get('/recipients', requireRole(['admin', 'faculty']), listRecipients);
+router.get('/recipients', requireRole(['principal', 'faculty']), listRecipients);
 
 export default router;

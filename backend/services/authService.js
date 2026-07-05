@@ -50,13 +50,6 @@ export const login = async ({ credential, password, role, captchaToken, captchaV
       role: 'faculty',
       isDeleted: false,
     });
-  } else if (role === 'admin') {
-    // Admins log in using username or email
-    user = await User.findOne({
-      $or: [{ email: credential.toLowerCase() }, { username: credential.toLowerCase() }],
-      role: 'admin',
-      isDeleted: false,
-    });
   } else if (role === 'hod') {
     user = await User.findOne({
       $or: [{ email: credential.toLowerCase() }, { username: credential.toLowerCase() }],

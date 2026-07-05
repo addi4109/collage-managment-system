@@ -10,7 +10,7 @@ import { authenticateToken, requireRole } from '../middleware/authMiddleware.js'
 const router = express.Router();
 
 router.use(authenticateToken);
-router.use(requireRole(['faculty', 'admin']));
+router.use(requireRole(['faculty', 'principal']));
 
 router.post('/create', createSession);
 router.post('/start/:id', startSession);

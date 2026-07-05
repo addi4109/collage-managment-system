@@ -10,7 +10,6 @@ import { ToastProvider } from './context/ToastContext';
 import AuthLanding from './pages/AuthLanding';
 import Login from './pages/Login';
 import DashboardLayout from './layouts/DashboardLayout';
-import AdminDashboard from './pages/AdminDashboard';
 import FacultyDashboard from './pages/FacultyDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import HodDashboard from './pages/HodDashboard';
@@ -72,14 +71,6 @@ function MainApp() {
             }
           >
             {/* Scoped Dashboard views dynamically redirected */}
-            <Route
-              path="admin"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="faculty"
               element={

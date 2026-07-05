@@ -5,7 +5,7 @@ import { authenticateToken, requireRole } from '../middleware/authMiddleware.js'
 const router = express.Router();
 
 router.use(authenticateToken);
-router.use(requireRole(['admin']));
+router.use(requireRole(['principal']));
 
 router.get('/', getLogsList);
 

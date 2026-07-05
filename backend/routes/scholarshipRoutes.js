@@ -8,6 +8,6 @@ router.use(authenticateToken);
 
 router.post('/apply', requireRole(['student']), apply);
 router.get('/', list);
-router.put('/:scholarshipId', requireRole(['admin', 'faculty']), updateStatus);
+router.put('/:scholarshipId', requireRole(['principal', 'faculty']), updateStatus);
 
 export default router;
