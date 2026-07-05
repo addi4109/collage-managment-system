@@ -180,6 +180,7 @@ export default function DashboardLayout({ mode, toggleTheme }) {
     menuItems.push(
       { text: 'Faculty Directory', icon: <PeopleIcon />, path: `/dashboard/hod?tab=faculty` },
       { text: 'Student Directory', icon: <PeopleIcon />, path: `/dashboard/hod?tab=students` },
+      { text: 'Subject Directory', icon: <MenuBookIcon />, path: `/dashboard/hod?tab=subjects` },
       { text: 'Application Approvals', icon: <AssignmentIcon />, path: `/dashboard/hod?tab=applications` },
       { text: 'Exam Approvals', icon: <AssignmentIcon />, path: `/dashboard/hod?tab=exams` },
       { text: 'Academic Performance', icon: <QueryStatsIcon />, path: `/dashboard/hod?tab=results` },

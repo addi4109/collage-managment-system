@@ -17,7 +17,13 @@ export const getSubjects = async (req, res) => {
 };
 
 export const createOrUpdateSubject = async (req, res) => {
-  const { id, name, code, departmentId, year, semester, status, maxInternal, maxPractical, maxTheory } = req.body;
+  const { id, name, code, year, semester, status, maxInternal, maxPractical, maxTheory } = req.body;
+  let { departmentId } = req.body;
+
+  if (req.user.role === 'hod') {
+    departmentId = req.user.departmentId;
+  }
+
   if (!name || !code || !departmentId || !year || !semester) {
     return res.status(400).json({ message: 'Missing required subject parameters.' });
   }
@@ -68,6 +74,11 @@ export const deleteSubject = async (req, res) => {
     if (!subject) {
       return res.status(404).json({ message: 'Subject not found.' });
     }
+    
+    if (req.user.role === 'hod' && subject.departmentId.toString() !== req.user.departmentId.toString()) {
+      return res.status(403).json({ message: 'Not authorized to delete subjects from other departments.' });
+    }
+
     subject.isDeleted = true;
     subject.deletedAt = new Date();
     await subject.save();
