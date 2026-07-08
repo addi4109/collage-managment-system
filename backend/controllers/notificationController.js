@@ -61,19 +61,25 @@ export const sendNotification = async (req, res) => {
     let count = 0;
 
     if (target === 'all_students') {
-      if (role !== 'principal') return res.status(403).json({ message: 'Only admin can message all students.' });
+      if (role !== 'principal' && role !== 'hod') return res.status(403).json({ message: 'Only Principal and HOD can message all students.' });
       count = await notificationService.createRoleNotifications('student', title, message, 'ANNOUNCEMENT', senderId);
 
     } else if (target === 'all_faculty') {
-      if (role !== 'principal') return res.status(403).json({ message: 'Only admin can message all faculty.' });
+      if (role !== 'principal' && role !== 'hod') return res.status(403).json({ message: 'Only Principal and HOD can message all faculty.' });
       count = await notificationService.createRoleNotifications('faculty', title, message, 'ANNOUNCEMENT', senderId);
 
-    } else if (target === 'all_staff') {
-      // Admin sends to both students and faculty
-      if (role !== 'principal') return res.status(403).json({ message: 'Only admin can broadcast to all.' });
+    } else if (target === 'all_hod') {
+      if (role !== 'principal') return res.status(403).json({ message: 'Only Principal can message all HODs.' });
+      count = await notificationService.createRoleNotifications('hod', title, message, 'ANNOUNCEMENT', senderId);
+
+    } else if (target === 'everyone' || target === 'all_staff') {
+      if (role !== 'principal' && role !== 'hod') return res.status(403).json({ message: 'Only Principal and HOD can broadcast to everyone.' });
       const s = await notificationService.createRoleNotifications('student', title, message, 'ANNOUNCEMENT', senderId);
       const f = await notificationService.createRoleNotifications('faculty', title, message, 'ANNOUNCEMENT', senderId);
-      count = s + f;
+      const h = await notificationService.createRoleNotifications('hod', title, message, 'ANNOUNCEMENT', senderId);
+      // Everyone includes principal? Sure.
+      const p = await notificationService.createRoleNotifications('principal', title, message, 'ANNOUNCEMENT', senderId);
+      count = s + f + h + p;
 
     } else if (target === 'batch') {
       if (!departmentId || !year) {
@@ -88,12 +94,23 @@ export const sendNotification = async (req, res) => {
           return res.status(403).json({ message: 'Department is outside your assigned scope.' });
         }
       }
+      // HOD and Principal can send to any batch
       count = await notificationService.createBatchNotifications(departmentId, year, semester || null, title, message, 'ANNOUNCEMENT', senderId);
 
     } else if (target === 'individual') {
       if (!recipientId) return res.status(400).json({ message: 'recipientId is required for individual notifications.' });
       const recipient = await User.findOne({ _id: recipientId, isDeleted: false });
       if (!recipient) return res.status(404).json({ message: 'Recipient user not found.' });
+      
+      // Permission checks for individual recipients based on sender role
+      if (role === 'faculty' && recipient.role !== 'student') {
+        return res.status(403).json({ message: 'Faculty can only send direct messages to students.' });
+      }
+      if (role === 'hod' && recipient.role !== 'student' && recipient.role !== 'faculty') {
+        return res.status(403).json({ message: 'HOD can only send direct messages to students and faculty.' });
+      }
+      // Principal can message anyone
+      
       await notificationService.createNotification(recipientId, title, message, 'ANNOUNCEMENT', senderId);
       count = 1;
 
@@ -114,7 +131,7 @@ export const listRecipients = async (req, res) => {
     const { role } = req.query;
     const query = { isDeleted: false };
     if (role) query.role = role;
-    else query.role = { $in: ['student', 'faculty'] };
+    else query.role = { $in: ['student', 'faculty', 'hod'] };
 
     const users = await User.find(query).select('name username role email').limit(200);
     res.status(200).json(users);

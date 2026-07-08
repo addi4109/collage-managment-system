@@ -14,10 +14,10 @@ router.post('/read-all', readAll);
 // Outbox / Sent
 router.get('/sent', getSent);
 
-// Send notification (admin + faculty)
-router.post('/send', requireRole(['principal', 'faculty']), sendNotification);
+// Send notification (admin + faculty + hod)
+router.post('/send', requireRole(['principal', 'faculty', 'hod']), sendNotification);
 
 // List recipients for individual picker
-router.get('/recipients', requireRole(['principal', 'faculty']), listRecipients);
+router.get('/recipients', requireRole(['principal', 'faculty', 'hod']), listRecipients);
 
 export default router;

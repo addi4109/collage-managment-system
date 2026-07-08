@@ -46,14 +46,26 @@ import { getSemestersForYear } from '../utils/academicHelpers';
 const TARGET_OPTIONS_ADMIN = [
   { value: 'all_students', label: 'All Students', icon: <SchoolIcon />, color: '#4F46E5' },
   { value: 'all_faculty', label: 'All Faculty', icon: <PeopleAltIcon />, color: '#10b981' },
-  { value: 'all_staff', label: 'Everyone (Faculty + Students)', icon: <AllInclusiveIcon />, color: '#f59e0b' },
+  { value: 'all_hod', label: 'All HODs', icon: <PeopleAltIcon />, color: '#eab308' },
+  { value: 'all_staff', label: 'Everyone', icon: <AllInclusiveIcon />, color: '#f59e0b' },
   { value: 'batch', label: 'Specific Batch (Dept + Year)', icon: <GroupIcon />, color: '#06b6d4' },
-  { value: 'individual', label: 'Individual Person', icon: <PersonIcon />, color: '#ef4444' },
+  { value: 'individual_student', label: 'Individual Student', icon: <PersonIcon />, color: '#ef4444' },
+  { value: 'individual_faculty', label: 'Individual Faculty', icon: <PersonIcon />, color: '#ef4444' },
+  { value: 'individual_hod', label: 'Individual HOD', icon: <PersonIcon />, color: '#ef4444' },
+];
+
+const TARGET_OPTIONS_HOD = [
+  { value: 'all_students', label: 'All Students', icon: <SchoolIcon />, color: '#4F46E5' },
+  { value: 'all_faculty', label: 'All Faculty', icon: <PeopleAltIcon />, color: '#10b981' },
+  { value: 'all_staff', label: 'Everyone', icon: <AllInclusiveIcon />, color: '#f59e0b' },
+  { value: 'batch', label: 'Specific Batch (Dept + Year)', icon: <GroupIcon />, color: '#06b6d4' },
+  { value: 'individual_student', label: 'Individual Student', icon: <PersonIcon />, color: '#ef4444' },
+  { value: 'individual_faculty', label: 'Individual Faculty', icon: <PersonIcon />, color: '#ef4444' },
 ];
 
 const TARGET_OPTIONS_FACULTY = [
   { value: 'batch', label: 'My Batch (Dept + Year)', icon: <GroupIcon />, color: '#06b6d4' },
-  { value: 'individual', label: 'Individual Student', icon: <PersonIcon />, color: '#ef4444' },
+  { value: 'individual_student', label: 'Individual Student', icon: <PersonIcon />, color: '#ef4444' },
 ];
 
 export default function NotificationTab({ role }) {
@@ -78,7 +90,7 @@ export default function NotificationTab({ role }) {
   const [departments, setDepartments] = useState([]);
   const [recipients, setRecipients] = useState([]);
 
-  const targetOptions = role === 'admin' ? TARGET_OPTIONS_ADMIN : TARGET_OPTIONS_FACULTY;
+  const targetOptions = role === 'admin' ? TARGET_OPTIONS_ADMIN : (role === 'hod' ? TARGET_OPTIONS_HOD : TARGET_OPTIONS_FACULTY);
 
   const loadDepartments = async () => {
     try {
@@ -95,7 +107,10 @@ export default function NotificationTab({ role }) {
 
   const loadRecipients = async () => {
     try {
-      const roleFilter = role === 'faculty' ? 'student' : '';
+      let roleFilter = '';
+      if (target === 'individual_student') roleFilter = 'student';
+      if (target === 'individual_faculty') roleFilter = 'faculty';
+      if (target === 'individual_hod') roleFilter = 'hod';
       const res = await api.get(`/notifications/recipients${roleFilter ? `?role=${roleFilter}` : ''}`);
       setRecipients(res.data);
     } catch (_) {}
@@ -135,7 +150,7 @@ export default function NotificationTab({ role }) {
 
   useEffect(() => {
     loadDepartments();
-    if (target === 'individual') loadRecipients();
+    if (target.startsWith('individual')) loadRecipients();
   }, [target]);
 
   useEffect(() => {
@@ -162,15 +177,20 @@ export default function NotificationTab({ role }) {
     if (target === 'batch' && (!departmentId || !year)) {
       return showToast('Please select Department and Year for batch notification.', 'warning');
     }
-    if (target === 'individual' && !recipientId) {
+    if (target.startsWith('individual') && !recipientId) {
       return showToast('Please select a recipient.', 'warning');
     }
 
     setSending(true);
     try {
-      const payload = { title, message, target };
+      const payload = { title, message };
+      if (target.startsWith('individual')) {
+        payload.target = 'individual';
+        payload.recipientId = recipientId._id;
+      } else {
+        payload.target = target;
+      }
       if (target === 'batch') { payload.departmentId = departmentId; payload.year = year; payload.semester = semester || undefined; }
-      if (target === 'individual') { payload.recipientId = recipientId._id; }
 
       const res = await api.post('/notifications/send', payload);
       showToast(`✅ Notification sent to ${res.data.count} recipient(s).`, 'success');
@@ -282,7 +302,7 @@ export default function NotificationTab({ role }) {
                 )}
 
                 {/* Individual picker */}
-                {target === 'individual' && (
+                {target.startsWith('individual') && (
                   <Autocomplete
                     options={recipients}
                     getOptionLabel={opt => `${opt.name} (${opt.role}) — @${opt.username}`}
@@ -344,7 +364,7 @@ export default function NotificationTab({ role }) {
                       {target === 'batch' && departmentId && year && (
                         <Chip label={`${departments.find(d => d._id === departmentId)?.name} · ${year}${semester ? ' · ' + semester : ''}`} size="small" variant="outlined" />
                       )}
-                      {target === 'individual' && recipientId && (
+                      {target.startsWith('individual') && recipientId && (
                         <Chip label={recipientId.name} size="small" variant="outlined" />
                       )}
                     </Box>
