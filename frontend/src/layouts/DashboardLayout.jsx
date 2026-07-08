@@ -185,7 +185,8 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Exam Approvals', icon: <AssignmentIcon />, path: `/dashboard/hod?tab=exams` },
       { text: 'Academic Performance', icon: <QueryStatsIcon />, path: `/dashboard/hod?tab=results` },
       { text: 'Notice Board', icon: <CampaignIcon />, path: `/dashboard/hod?tab=notices` },
-      { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/hod?tab=calendar` }
+      { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/hod?tab=calendar` },
+      { text: 'Send Notifications', icon: <NotificationsIcon />, path: `/dashboard/hod?tab=notifications` }
     );
   } else if (user?.role === 'principal') {
     menuItems.push(
@@ -197,7 +198,8 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Placement Drives', icon: <BusinessCenterIcon />, path: `/dashboard/principal?tab=placements` },
       { text: 'Library Ledger', icon: <LibraryBooksIcon />, path: `/dashboard/principal?tab=library` },
       { text: 'System Audit Logs', icon: <SecurityIcon />, path: `/dashboard/principal?tab=audit` },
-      { text: 'Application Approvals', icon: <AssignmentIcon />, path: `/dashboard/principal?tab=applications` }
+      { text: 'Application Approvals', icon: <AssignmentIcon />, path: `/dashboard/principal?tab=applications` },
+      { text: 'Send Notifications', icon: <NotificationsIcon />, path: `/dashboard/principal?tab=notifications` }
     );
   }
 

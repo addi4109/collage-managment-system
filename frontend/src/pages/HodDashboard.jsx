@@ -30,6 +30,11 @@ export default function HodDashboard() {
       {tab === 'overview' && <DashboardOverviewTab />}
       {/* Overview is handled by specific tabs */}
 
+      {/* NOTIFICATIONS TAB */}
+      {tab === 'notifications' && (
+        <NotificationTab role="hod" />
+      )}
+
       {/* DIRECTORIES */}
       {tab === 'faculty' && <FacultyDirectoryTab role="hod" />}
       {tab === 'students' && <StudentDirectoryTab role="hod" />}
