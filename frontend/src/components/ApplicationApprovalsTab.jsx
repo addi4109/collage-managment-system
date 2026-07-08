@@ -142,7 +142,7 @@ export default function ApplicationApprovalsTab() {
             fullWidth
             multiline
             rows={3}
-            label={reviewDialog.status === 'approved' ? 'Suggestions / Remarks (Optional)' : 'Rejection Reason'}
+            label={reviewDialog.status === 'approved' ? 'Reason for Approval (Optional)' : 'Reason for Rejection (Required)'}
             value={reviewDialog.remarks}
             onChange={(e) => setReviewDialog({ ...reviewDialog, remarks: e.target.value })}
             required={reviewDialog.status === 'rejected'}
