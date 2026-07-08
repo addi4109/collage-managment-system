@@ -3,6 +3,7 @@ import NoticeRead from '../models/NoticeRead.js';
 import Student from '../models/Student.js';
 import Faculty from '../models/Faculty.js';
 import { logActivity } from './activityLogService.js';
+import { createRoleNotifications, createBatchNotifications } from './notificationService.js';
 
 export const createNotice = async (noticeData, creatorId, requestUser) => {
   const {
@@ -51,6 +52,15 @@ export const createNotice = async (noticeData, creatorId, requestUser) => {
 
   await notice.save();
   await logActivity(creatorId, 'CREATE_NOTICE', 'Notice', `Created notice: ${title}`);
+
+  // Send Notifications
+  if (!departmentId && year === 'All' && semester === 'All') {
+    await createRoleNotifications('student', 'New Notice Posted', `Campus Notice: ${title}`, 'NOTICE', creatorId);
+    await createRoleNotifications('faculty', 'New Notice Posted', `Campus Notice: ${title}`, 'NOTICE', creatorId);
+  } else if (departmentId) {
+    await createBatchNotifications(departmentId, year === 'All' ? null : year, semester === 'All' ? null : semester, 'New Notice Posted', `Department Notice: ${title}`, 'NOTICE', creatorId);
+  }
+
   return notice;
 };
 

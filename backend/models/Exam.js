@@ -58,7 +58,7 @@ const examSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['draft', 'pending_approval', 'approved', 'scheduled', 'active', 'ended'],
+      enum: ['draft', 'pending_hod', 'pending_principal', 'approved', 'scheduled', 'active', 'ended'],
       default: 'draft',
       required: true,
     },

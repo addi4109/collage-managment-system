@@ -1,4 +1,5 @@
 import Application from '../models/Application.js';
+import User from '../models/User.js';
 import { logActivity } from './auditService.js';
 import { createNotification } from './notificationService.js';
 
@@ -18,7 +19,34 @@ export const createApplication = async (appData, requestUser) => {
     status: requestUser.role === 'hod' ? 'pending_principal' : 'pending_hod',
   });
 
-  return await application.save();
+  const savedApplication = await application.save();
+
+  // Notify Approver
+  if (savedApplication.status === 'pending_hod') {
+    const hod = await User.findOne({ role: 'hod', departmentId: savedApplication.departmentId, isDeleted: false });
+    if (hod) {
+      await createNotification(
+        hod._id,
+        'New Application Received',
+        `A new ${savedApplication.type} application was submitted by ${savedApplication.applicantName} and requires your approval.`,
+        'APPLICATION',
+        requestUser.id
+      );
+    }
+  } else if (savedApplication.status === 'pending_principal') {
+    const principal = await User.findOne({ role: 'principal', isDeleted: false });
+    if (principal) {
+      await createNotification(
+        principal._id,
+        'New Application Received',
+        `A new ${savedApplication.type} application was submitted by ${savedApplication.applicantName} and requires your approval.`,
+        'APPLICATION',
+        requestUser.id
+      );
+    }
+  }
+
+  return savedApplication;
 };
 
 export const getPendingApplications = async (departmentId = null, role = 'principal') => {
@@ -59,7 +87,23 @@ export const reviewApplication = async (applicationId, status, remarks, adminId,
   app.remarks = remarks || '';
   await app.save();
 
-  await createNotification(
+  // If forwarded to Principal, notify Principal
+  if (finalStatus === 'pending_principal') {
+    const principal = await User.findOne({ role: 'principal', isDeleted: false });
+    if (principal) {
+      await createNotification(
+        principal._id,
+        'Application Forwarded',
+        `A ${app.type} application by faculty ${app.applicantName} was approved by their HOD and now requires your final approval.`,
+        'APPLICATION',
+        adminId
+      );
+    }
+  }
+
+  // Only notify applicant if final status is reached (approved/rejected)
+  if (finalStatus === 'approved' || finalStatus === 'rejected') {
+    await createNotification(
     app.applicantId,
     `Application ${status.charAt(0).toUpperCase() + status.slice(1)}`,
     `Your request of type [${app.type}] has been ${status}. Remarks: ${remarks || 'None'}`,

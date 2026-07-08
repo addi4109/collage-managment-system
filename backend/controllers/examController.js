@@ -22,7 +22,7 @@ export const submitForApproval = async (req, res) => {
 export const listPending = async (req, res) => {
   try {
     const departmentId = req.user.role === 'hod' ? req.user.departmentId : null;
-    const exams = await examService.getPendingExams(departmentId);
+    const exams = await examService.getPendingExams(departmentId, req.user.role);
     res.status(200).json(exams);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch pending exams.' });
@@ -35,7 +35,7 @@ export const review = async (req, res) => {
     if (approve === undefined) {
       return res.status(400).json({ message: 'Approve parameter (true/false) is required.' });
     }
-    const exam = await examService.reviewExam(req.params.id, approve);
+    const exam = await examService.reviewExam(req.params.id, approve, req.user.id, req.user.role);
     res.status(200).json({ message: `Exam ${approve ? 'approved' : 'rejected and set to draft'}.`, exam });
   } catch (err) {
     res.status(400).json({ message: err.message });
