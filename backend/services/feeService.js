@@ -27,7 +27,11 @@ export const getFeeStructures = async () => {
 };
 
 export const generateBatchInvoices = async (batchData, adminId) => {
-  const { departmentId, year, semester, academicYear, installmentCount = 2 } = batchData;
+  const { departmentId, year, semester, academicYear, installments } = batchData;
+
+  if (!installments || !Array.isArray(installments) || installments.length === 0) {
+    throw new Error('You must provide at least one installment.');
+  }
 
   // 1. Find all students in this batch
   const students = await Student.find({ departmentId, year, semester, isDeleted: false });
@@ -35,43 +39,50 @@ export const generateBatchInvoices = async (batchData, adminId) => {
     throw new Error('No students found in the specified batch.');
   }
 
-  // 2. Fetch all matching fee structures to compute the total fee
+  // 2. Fetch all matching fee structures to compute the total expected fee
   const structures = await FeeStructure.find({ departmentId, year, semester });
   if (structures.length === 0) {
     throw new Error('No fee structures defined for this batch. Create fee structures first.');
   }
 
-  const totalFee = structures.reduce((sum, item) => sum + item.amount, 0);
+  const expectedTotalFee = structures.reduce((sum, item) => sum + item.amount, 0);
+
+  // 3. Validate installments sum against the expected total fee
+  let installmentsSum = 0;
+  const processedInstallments = installments.map((inst, idx) => {
+    const amount = Number(inst.amount);
+    if (isNaN(amount) || amount <= 0) {
+      throw new Error(`Invalid amount in installment #${idx + 1}.`);
+    }
+    const dueDate = new Date(inst.dueDate);
+    if (isNaN(dueDate.getTime())) {
+      throw new Error(`Invalid due date in installment #${idx + 1}.`);
+    }
+    
+    installmentsSum += amount;
+    return {
+      index: idx + 1,
+      amount,
+      dueDate,
+      status: 'unpaid',
+    };
+  });
+
+  if (installmentsSum !== expectedTotalFee) {
+    throw new Error(`The sum of installments ($${installmentsSum}) does not match the expected total fee ($${expectedTotalFee}) for this batch.`);
+  }
 
   const generatedFees = [];
 
   for (const student of students) {
-    // Generate installments
-    const installments = [];
-    const installmentAmount = Math.round(totalFee / installmentCount);
-    const now = new Date();
-
-    for (let i = 0; i < installmentCount; i++) {
-      // Installment 1 in 15 days, Installment 2 in 45 days, etc.
-      const dueDate = new Date();
-      dueDate.setDate(now.getDate() + 15 + i * 30);
-
-      installments.push({
-        index: i + 1,
-        amount: installmentAmount,
-        dueDate,
-        status: 'unpaid',
-      });
-    }
-
     // Attempt to update or create StudentFee
     const studentFee = await StudentFee.findOneAndUpdate(
       { studentId: student.userId, academicYear },
       {
-        totalFee,
-        remainingAmount: totalFee,
+        totalFee: expectedTotalFee,
+        remainingAmount: expectedTotalFee,
         paidAmount: 0,
-        installments,
+        installments: processedInstallments,
         lastPaymentDate: null,
       },
       { upsert: true, new: true }
@@ -82,7 +93,7 @@ export const generateBatchInvoices = async (batchData, adminId) => {
     await createNotification(
       student.userId,
       'Fee Invoice Generated',
-      `An academic fee invoice of ${totalFee} has been generated for academic year ${academicYear}.`,
+      `An academic fee invoice of $${expectedTotalFee} has been generated for academic year ${academicYear}.`,
       'Fee Due'
     );
   }

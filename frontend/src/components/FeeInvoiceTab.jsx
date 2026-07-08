@@ -64,10 +64,17 @@ export default function FeeInvoiceTab({ role }) {
     year: 'First Year',
     semester: 'Sem 1',
     academicYear: '2026-27',
-    installmentCount: 2,
+    installments: [{ amount: '', dueDate: '' }],
   });
 
   const [analytics, setAnalytics] = useState(null);
+
+  const expectedTotal = structures
+    .filter(s => s.departmentId?._id === batchForm.departmentId && s.year === batchForm.year && s.semester === batchForm.semester)
+    .reduce((sum, s) => sum + s.amount, 0);
+
+  const currentTotal = batchForm.installments.reduce((sum, inst) => sum + Number(inst.amount || 0), 0);
+
 
   const loadData = async () => {
     setLoading(true);
@@ -108,6 +115,10 @@ export default function FeeInvoiceTab({ role }) {
 
   const handleGenerateBatch = async (e) => {
     e.preventDefault();
+    if (currentTotal !== expectedTotal) {
+      showToast(`Installment total ($${currentTotal}) does not match expected total ($${expectedTotal})`, 'warning');
+      return;
+    }
     try {
       await api.post('/fees/batch-invoice', batchForm);
       showToast('Invoices generated successfully for this batch.', 'success');
@@ -460,7 +471,7 @@ export default function FeeInvoiceTab({ role }) {
           <DialogTitle sx={{ fontWeight: 'bold' }}>Generate Batch Invoices</DialogTitle>
           <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              Calculate total fees based on defined structures, split them into installments, and assign invoice schedules to all students in this batch.
+              Calculate total fees based on defined structures, then configure explicit installments and due dates.
             </Typography>
             <TextField
               select
@@ -503,7 +514,7 @@ export default function FeeInvoiceTab({ role }) {
               </Grid>
             </Grid>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid item xs={12}>
                 <TextField
                   label="Academic Year"
                   fullWidth
@@ -512,16 +523,66 @@ export default function FeeInvoiceTab({ role }) {
                   onChange={(e) => setBatchForm({ ...batchForm, academicYear: e.target.value })}
                 />
               </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  label="Installments Count"
-                  type="number"
-                  fullWidth
-                  value={batchForm.installmentCount}
-                  onChange={(e) => setBatchForm({ ...batchForm, installmentCount: Number(e.target.value) })}
-                />
-              </Grid>
             </Grid>
+
+            {batchForm.departmentId && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: 'action.hover', borderRadius: '12px' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Fee Installments Configuration</Typography>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="caption" color="text.secondary" display="block">Expected Total Fee</Typography>
+                    <Typography variant="h6" color={currentTotal === expectedTotal ? 'success.main' : 'error.main'}>
+                      ${currentTotal} / ${expectedTotal}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Stack spacing={2}>
+                  {batchForm.installments.map((inst, index) => (
+                    <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                      <TextField
+                        label={`Installment ${index + 1} Amount`}
+                        type="number"
+                        required
+                        value={inst.amount}
+                        onChange={(e) => {
+                          const newInst = [...batchForm.installments];
+                          newInst[index].amount = e.target.value;
+                          setBatchForm({ ...batchForm, installments: newInst });
+                        }}
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        label="Due Date"
+                        type="date"
+                        required
+                        InputLabelProps={{ shrink: true }}
+                        value={inst.dueDate}
+                        onChange={(e) => {
+                          const newInst = [...batchForm.installments];
+                          newInst[index].dueDate = e.target.value;
+                          setBatchForm({ ...batchForm, installments: newInst });
+                        }}
+                        sx={{ flex: 1 }}
+                      />
+                      {batchForm.installments.length > 1 && (
+                        <Button color="error" onClick={() => {
+                          const newInst = [...batchForm.installments];
+                          newInst.splice(index, 1);
+                          setBatchForm({ ...batchForm, installments: newInst });
+                        }}>
+                          Remove
+                        </Button>
+                      )}
+                    </Box>
+                  ))}
+                  <Button variant="outlined" startIcon={<AddIcon />} onClick={() => {
+                    setBatchForm({ ...batchForm, installments: [...batchForm.installments, { amount: '', dueDate: '' }] });
+                  }}>
+                    Add Installment
+                  </Button>
+                </Stack>
+              </Box>
+            )}
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenBatch(false)}>Cancel</Button>

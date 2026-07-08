@@ -197,6 +197,7 @@ export default function DashboardLayout({ mode, toggleTheme }) {
       { text: 'Academic Calendar', icon: <CalendarMonthIcon />, path: `/dashboard/principal?tab=calendar` },
       { text: 'Placement Drives', icon: <BusinessCenterIcon />, path: `/dashboard/principal?tab=placements` },
       { text: 'Library Ledger', icon: <LibraryBooksIcon />, path: `/dashboard/principal?tab=library` },
+      { text: 'Fees Management', icon: <ReceiptIcon />, path: `/dashboard/principal?tab=fees` },
       { text: 'System Audit Logs', icon: <SecurityIcon />, path: `/dashboard/principal?tab=audit` },
       { text: 'Application Approvals', icon: <AssignmentIcon />, path: `/dashboard/principal?tab=applications` },
       { text: 'Send Notifications', icon: <NotificationsIcon />, path: `/dashboard/principal?tab=notifications` }
