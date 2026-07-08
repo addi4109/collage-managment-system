@@ -104,6 +104,7 @@ export const reviewApplication = async (applicationId, status, remarks, adminId,
     `Your request of type [${app.type}] has been ${status}. Remarks: ${remarks || 'None'}`,
     'APPLICATION'
   );
+  }
 
   await logActivity({
     action: `APPLICATION_${status.toUpperCase()}`,
