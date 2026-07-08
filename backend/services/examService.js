@@ -2,6 +2,7 @@ import Exam from '../models/Exam.js';
 import ExamAttempt from '../models/ExamAttempt.js';
 import Student from '../models/Student.js';
 import User from '../models/User.js';
+import HOD from '../models/HOD.js';
 import { createBatchNotifications, createNotification } from './notificationService.js';
 
 export const createExam = async (examData, facultyId) => {
@@ -28,10 +29,10 @@ export const submitExamForApproval = async (examId, facultyId) => {
   exam.status = 'pending_hod';
   await exam.save();
 
-  const hod = await User.findOne({ role: 'hod', departmentId: exam.departmentId, isDeleted: false });
+  const hod = await HOD.findOne({ departmentId: exam.departmentId, isDeleted: false });
   if (hod) {
     await createNotification(
-      hod._id,
+      hod.userId,
       'New MCQ Exam Requires Approval',
       `An MCQ exam [${exam.title}] was submitted by faculty and requires your approval.`,
       'EXAM',
@@ -61,16 +62,13 @@ export const reviewExam = async (examId, approve, adminId, adminRole) => {
   if (approve) {
     if (adminRole === 'hod') {
       exam.status = 'pending_principal';
-      const principal = await User.findOne({ role: 'principal', isDeleted: false });
-      if (principal) {
-        await createNotification(
-          principal._id,
-          'MCQ Exam Forwarded',
-          `An MCQ exam [${exam.title}] was approved by the HOD and now requires your final approval.`,
-          'EXAM',
-          adminId
-        );
-      }
+      await createRoleNotifications(
+        'principal',
+        'MCQ Exam Forwarded',
+        `An MCQ exam [${exam.title}] was approved by the HOD and now requires your final approval.`,
+        'EXAM',
+        adminId
+      );
     } else {
       exam.status = 'approved';
       await createNotification(

@@ -1,6 +1,7 @@
 import Notification from '../models/Notification.js';
 import Student from '../models/Student.js';
 import Faculty from '../models/Faculty.js';
+import HOD from '../models/HOD.js';
 import User from '../models/User.js';
 
 // Single recipient
@@ -13,14 +14,33 @@ export const createNotification = async (recipientId, title, message, type, send
   }
 };
 
-// Batch: by dept + year (students only)
+// Batch: by dept + year (students, and optionally faculty/hod)
 export const createBatchNotifications = async (departmentId, year, semester, title, message, type, senderId = null) => {
   try {
-    const query = { departmentId, year, isDeleted: false };
+    // 1. Find Students
+    const query = { departmentId, isDeleted: false };
+    if (year) query.year = year;
     if (semester) query.semester = semester;
     const students = await Student.find(query);
-    const notifications = students.map(s => ({
-      recipientId: s.userId,
+    
+    // 2. Find Faculty assigned to department & year
+    const facultyQuery = { 
+      assignedDepartments: departmentId, 
+      isDeleted: false 
+    };
+    if (year) facultyQuery.assignedYears = year;
+    const faculties = await Faculty.find(facultyQuery);
+
+    // 3. Find HOD of department
+    const hod = await HOD.findOne({ departmentId, isDeleted: false });
+
+    const recipientIds = [];
+    students.forEach(s => recipientIds.push(s.userId));
+    faculties.forEach(f => recipientIds.push(f.userId));
+    if (hod) recipientIds.push(hod.userId);
+
+    const notifications = recipientIds.map(id => ({
+      recipientId: id,
       senderId,
       title,
       message,

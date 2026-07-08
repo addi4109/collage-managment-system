@@ -1,7 +1,8 @@
 import Application from '../models/Application.js';
 import User from '../models/User.js';
+import HOD from '../models/HOD.js';
 import { logActivity } from './auditService.js';
-import { createNotification } from './notificationService.js';
+import { createNotification, createRoleNotifications } from './notificationService.js';
 
 export const createApplication = async (appData, requestUser) => {
   const { type, description, attachments } = appData;
@@ -23,10 +24,10 @@ export const createApplication = async (appData, requestUser) => {
 
   // Notify Approver
   if (savedApplication.status === 'pending_hod') {
-    const hod = await User.findOne({ role: 'hod', departmentId: savedApplication.departmentId, isDeleted: false });
+    const hod = await HOD.findOne({ departmentId: savedApplication.departmentId, isDeleted: false });
     if (hod) {
       await createNotification(
-        hod._id,
+        hod.userId,
         'New Application Received',
         `A new ${savedApplication.type} application was submitted by ${savedApplication.applicantName} and requires your approval.`,
         'APPLICATION',
@@ -34,16 +35,13 @@ export const createApplication = async (appData, requestUser) => {
       );
     }
   } else if (savedApplication.status === 'pending_principal') {
-    const principal = await User.findOne({ role: 'principal', isDeleted: false });
-    if (principal) {
-      await createNotification(
-        principal._id,
-        'New Application Received',
-        `A new ${savedApplication.type} application was submitted by ${savedApplication.applicantName} and requires your approval.`,
-        'APPLICATION',
-        requestUser.id
-      );
-    }
+    await createRoleNotifications(
+      'principal',
+      'New Application Received',
+      `A new ${savedApplication.type} application was submitted by ${savedApplication.applicantName} and requires your approval.`,
+      'APPLICATION',
+      requestUser.id
+    );
   }
 
   return savedApplication;
@@ -89,16 +87,13 @@ export const reviewApplication = async (applicationId, status, remarks, adminId,
 
   // If forwarded to Principal, notify Principal
   if (finalStatus === 'pending_principal') {
-    const principal = await User.findOne({ role: 'principal', isDeleted: false });
-    if (principal) {
-      await createNotification(
-        principal._id,
-        'Application Forwarded',
-        `A ${app.type} application by faculty ${app.applicantName} was approved by their HOD and now requires your final approval.`,
-        'APPLICATION',
-        adminId
-      );
-    }
+    await createRoleNotifications(
+      'principal',
+      'Application Forwarded',
+      `A ${app.type} application by faculty ${app.applicantName} was approved by their HOD and now requires your final approval.`,
+      'APPLICATION',
+      adminId
+    );
   }
 
   // Only notify applicant if final status is reached (approved/rejected)
