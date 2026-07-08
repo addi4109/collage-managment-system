@@ -17,15 +17,17 @@ import NotificationTab from '../components/NotificationTab';
 import ContactSupportTab from '../components/ContactSupportTab';
 import StudentApplicationsTab from '../components/StudentApplicationsTab';
 import AcademicCalendarTab from '../components/AcademicCalendarTab';
+import DashboardOverviewTab from '../components/DashboardOverviewTab';
 
 export default function HodDashboard() {
   const [searchParams] = useSearchParams();
-  const tab = searchParams.get('tab') || 'stats';
+  const tab = searchParams.get('tab') || 'overview';
   const { user } = useAuth();
 
   return (
     <Box>
-      {/* STATS VIEW */}
+      {/* OVERVIEW */}
+      {tab === 'overview' && <DashboardOverviewTab />}
       {/* Overview is handled by specific tabs */}
 
       {/* DIRECTORIES */}

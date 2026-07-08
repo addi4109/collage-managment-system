@@ -62,6 +62,55 @@ export const getAdminStats = async () => {
   };
 };
 
+export const getHodStats = async (departmentId, requestUser) => {
+  const totalStudents = await Student.countDocuments({ departmentId, isDeleted: false });
+  const totalFaculty = await Faculty.countDocuments({ departmentId, isDeleted: false });
+  const pendingApplications = await Application.countDocuments({ 
+    departmentId,
+    status: { $in: ['pending_hod', 'pending'] }, // Catch both
+    isDeleted: false 
+  });
+
+  // Today's active sessions in the department
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const activeSessions = await AttendanceSession.find({
+    departmentId,
+    date: { $gte: today },
+    status: 'active',
+  }).populate('facultyId', 'name');
+
+  const activeSessionsList = [];
+  for (const s of activeSessions) {
+    const checkinCount = await Attendance.countDocuments({ sessionId: s._id });
+    activeSessionsList.push({
+      sessionId: s._id,
+      subjectName: s.subjectName,
+      facultyName: s.facultyId?.name || 'Unknown',
+      startTime: s.startTime,
+      duration: s.duration,
+      checkinCount,
+    });
+  }
+
+  // Upcoming scheduled exams in the department
+  const upcomingExams = await Exam.find({
+    departmentId,
+    status: 'scheduled',
+    isDeleted: false,
+  })
+    .populate('subjectId', 'name code')
+    .limit(5);
+
+  return {
+    totalStudents,
+    totalFaculty,
+    pendingApplications,
+    activeSessions: activeSessionsList,
+    upcomingExams,
+  };
+};
+
 export const getFacultyStats = async (facultyId, requestUser) => {
   const assignedDepts = requestUser.assignedDepartments || [];
   const assignedYears = requestUser.assignedYears || [];

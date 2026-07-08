@@ -46,10 +46,11 @@ import LibraryTab from '../components/LibraryTab';
 import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 import StudentApplicationsTab from '../components/StudentApplicationsTab';
+import DashboardOverviewTab from '../components/DashboardOverviewTab';
 
 export default function StudentDashboard() {
   const [searchParams] = useSearchParams();
-  const tab = searchParams.get('tab') || 'stats';
+  const tab = searchParams.get('tab') || 'overview';
   const { showToast } = useToast();
 
   // Data States
@@ -91,9 +92,8 @@ export default function StudentDashboard() {
   const loadData = async () => {
     setLoading(true);
     try {
-      if (tab === 'stats') {
-        const res = await api.get('/reports/analytics');
-        setStats(res.data);
+      if (tab === 'overview') {
+        // Handled by DashboardOverviewTab
       } else if (tab === 'attendance') {
         const res = await api.get('/attendance/student-summary');
         setFees(res.data);
@@ -391,56 +391,8 @@ export default function StudentDashboard() {
         <TableSkeleton />
       ) : (
         <>
-          {/* STATS VIEW */}
-          {tab === 'stats' && stats && (
-            <Box>
-              <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid item xs={12} sm={4}>
-                  <Card sx={{ p: 3, borderRadius: '16px', bgcolor: 'primary.light', color: '#fff' }}>
-                    <Typography variant="body2">My Attendance Percentage</Typography>
-                    <Typography variant="h3" sx={{ fontWeight: 800 }}>{stats.attendancePercentage}%</Typography>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Card sx={{ p: 3, borderRadius: '16px', bgcolor: 'warning.light', color: '#fff' }}>
-                    <Typography variant="body2">Fees Outstanding Balance</Typography>
-                    <Typography variant="h3" sx={{ fontWeight: 'bold' }}>${stats.feesDue}</Typography>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Card sx={{ p: 3, borderRadius: '16px', bgcolor: 'success.light', color: '#fff' }}>
-                    <Typography variant="body2">Available MCQ Exams</Typography>
-                    <Typography variant="h3" sx={{ fontWeight: 'bold' }}>{stats.upcomingExamsCount}</Typography>
-                  </Card>
-                </Grid>
-              </Grid>
-
-              {/* Recent Notices Feed */}
-              <Card sx={{ p: 3, borderRadius: '16px' }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>Recent Campus Announcements</Typography>
-                {stats.recentNotices?.length === 0 ? (
-                  <Typography color="text.secondary">No announcements posted for your batch.</Typography>
-                ) : (
-                  <Box>
-                    {stats.recentNotices?.map((n) => (
-                      <Box key={n.id} sx={{ mb: 2.5, pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{n.title}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {new Date(n.createdAt).toLocaleDateString()} • {n.facultyName}
-                          </Typography>
-                        </Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{n.content}</Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                )}
-              </Card>
-
-              {/* LATEST UPDATES FEED */}
-              <LatestUpdatesPanel role="student" />
-            </Box>
-          )}
+          {/* OVERVIEW VIEW */}
+          {tab === 'overview' && <DashboardOverviewTab />}
 
           {/* SCAN ATTENDANCE */}
           {tab === 'attendance' && (

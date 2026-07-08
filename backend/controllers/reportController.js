@@ -8,6 +8,8 @@ export const getDashboardAnalytics = async (req, res) => {
       stats = await analyticsService.getAdminStats();
     } else if (req.user.role === 'faculty') {
       stats = await analyticsService.getFacultyStats(req.user.id, req.user);
+    } else if (req.user.role === 'hod') {
+      stats = await analyticsService.getHodStats(req.user.departmentId, req.user);
     } else if (req.user.role === 'student') {
       stats = await analyticsService.getStudentStats(req.user.id);
     } else {

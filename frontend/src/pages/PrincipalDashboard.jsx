@@ -49,6 +49,7 @@ import PlacementTab from '../components/PlacementTab';
 import LibraryTab from '../components/LibraryTab';
 import NotificationTab from '../components/NotificationTab';
 import ContactSupportTab from '../components/ContactSupportTab';
+import DashboardOverviewTab from '../components/DashboardOverviewTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
 import HodManagementTab from '../components/HodManagementTab';
 import FacultyDirectoryTab from '../components/FacultyDirectoryTab';
@@ -60,7 +61,7 @@ import { getSemestersForYear } from '../utils/academicHelpers';
 
 export default function PrincipalDashboard() {
   const [searchParams] = useSearchParams();
-  const tab = searchParams.get('tab') || 'hods';
+  const tab = searchParams.get('tab') || 'overview';
   const { showToast } = useToast();
 
   // Data States
@@ -163,6 +164,9 @@ export default function PrincipalDashboard() {
         <TableSkeleton />
       ) : (
         <>
+          {/* OVERVIEW VIEW */}
+          {tab === 'overview' && <DashboardOverviewTab />}
+
           {/* DEPARTMENT DIRECTORY */}
           {tab === 'departments' && (
             <DepartmentDirectoryTab />

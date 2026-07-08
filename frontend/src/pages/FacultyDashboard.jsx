@@ -48,11 +48,12 @@ import NotificationTab from '../components/NotificationTab';
 import StudentApplicationsTab from '../components/StudentApplicationsTab';
 import ContactSupportTab from '../components/ContactSupportTab';
 import LatestUpdatesPanel from '../components/LatestUpdatesPanel';
+import DashboardOverviewTab from '../components/DashboardOverviewTab';
 import { getSemestersForYear } from '../utils/academicHelpers';
 
 export default function FacultyDashboard() {
   const [searchParams] = useSearchParams();
-  const tab = searchParams.get('tab') || 'stats';
+  const tab = searchParams.get('tab') || 'overview';
   const { user } = useAuth();
   const { showToast } = useToast();
 
@@ -182,9 +183,8 @@ export default function FacultyDashboard() {
   const loadData = async () => {
     setLoading(true);
     try {
-      if (tab === 'stats') {
-        const res = await api.get('/reports/analytics');
-        setStats(res.data);
+      if (tab === 'overview') {
+        // Handled by DashboardOverviewTab
       } else if (tab === 'students') {
         const res = await api.get('/students');
         setStudents(res.data);
@@ -400,69 +400,8 @@ export default function FacultyDashboard() {
         <TableSkeleton />
       ) : (
         <>
-          {/* STATS VIEW */}
-          {tab === 'stats' && stats && (
-            <Box>
-              <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid item xs={12} sm={4}>
-                  <Card sx={{ p: 3, borderRadius: '16px', bgcolor: 'primary.light', color: '#fff' }}>
-                    <Typography variant="body2">My Scoped Students</Typography>
-                    <Typography variant="h3" sx={{ fontWeight: 800 }}>{stats.myStudents}</Typography>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Card sx={{ p: 3, borderRadius: '16px', bgcolor: 'secondary.light', color: '#fff' }}>
-                    <Typography variant="body2">Pending Admission Enquiries</Typography>
-                    <Typography variant="h3" sx={{ fontWeight: 800 }}>{stats.pendingAdmissions}</Typography>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Card sx={{ p: 3, borderRadius: '16px', bgcolor: 'success.light', color: '#fff' }}>
-                    <Typography variant="body2">Upcoming MCQ Exams</Typography>
-                    <Typography variant="h3" sx={{ fontWeight: 800 }}>{stats.upcomingExams?.length || 0}</Typography>
-                  </Card>
-                </Grid>
-              </Grid>
-
-              {/* Active check-in monitor */}
-              <Card sx={{ p: 3, borderRadius: '16px', mb: 4 }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>Today's Active Attendance Check-Ins</Typography>
-                {stats.activeSessions?.length === 0 ? (
-                  <Typography color="text.secondary">No active attendance sessions right now.</Typography>
-                ) : (
-                  <TableContainer component={Paper} sx={{ boxShadow: 'none' }}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Subject Code</TableCell>
-                          <TableCell>Subject Name</TableCell>
-                          <TableCell>Time</TableCell>
-                          <TableCell>Duration</TableCell>
-                          <TableCell align="right">Students Checked-in</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {stats.activeSessions?.map((s, idx) => (
-                          <TableRow key={idx}>
-                            <TableCell sx={{ fontWeight: 'bold' }}>{s.subjectCode}</TableCell>
-                            <TableCell>{s.subjectName}</TableCell>
-                            <TableCell>{s.startTime}</TableCell>
-                            <TableCell>{s.duration} mins</TableCell>
-                            <TableCell align="right">
-                              <Chip label={`${s.checkinCount} present`} color="success" size="small" />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                )}
-              </Card>
-
-              {/* LATEST UPDATES FEED */}
-              <LatestUpdatesPanel role="faculty" />
-            </Box>
-          )}
+          {/* OVERVIEW VIEW */}
+          {tab === 'overview' && <DashboardOverviewTab />}
 
           {/* STUDENT CRUD */}
           {tab === 'students' && (

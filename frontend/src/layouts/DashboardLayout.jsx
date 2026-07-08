@@ -145,9 +145,7 @@ export default function DashboardLayout({ mode, toggleTheme }) {
   // Sidebar Menu Scoping
   const menuItems = [];
   
-  if (user?.role !== 'principal' && user?.role !== 'hod') {
-    menuItems.push({ text: 'Dashboard', icon: <DashboardIcon />, path: `/dashboard/${user?.role}` });
-  }
+  menuItems.push({ text: 'Dashboard Overview', icon: <DashboardIcon />, path: `/dashboard/${user?.role}?tab=overview` });
 
   if (user?.role === 'faculty') {
     menuItems.push(
