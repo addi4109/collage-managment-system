@@ -15,7 +15,7 @@ export const createApplication = async (appData, requestUser) => {
     year: requestUser.role === 'student' ? requestUser.year : (requestUser.assignedYears?.[0] || 'First Year'),
     semester: requestUser.role === 'student' ? requestUser.semester : 'Sem 1',
     attachments: attachments || [],
-    status: (requestUser.role === 'student' || requestUser.role === 'hod') ? 'pending_principal' : 'pending_hod',
+    status: requestUser.role === 'hod' ? 'pending_principal' : 'pending_hod',
   });
 
   return await application.save();
