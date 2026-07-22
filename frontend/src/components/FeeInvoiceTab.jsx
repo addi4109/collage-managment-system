@@ -393,7 +393,7 @@ export default function FeeInvoiceTab({ role }) {
               onChange={(e) => setStructureForm({ ...structureForm, title: e.target.value })}
             />
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   label="Amount"
                   type="number"
@@ -403,7 +403,7 @@ export default function FeeInvoiceTab({ role }) {
                   onChange={(e) => setStructureForm({ ...structureForm, amount: Number(e.target.value) })}
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   select
                   label="Category"
@@ -430,7 +430,7 @@ export default function FeeInvoiceTab({ role }) {
               ))}
             </TextField>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   select
                   label="Year"
@@ -443,7 +443,7 @@ export default function FeeInvoiceTab({ role }) {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   select
                   label="Semester"
@@ -486,7 +486,7 @@ export default function FeeInvoiceTab({ role }) {
               ))}
             </TextField>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   select
                   label="Year"
@@ -499,7 +499,7 @@ export default function FeeInvoiceTab({ role }) {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   select
                   label="Semester"
@@ -527,9 +527,9 @@ export default function FeeInvoiceTab({ role }) {
 
             {batchForm.departmentId && (
               <Box sx={{ mt: 2, p: 2, bgcolor: 'action.hover', borderRadius: '12px' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', mb: 2, gap: 1 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Fee Installments Configuration</Typography>
-                  <Box sx={{ textAlign: 'right' }}>
+                  <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
                     <Typography variant="caption" color="text.secondary" display="block">Expected Total Fee</Typography>
                     <Typography variant="h6" color={currentTotal === expectedTotal ? 'success.main' : 'error.main'}>
                       ${currentTotal} / ${expectedTotal}
@@ -538,7 +538,7 @@ export default function FeeInvoiceTab({ role }) {
                 </Box>
                 <Stack spacing={2}>
                   {batchForm.installments.map((inst, index) => (
-                    <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <Box key={index} sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: { xs: 'stretch', sm: 'center' } }}>
                       <TextField
                         label={`Installment ${index + 1} Amount`}
                         type="number"
@@ -565,11 +565,11 @@ export default function FeeInvoiceTab({ role }) {
                         sx={{ flex: 1 }}
                       />
                       {batchForm.installments.length > 1 && (
-                        <Button color="error" onClick={() => {
+                        <Button color="error" variant="outlined" onClick={() => {
                           const newInst = [...batchForm.installments];
                           newInst.splice(index, 1);
                           setBatchForm({ ...batchForm, installments: newInst });
-                        }}>
+                        }} sx={{ flexShrink: 0, alignSelf: { xs: 'flex-end', sm: 'auto' } }}>
                           Remove
                         </Button>
                       )}
