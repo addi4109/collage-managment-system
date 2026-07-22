@@ -576,8 +576,8 @@ export default function DashboardLayout({ mode, toggleTheme }) {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          width: { md: `calc(100% - ${drawerWidth}px)` },
+          p: { xs: 2, md: 3 },
+          width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
           mt: '64px',
         }}
       >

@@ -478,8 +478,8 @@ export default function AssignmentTab({ role }) {
           {submissionsList.length === 0 ? (
             <Typography color="text.secondary">No submissions made yet.</Typography>
           ) : (
-            <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid', borderColor: 'divider' }}>
-              <Table>
+            <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid', borderColor: 'divider', overflowX: 'auto' }}>
+              <Table sx={{ minWidth: 800 }}>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'action.hover' }}>
                     <TableCell>Student</TableCell>

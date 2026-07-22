@@ -89,8 +89,8 @@ export default function Login({ mode, toggleTheme }) {
         to="/portal"
         sx={{
           position: 'absolute',
-          top: 24,
-          left: 24,
+          top: { xs: 16, sm: 24 },
+          left: { xs: 16, sm: 24 },
           bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
           backdropFilter: 'blur(12px)',
           border: '1px solid',
@@ -109,8 +109,8 @@ export default function Login({ mode, toggleTheme }) {
         onClick={toggleTheme}
         sx={{
           position: 'absolute',
-          top: 24,
-          right: 24,
+          top: { xs: 16, sm: 24 },
+          right: { xs: 16, sm: 24 },
           bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
           backdropFilter: 'blur(12px)',
           border: '1px solid',
@@ -128,10 +128,10 @@ export default function Login({ mode, toggleTheme }) {
         {isDark ? <LightModeIcon /> : <DarkModeIcon />}
       </IconButton>
 
-      <Container sx={{ position: 'relative', zIndex: 1, width: 480, maxWidth: '100%', mx: 'auto' }}>
+      <Container sx={{ position: 'relative', zIndex: 1, width: 480, maxWidth: '100%', mx: 'auto', px: { xs: 2, sm: 3 } }}>
         <Card
           sx={{
-            p: 4,
+            p: { xs: 3, sm: 4 },
             borderRadius: '24px',
             background: isDark
               ? 'linear-gradient(145deg, rgba(17, 24, 39, 0.9) 0%, rgba(15, 20, 35, 0.95) 100%)'

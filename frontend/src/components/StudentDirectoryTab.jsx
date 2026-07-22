@@ -136,7 +136,7 @@ export default function StudentDirectoryTab({ role }) {
     <Box>
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Students Directory</Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} sx={{ width: { xs: '100%', sm: 'auto' } }}>
           <TextField
             select
             size="small"
@@ -170,8 +170,8 @@ export default function StudentDirectoryTab({ role }) {
       ) : students.length === 0 ? (
         <Typography color="text.secondary">No students found.</Typography>
       ) : (
-        <TableContainer component={Paper} sx={{ borderRadius: '16px' }}>
-          <Table>
+        <TableContainer component={Paper} sx={{ borderRadius: '16px', overflowX: 'auto' }}>
+          <Table sx={{ minWidth: 800 }}>
             <TableHead>
               <TableRow>
                 <TableCell>Roll Number</TableCell>

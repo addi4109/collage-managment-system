@@ -189,7 +189,7 @@ export default function FeeInvoiceTab({ role }) {
           <ReceiptIcon color="primary" /> Fees & Billing Panel
         </Typography>
         {role === 'admin' && (
-          <Stack direction="row" spacing={2}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ width: { xs: '100%', sm: 'auto' } }}>
             <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setOpenStructure(true)}>
               Define Structure
             </Button>
@@ -238,8 +238,8 @@ export default function FeeInvoiceTab({ role }) {
                     <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
                       Installments Schedule
                     </Typography>
-                    <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid', borderColor: 'divider', mb: 4 }}>
-                      <Table>
+                    <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid', borderColor: 'divider', mb: 4, overflowX: 'auto' }}>
+                      <Table sx={{ minWidth: 600 }}>
                         <TableHead>
                           <TableRow sx={{ bgcolor: 'action.hover' }}>
                             <TableCell>Installment</TableCell>
@@ -352,8 +352,8 @@ export default function FeeInvoiceTab({ role }) {
               <Typography color="text.secondary">No fee structures created yet.</Typography>
             </Card>
           ) : (
-            <TableContainer component={Paper} sx={{ borderRadius: '16px' }}>
-              <Table>
+            <TableContainer component={Paper} sx={{ borderRadius: '16px', overflowX: 'auto' }}>
+              <Table sx={{ minWidth: 600 }}>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'action.hover' }}>
                     <TableCell>Title</TableCell>

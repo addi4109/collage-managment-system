@@ -177,8 +177,8 @@ export default function FacultyDirectoryTab({ role }) {
                     <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{dept.name}</Typography>
                   </AccordionSummary>
                   <AccordionDetails sx={{ p: 0 }}>
-                    <TableContainer component={Paper} elevation={0} sx={{ borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}>
-                      <Table>
+                    <TableContainer component={Paper} elevation={0} sx={{ borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px', overflowX: 'auto' }}>
+                      <Table sx={{ minWidth: 800 }}>
                         <TableHead>
                           <TableRow>
                             <TableCell>Name</TableCell>

@@ -161,8 +161,8 @@ export default function DashboardOverviewTab() {
           {stats.activeSessions.length === 0 ? (
             <Typography color="text.secondary">No active attendance sessions right now.</Typography>
           ) : (
-            <TableContainer component={Paper} sx={{ boxShadow: 'none' }}>
-              <Table>
+            <TableContainer component={Paper} sx={{ boxShadow: 'none', overflowX: 'auto' }}>
+              <Table sx={{ minWidth: 600 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>Subject Code</TableCell>
