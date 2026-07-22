@@ -54,10 +54,10 @@ export default function DashboardOverviewTab() {
               <CardContent>
                 <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>Exam Status Overview</Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={6}><StatRow label="Draft" value={stats.examStats.draft || 0} /></Grid>
-                  <Grid item xs={6}><StatRow label="Scheduled" value={stats.examStats.scheduled || 0} /></Grid>
-                  <Grid item xs={6}><StatRow label="Active" value={stats.examStats.active || 0} /></Grid>
-                  <Grid item xs={6}><StatRow label="Ended" value={stats.examStats.ended || 0} /></Grid>
+                  <Grid item xs={12} sm={6}><StatRow label="Draft" value={stats.examStats.draft || 0} /></Grid>
+                  <Grid item xs={12} sm={6}><StatRow label="Scheduled" value={stats.examStats.scheduled || 0} /></Grid>
+                  <Grid item xs={12} sm={6}><StatRow label="Active" value={stats.examStats.active || 0} /></Grid>
+                  <Grid item xs={12} sm={6}><StatRow label="Ended" value={stats.examStats.ended || 0} /></Grid>
                 </Grid>
               </CardContent>
             </Card>

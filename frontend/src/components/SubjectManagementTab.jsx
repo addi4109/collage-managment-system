@@ -146,7 +146,7 @@ export default function SubjectManagementTab({ role, userDepartmentId }) {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Subjects Directory</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenSubjectForm()}>
           Create Subject
@@ -273,7 +273,7 @@ export default function SubjectManagementTab({ role, userDepartmentId }) {
             )}
 
             <Grid container spacing={2} sx={{ mb: 2 }}>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   select
                   fullWidth
@@ -287,7 +287,7 @@ export default function SubjectManagementTab({ role, userDepartmentId }) {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   select
                   fullWidth

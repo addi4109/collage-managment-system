@@ -135,7 +135,7 @@ export default function NoticeTab({ role }) {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
           Notice Board
         </Typography>
@@ -276,7 +276,7 @@ export default function NoticeTab({ role }) {
               onChange={(e) => setForm({ ...form, content: e.target.value })}
             />
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   select
                   label="Category"
@@ -289,7 +289,7 @@ export default function NoticeTab({ role }) {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   select
                   label="Priority"
@@ -317,7 +317,7 @@ export default function NoticeTab({ role }) {
               ))}
             </TextField>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   select
                   label="Target Year"
@@ -330,7 +330,7 @@ export default function NoticeTab({ role }) {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   select
                   label="Target Semester"
@@ -345,7 +345,7 @@ export default function NoticeTab({ role }) {
               </Grid>
             </Grid>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   label="Publish Date & Time (optional)"
                   type="datetime-local"
@@ -355,7 +355,7 @@ export default function NoticeTab({ role }) {
                   onChange={(e) => setForm({ ...form, publishAt: e.target.value })}
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   label="Expiry Date & Time (optional)"
                   type="datetime-local"

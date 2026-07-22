@@ -134,7 +134,7 @@ export default function StudentDirectoryTab({ role }) {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Students Directory</Typography>
         <Stack direction="row" spacing={2} alignItems="center">
           <TextField

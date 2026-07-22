@@ -239,7 +239,7 @@ export default function TimetableTab({ role }) {
                     </TextField>
                   </Grid>
 
-                  <Grid item xs={6}>
+                  <Grid item xs={12} sm={6}>
                     <TextField
                       select
                       fullWidth
@@ -254,7 +254,7 @@ export default function TimetableTab({ role }) {
                     </TextField>
                   </Grid>
 
-                  <Grid item xs={6}>
+                  <Grid item xs={12} sm={6}>
                     <TextField
                       select
                       fullWidth
@@ -306,7 +306,7 @@ export default function TimetableTab({ role }) {
                     />
                   </Grid>
 
-                  <Grid item xs={6}>
+                  <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
                       label="Start Time"
@@ -317,7 +317,7 @@ export default function TimetableTab({ role }) {
                     />
                   </Grid>
 
-                  <Grid item xs={6}>
+                  <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
                       label="End Time"

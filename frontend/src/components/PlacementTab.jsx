@@ -225,7 +225,7 @@ export default function PlacementTab({ role }) {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
           <BusinessCenterIcon color="primary" /> Placement Cell Job Portal
         </Typography>
@@ -430,7 +430,7 @@ export default function PlacementTab({ role }) {
               onChange={(e) => setForm({ ...form, role: e.target.value })}
             />
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   label="CTC Package (in LPA)"
                   type="number"
@@ -440,7 +440,7 @@ export default function PlacementTab({ role }) {
                   onChange={(e) => setForm({ ...form, package: Number(e.target.value) })}
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   label="Minimum Eligibility CGPA"
                   type="number"

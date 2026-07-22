@@ -124,7 +124,7 @@ export default function LibraryTab({ role }) {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
           <LibraryBooksIcon color="primary" /> Library Circulation Panel
         </Typography>
@@ -307,7 +307,7 @@ export default function LibraryTab({ role }) {
               onChange={(e) => setBookForm({ ...bookForm, author: e.target.value })}
             />
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   label="ISBN Number"
                   fullWidth
@@ -315,7 +315,7 @@ export default function LibraryTab({ role }) {
                   onChange={(e) => setBookForm({ ...bookForm, isbn: e.target.value })}
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   label="Category Classification"
                   fullWidth
@@ -326,7 +326,7 @@ export default function LibraryTab({ role }) {
               </Grid>
             </Grid>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   label="Unique Book Code"
                   fullWidth
@@ -336,7 +336,7 @@ export default function LibraryTab({ role }) {
                   onChange={(e) => setBookForm({ ...bookForm, bookCode: e.target.value })}
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   label="Total Stock Copies"
                   type="number"

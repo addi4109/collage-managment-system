@@ -186,7 +186,7 @@ export default function AssignmentTab({ role }) {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
           Assignment Manager
         </Typography>
@@ -336,7 +336,7 @@ export default function AssignmentTab({ role }) {
               ))}
             </TextField>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   select
                   label="Year"
@@ -349,7 +349,7 @@ export default function AssignmentTab({ role }) {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   select
                   label="Semester"
@@ -385,7 +385,7 @@ export default function AssignmentTab({ role }) {
               onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
             />
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   label="Max Marks"
                   type="number"
@@ -395,7 +395,7 @@ export default function AssignmentTab({ role }) {
                   onChange={(e) => setForm({ ...form, maxMarks: Number(e.target.value) })}
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   label="Max Attempts"
                   type="number"

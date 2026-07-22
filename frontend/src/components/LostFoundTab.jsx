@@ -272,7 +272,7 @@ export default function LostFoundTab() {
   return (
     <Box>
       {/* Header and Add Action */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Lost & Found Message Board</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenPostDialog}>
           Post New Item
