@@ -126,7 +126,7 @@ export default function AuthLanding({ mode, toggleTheme }) {
 
       <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1, pt: { xs: 6, sm: 0 }, px: { md: 4 } }}>
         {/* Title Section */}
-        <Box sx={{ textAlign: 'center', mb: 8 }}>
+        <Box sx={{ textAlign: 'center', mb: { xs: 4, sm: 6, md: 8 }, mt: { xs: 2, sm: 0 } }}>
           <Typography
             variant="h2"
             sx={{
@@ -140,7 +140,7 @@ export default function AuthLanding({ mode, toggleTheme }) {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
-              fontSize: { xs: '2.5rem', md: '3.5rem' },
+              fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
             }}
           >
             EduTech Hub
@@ -152,7 +152,8 @@ export default function AuthLanding({ mode, toggleTheme }) {
               color: isDark ? '#94A3B8' : '#475569',
               maxWidth: 600,
               mx: 'auto',
-              fontSize: { xs: '0.95rem', md: '1.15rem' },
+              px: { xs: 2, sm: 0 },
+              fontSize: { xs: '0.9rem', sm: '1rem', md: '1.15rem' },
             }}
           >
             Unified Management Portal for Students, Instructors, and Administrators
@@ -160,7 +161,7 @@ export default function AuthLanding({ mode, toggleTheme }) {
         </Box>
 
         {/* Portal Cards */}
-        <Grid container spacing={3} justifyContent="center" sx={{ maxWidth: '1400px', mx: 'auto' }}>
+        <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center" sx={{ maxWidth: '1400px', mx: 'auto', px: { xs: 1, sm: 0 } }}>
           {portals.map((portal, idx) => (
             <Grid item xs={12} sm={6} md={3} key={portal.role}>
               <Card
