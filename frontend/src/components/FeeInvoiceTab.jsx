@@ -209,7 +209,7 @@ export default function FeeInvoiceTab({ role }) {
           <Stack spacing={4}>
             {feeRecords.map(({ feeDetails, payments }) => {
               return (
-                <Grid container spacing={4} key={feeDetails._id}>
+                <Grid container spacing={{ xs: 2, md: 4 }} key={feeDetails._id}>
                   {/* Summary Card */}
                   <Grid item xs={12} md={4}>
                     <Card sx={{ p: 3, borderRadius: '16px', bgcolor: 'primary.light', color: '#fff' }}>
@@ -313,7 +313,7 @@ export default function FeeInvoiceTab({ role }) {
         /* ADMIN VIEW */
         <Box sx={{ mt: 2 }}>
           {analytics && (
-            <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: 4 }}>
               <Grid item xs={12} sm={4}>
                 <Card sx={{ p: 3, borderRadius: '16px', display: 'flex', gap: 2, alignItems: 'center' }}>
                   <AccountBalanceWalletIcon color="primary" sx={{ fontSize: 40 }} />

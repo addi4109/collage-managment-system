@@ -399,7 +399,7 @@ export default function StudentDashboard() {
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 3 }}>Attendance Check-In</Typography>
 
-              <Grid container spacing={4} justifyContent="center">
+              <Grid container spacing={{ xs: 2, md: 4 }} justifyContent="center">
                 {/* QR SCANNER CARD */}
                 <Grid item xs={12} md={5}>
                   <Card sx={{

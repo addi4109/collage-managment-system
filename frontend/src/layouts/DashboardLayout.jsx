@@ -575,11 +575,11 @@ export default function DashboardLayout({ mode, toggleTheme }) {
         component="main"
         sx={{
           flexGrow: 1,
+          minWidth: 0,
           p: { xs: 2, md: 3 },
           width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
           mt: '64px',
           boxSizing: 'border-box',
-          overflowX: 'hidden',
         }}
       >
         <Outlet />
