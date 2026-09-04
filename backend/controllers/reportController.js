@@ -12,6 +12,8 @@ export const getDashboardAnalytics = async (req, res) => {
       stats = await analyticsService.getHodStats(req.user.departmentId, req.user);
     } else if (req.user.role === 'student') {
       stats = await analyticsService.getStudentStats(req.user.id);
+    } else if (req.user.role === 'librarian') {
+      stats = await analyticsService.getAdminStats();
     } else {
       return res.status(400).json({ message: 'Unknown role portal.' });
     }

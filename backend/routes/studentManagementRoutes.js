@@ -4,7 +4,7 @@ import { authenticateToken, requireRole } from '../middleware/authMiddleware.js'
 
 const router = express.Router();
 
-router.get('/', authenticateToken, requireRole(['faculty', 'hod', 'principal']), listStudents);
+router.get('/', authenticateToken, requireRole(['faculty', 'hod', 'principal', 'librarian']), listStudents);
 router.post('/', authenticateToken, requireRole(['hod', 'principal']), addStudent);
 router.put('/:id', authenticateToken, requireRole(['hod', 'principal']), editStudent);
 router.delete('/:id', authenticateToken, requireRole(['hod', 'principal']), removeStudent);
