@@ -1,0 +1,143 @@
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
+import Faculty from '../models/Faculty.js';
+import Student from '../models/Student.js';
+import HOD from '../models/HOD.js';
+import Principal from '../models/Principal.js';
+import Librarian from '../models/Librarian.js';
+
+// In-memory cache for user auth context to optimize DB queries
+const userCache = new Map();
+const CACHE_TTL = 30 * 1000; // 30 seconds cache (short cache to reflect status changes quickly)
+
+export const clearUserCache = (userId) => {
+  if (userId) {
+    userCache.delete(userId.toString());
+  } else {
+    userCache.clear();
+  }
+};
+
+export const authenticateToken = async (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ message: 'Access denied. No token provided.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'edutech_hub_jwt_secret_token_key_987654321');
+    const now = Date.now();
+
+    // Check cache
+    const cachedEntry = userCache.get(decoded.id);
+    if (cachedEntry && (now - cachedEntry.timestamp < CACHE_TTL)) {
+      req.user = cachedEntry.user;
+      return next();
+    }
+
+    // Fetch user from DB
+    const user = await User.findOne({ _id: decoded.id, isDeleted: false });
+    if (!user) {
+      return res.status(401).json({ message: 'User not found or deleted.' });
+    }
+
+    if (user.status !== 'active') {
+      return res.status(403).json({ message: 'User account is suspended/inactive.' });
+    }
+
+    const requestUser = {
+      id: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      username: user.username,
+      role: user.role,
+      status: user.status,
+    };
+
+    // Load dynamic scopes based on Role
+    if (user.role === 'faculty') {
+      const facultyProfile = await Faculty.findOne({ userId: user._id, isDeleted: false })
+        .populate('assignedDepartments', 'name code');
+      if (facultyProfile) {
+        requestUser.employeeId = facultyProfile.employeeId;
+        requestUser.assignedDepartments = (facultyProfile.assignedDepartments || [])
+          .filter(Boolean)
+          .map(d => d._id.toString());
+        requestUser.assignedDepartmentDetails = (facultyProfile.assignedDepartments || [])
+          .filter(Boolean)
+          .map(d => ({ id: d._id.toString(), name: d.name, code: d.code }));
+        requestUser.assignedYears = facultyProfile.assignedYears || [];
+        requestUser.phone = facultyProfile.phone;
+      } else {
+        requestUser.employeeId = '';
+        requestUser.assignedDepartments = [];
+        requestUser.assignedDepartmentDetails = [];
+        requestUser.assignedYears = [];
+        requestUser.phone = '';
+      }
+    } else if (user.role === 'student') {
+      const studentProfile = await Student.findOne({ userId: user._id, isDeleted: false })
+        .populate('departmentId', 'name code');
+      if (studentProfile) {
+        requestUser.rollNumber = studentProfile.rollNumber;
+        requestUser.enrollmentNumber = studentProfile.enrollmentNumber;
+        requestUser.departmentId = studentProfile.departmentId?._id?.toString() || '';
+        requestUser.departmentName = studentProfile.departmentId?.name || '';
+        requestUser.year = studentProfile.year;
+        requestUser.semester = studentProfile.semester;
+        requestUser.phone = studentProfile.phone;
+        requestUser.parentName = studentProfile.parentName;
+        requestUser.parentMobile = studentProfile.parentMobile;
+        requestUser.address = studentProfile.address;
+      }
+    } else if (user.role === 'hod') {
+      const hodProfile = await HOD.findOne({ userId: user._id, isDeleted: false })
+        .populate('departmentId', 'name code');
+      if (hodProfile) {
+        requestUser.employeeId = hodProfile.employeeId;
+        requestUser.departmentId = hodProfile.departmentId?._id?.toString() || '';
+        requestUser.departmentName = hodProfile.departmentId?.name || '';
+        requestUser.departmentCode = hodProfile.departmentId?.code || '';
+        requestUser.phone = hodProfile.phone;
+      }
+    } else if (user.role === 'principal') {
+      const principalProfile = await Principal.findOne({ userId: user._id, isDeleted: false });
+      if (principalProfile) {
+        requestUser.employeeId = principalProfile.employeeId;
+        requestUser.phone = principalProfile.phone;
+      }
+    } else if (user.role === 'librarian') {
+      const librarianProfile = await Librarian.findOne({ userId: user._id, isDeleted: false });
+      if (librarianProfile) {
+        requestUser.employeeId = librarianProfile.employeeId;
+        requestUser.phone = librarianProfile.phone;
+      } else {
+        requestUser.employeeId = '';
+        requestUser.phone = '';
+      }
+    }
+
+    // Cache user context
+    userCache.set(user._id.toString(), {
+      user: requestUser,
+      timestamp: now,
+    });
+
+    req.user = requestUser;
+    next();
+  } catch (error) {
+    console.error('JWT verification error:', error);
+    return res.status(403).json({ message: 'Invalid or expired access token.' });
+  }
+};
+
+export const requireRole = (allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Forbidden. Insufficient permissions.' });
+    }
+    next();
+  };
+};

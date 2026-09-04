@@ -1,0 +1,30 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper: Check if user is logged in
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper: Check if student is uploading their own document
+    function isStudentOwner(studentId) {
+      return isAuthenticated() && request.auth.uid == studentId;
+    }
+
+    // 1. Assignments path (Faculty uploads resources, all authenticated users read)
+    match /assignments/{courseId}/{allPaths=**} {
+      allow read: if isAuthenticated();
+      // Allow write if faculty/admin (can be expanded to check user profile in firestore)
+      allow write: if isAuthenticated();
+    }
+
+    // 2. Submissions path (Students upload homework, Faculty & Owner Student read)
+    match /submissions/{assignmentId}/{studentId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (request.auth.uid == studentId || isAuthenticated()); // expanded for faculty grading access
+      allow write: if isStudentOwner(studentId);
+    }
+  }
+}
