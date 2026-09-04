@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Container, Typography, Card, Grid, Button, IconButton, useTheme } from '@mui/material';
+import { Box, Container, Typography, Card, Grid, Button, IconButton, useTheme, Tooltip } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import PersonIcon from '@mui/icons-material/Person';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -51,15 +51,6 @@ export default function AuthLanding({ mode, toggleTheme }) {
       glowColor: 'rgba(236, 72, 153, 0.5)',
       btnColor: '#ec4899',
     },
-    {
-      role: 'librarian',
-      title: 'Librarian Portal',
-      description: 'Manage the library catalog, register new books, issue and renew books to students, and track lending circulation.',
-      icon: <LibraryBooksIcon sx={{ fontSize: 48 }} />,
-      gradient: 'linear-gradient(135deg, #f97316, #eab308)',
-      glowColor: 'rgba(249, 115, 22, 0.5)',
-      btnColor: '#f97316',
-    },
   ];
 
   return (
@@ -109,6 +100,33 @@ export default function AuthLanding({ mode, toggleTheme }) {
           />
         </>
       )}
+      {/* Librarian Login Icon - Top Right, left of dark mode toggle */}
+      <Tooltip title="Librarian Login" placement="bottom">
+        <IconButton
+          onClick={() => navigate('/login/librarian')}
+          sx={{
+            position: 'absolute',
+            top: { xs: 16, sm: 24 },
+            right: { xs: 72, sm: 80 },
+            zIndex: 1000,
+            bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+            color: isDark ? '#f97316' : '#ea580c',
+            width: 48,
+            height: 48,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              bgcolor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.1)',
+              transform: 'scale(1.08)',
+            },
+          }}
+        >
+          <LibraryBooksIcon />
+        </IconButton>
+      </Tooltip>
+
       {/* Dark Mode Toggle Button - Top Right */}
       <IconButton
         onClick={toggleTheme}
@@ -173,7 +191,7 @@ export default function AuthLanding({ mode, toggleTheme }) {
         {/* Portal Cards */}
           <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center" sx={{ maxWidth: '1400px', mx: 'auto', px: { xs: 1, sm: 0 } }}>
           {portals.map((portal, idx) => (
-            <Grid item xs={12} sm={6} md={portal.role === 'librarian' ? 4 : 3} key={portal.role}>
+            <Grid item xs={12} sm={6} md={3} key={portal.role}>
               <Card
                 sx={{
                   height: '100%',
