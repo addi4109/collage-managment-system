@@ -28,9 +28,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import PersonIcon from '@mui/icons-material/Person';
 
-import { api } from '../../context/AuthContext';
-import { useToast } from '../../context/ToastContext';
-import { TableSkeleton } from '../SkeletonLoader';
+import { api } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { TableSkeleton } from './SkeletonLoader';
 
 export default function LibrarianManagementTab() {
   const { showToast } = useToast();
